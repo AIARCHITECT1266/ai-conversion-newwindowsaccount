@@ -117,3 +117,45 @@ h1, h2 { letter-spacing: -0.03em; }
 .btn-glow-green:hover {
   box-shadow: 0 0 30px rgba(34, 197, 94, 0.3), 0 0 60px rgba(34, 197, 94, 0.1);
 }
+
+/* ─── Neural Data Pulses — travel along grid lines ─── */
+@keyframes pulse-h {
+  0%   { left: -4px; opacity: 0; }
+  5%   { opacity: 0.12; }
+  95%  { opacity: 0.12; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes pulse-v {
+  0%   { top: -4px; opacity: 0; }
+  5%   { opacity: 0.1; }
+  95%  { opacity: 0.1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.neural-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Horizontal pulses */
+.neural-grid .pulse-h {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: pulse-h linear infinite;
+  will-change: left, opacity;
+}
+
+/* Vertical pulses */
+.neural-grid .pulse-v {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: pulse-v linear infinite;
+  will-change: top, opacity;
+}

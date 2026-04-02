@@ -1,3 +1,4 @@
+import NeuralGrid from "@/components/NeuralGrid";
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import LogoCloud from "@/components/LogoCloud";
@@ -27,6 +28,7 @@ export default function Home() {
         />
       </div>
 
+      <NeuralGrid />
       <Navigation />
       <HeroSection />
       <LogoCloud />
