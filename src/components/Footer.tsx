@@ -64,37 +64,51 @@ export default function Footer() {
               <li className="flex items-start gap-2 text-[14px] text-slate-600">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-700" />
                 <span>
-                  AI Conversion GmbH<br />
-                  Friedrichstraße 123<br />
-                  10117 Berlin
+                  AI Conversion<br />
+                  Philipp Motzer<br />
+                  Bezirk Telawi, 2212 Dorf Ruispiri<br />
+                  Georgien
                 </span>
               </li>
               <li className="flex items-center gap-2 text-[14px] text-slate-600">
                 <Mail className="h-4 w-4 shrink-0 text-slate-700" />
-                info@ai-conversion.de
-              </li>
-              <li className="flex items-center gap-2 text-[14px] text-slate-600">
-                <Phone className="h-4 w-4 shrink-0 text-slate-700" />
-                +49 30 12345678
+                hello@ai-conversion.ai
               </li>
             </ul>
             <div className="mt-6 space-y-2">
-              {["Impressum", "Datenschutz", "AGB"].map((link) => (
-                <a key={link} href="#" className="block text-[14px] text-slate-600 transition-colors hover:text-white">
-                  {link}
+              {[
+                { label: "Impressum", href: "/impressum" },
+                { label: "Datenschutz", href: "/datenschutz" },
+                { label: "AGB", href: "#" },
+              ].map((link) => (
+                <a key={link.label} href={link.href} className="block text-[14px] text-slate-600 transition-colors hover:text-white">
+                  {link.label}
                 </a>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-24 border-t border-white/[0.03] pt-10">
+        {/* WhatsApp CTA */}
+        <div className="mt-20 flex justify-center">
+          <a
+            href="https://wa.me/4917647666407?text=Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20euren%20KI-WhatsApp-Bot!"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 rounded-full bg-emerald-500 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-400 hover:shadow-emerald-500/30"
+          >
+            <MessageCircle className="h-5 w-5" />
+            Jetzt per WhatsApp starten
+          </a>
+        </div>
+
+        <div className="mt-16 border-t border-white/[0.03] pt-10">
           <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
             <p className="text-xs tracking-wide text-slate-700">
-              &copy; {new Date().getFullYear()} AI Conversion GmbH. Alle Rechte vorbehalten.
+              &copy; {new Date().getFullYear()} AI Conversion · Philipp Motzer. Alle Rechte vorbehalten.
             </p>
             <p className="text-xs tracking-wide text-slate-700">
-              Handelsregister: HRB 234567 B · Amtsgericht Berlin-Charlottenburg
+              Individual Entrepreneur · Georgien · ID 331187816
             </p>
           </div>
         </div>
