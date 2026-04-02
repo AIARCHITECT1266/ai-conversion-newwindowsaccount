@@ -35,7 +35,7 @@ export default function CalendarSection() {
 
   return (
     <>
-      <section id="contact" className="relative py-32 lg:py-44">
+      <section id="contact" className="relative py-40 lg:py-56">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/2 top-0 h-[400px] w-[800px] -translate-x-1/2 rounded-full bg-purple-600/[0.025] blur-[160px]" />
         </div>

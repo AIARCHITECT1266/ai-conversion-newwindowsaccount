@@ -30,7 +30,7 @@ const solutions = [
 
 export default function ProblemSolution() {
   return (
-    <section className="relative py-32 lg:py-44">
+    <section className="relative py-40 lg:py-56">
       <div className="mx-auto max-w-6xl px-4 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}

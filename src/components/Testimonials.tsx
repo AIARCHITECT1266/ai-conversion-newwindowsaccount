@@ -41,7 +41,7 @@ const cardVariants = {
 
 export default function Testimonials() {
   return (
-    <section id="testimonials" className="relative py-32 lg:py-44">
+    <section id="testimonials" className="relative py-40 lg:py-56">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-0 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-purple-600/[0.025] blur-[160px]" />
       </div>

@@ -6,7 +6,7 @@ import Image from "next/image";
 export default function Footer() {
   return (
     <footer className="border-t border-white/[0.03]">
-      <div className="mx-auto max-w-6xl px-6 py-24 lg:px-8">
+      <div className="mx-auto max-w-6xl px-6 py-32 lg:px-8">
         <div className="grid gap-16 lg:grid-cols-4">
           {/* Brand */}
           <div className="lg:col-span-2">
@@ -88,8 +88,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-20 border-t border-white/[0.03] pt-10">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+        <div className="mt-24 border-t border-white/[0.03] pt-10">
+          <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
             <p className="text-xs tracking-wide text-slate-700">
               &copy; {new Date().getFullYear()} AI Conversion GmbH. Alle Rechte vorbehalten.
             </p>

@@ -32,14 +32,14 @@ export default function Navigation() {
         scrolled ? "glass shadow-2xl shadow-black/40" : "bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8 lg:py-6">
         <a href="#" className="flex items-center">
           <Image
             src="/logo1.png"
             alt="AI Conversion"
             width={1024}
             height={1024}
-            className="h-16 w-auto sm:h-20 lg:h-24"
+            className="h-28 w-auto sm:h-32 lg:h-44"
             priority
           />
         </a>

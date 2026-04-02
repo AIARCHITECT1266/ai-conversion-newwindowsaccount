@@ -33,27 +33,21 @@ export default function Home() {
       <HeroSection />
       <LogoCloud />
 
-      <div className="divider-purple mx-auto max-w-5xl" />
 
       <ProblemSolution />
 
-      <div className="divider-purple mx-auto max-w-5xl" />
 
       <Features />
 
-      <div className="divider-purple mx-auto max-w-5xl" />
 
       <HowItWorks />
 
-      <div className="divider-purple mx-auto max-w-5xl" />
 
       <Testimonials />
 
-      <div className="divider-purple mx-auto max-w-5xl" />
 
       <Pricing />
 
-      <div className="divider-purple mx-auto max-w-5xl" />
 
       <CalendarSection />
       <Footer />

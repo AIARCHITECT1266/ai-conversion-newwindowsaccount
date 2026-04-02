@@ -184,7 +184,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring, delay: 0.5 }}
-          className="relative mx-auto mt-20 max-w-4xl"
+          className="relative mx-auto mt-24 w-[95%] max-w-5xl sm:w-auto"
         >
           {/* Ambient glow */}
           <div className="absolute left-1/2 top-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-500/[0.05] blur-[140px]" />
@@ -294,33 +294,33 @@ export default function HeroSection() {
           {/* ── Foreground Phone — overlapping bottom-right ── */}
           <div className="absolute -bottom-12 right-4 z-10 lg:right-12">
             <div
-              className="flex w-[220px] flex-col overflow-hidden rounded-[1.75rem] border border-white/[0.1] bg-neutral-900/90 shadow-[0_30px_80px_rgba(0,0,0,0.7)] backdrop-blur-md lg:w-[260px]"
+              className="flex w-[280px] flex-col overflow-hidden rounded-[2rem] border border-white/[0.1] bg-neutral-900/90 shadow-[0_30px_80px_rgba(0,0,0,0.7)] backdrop-blur-md sm:w-[300px] lg:w-[320px]"
               style={{ aspectRatio: "9/19" }}
             >
               {/* Notch */}
-              <div className="absolute left-1/2 top-0 z-20 h-4 w-16 -translate-x-1/2 rounded-b-xl bg-navy-950/80" />
+              <div className="absolute left-1/2 top-0 z-20 h-5 w-20 -translate-x-1/2 rounded-b-xl bg-navy-950/80" />
 
               {/* Header */}
-              <div className="relative z-10 flex items-center gap-2 border-b border-white/[0.04] bg-navy-800/60 px-3 pb-2.5 pt-7">
+              <div className="relative z-10 flex items-center gap-2.5 border-b border-white/[0.04] bg-navy-800/60 px-4 pb-3 pt-8">
                 <div className="relative">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15 text-[8px] font-bold text-emerald-400">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] font-bold text-emerald-400">
                     KI
                   </div>
-                  <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full border border-navy-800 bg-emerald-400" />
+                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-[1.5px] border-navy-800 bg-emerald-400" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[9px] font-semibold text-white">KI-Bot</p>
-                  <p className="text-[7px] text-emerald-400/70">Online</p>
+                  <p className="text-[12px] font-semibold text-white">KI-Vertriebs-Bot</p>
+                  <p className="text-[10px] text-emerald-400/70">Spricht mit einem Lead...</p>
                 </div>
-                <span className="rounded-full bg-emerald-500/10 px-1.5 py-px text-[7px] font-bold text-emerald-400">
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[8px] font-bold tracking-wider text-emerald-400">
                   LIVE
                 </span>
               </div>
 
               {/* Chat */}
-              <div className="flex flex-1 flex-col px-2.5 py-3">
-                <p className="mb-2 text-center text-[7px] text-slate-700">09:43</p>
-                <div className="flex flex-1 flex-col gap-1.5">
+              <div className="flex flex-1 flex-col px-3 py-3">
+                <p className="mb-2 text-center text-[9px] text-slate-700">Heute, 09:43</p>
+                <div className="flex flex-1 flex-col gap-2">
                   <AnimatePresence>
                     {script
                       .filter((m) => visible.includes(m.id))
@@ -333,10 +333,10 @@ export default function HeroSection() {
                           className={`flex ${msg.sender === "lead" ? "justify-start" : "justify-end"}`}
                         >
                           <div
-                            className={`max-w-[88%] rounded-xl px-2.5 py-1.5 text-[9px] leading-[1.5] lg:text-[10px] ${
+                            className={`max-w-[86%] rounded-2xl px-3 py-2 text-[12px] leading-[1.55] sm:text-[13px] ${
                               msg.sender === "lead"
                                 ? "rounded-bl-sm bg-white/[0.05] text-slate-300"
-                                : "rounded-br-sm bg-emerald-500/85 text-white"
+                                : "rounded-br-sm bg-emerald-500/85 text-white shadow-[0_2px_8px_rgba(37,211,102,0.1)]"
                             }`}
                           >
                             {msg.text}
@@ -354,9 +354,9 @@ export default function HeroSection() {
                         transition={{ duration: 0.15 }}
                         className="flex justify-end"
                       >
-                        <div className="flex items-center gap-0.5 rounded-xl rounded-br-sm bg-emerald-500/20 px-2.5 py-1.5">
+                        <div className="flex items-center gap-1 rounded-2xl rounded-br-sm bg-emerald-500/20 px-3 py-2">
                           {[0, 1, 2].map((i) => (
-                            <span key={i} className="h-1 w-1 rounded-full bg-emerald-400/60" style={{ animation: `pulse 1.2s ease-in-out ${i * 0.15}s infinite` }} />
+                            <span key={i} className="h-1.5 w-1.5 rounded-full bg-emerald-400/60" style={{ animation: `pulse 1.2s ease-in-out ${i * 0.15}s infinite` }} />
                           ))}
                         </div>
                       </motion.div>
@@ -366,10 +366,10 @@ export default function HeroSection() {
               </div>
 
               {/* Input */}
-              <div className="border-t border-white/[0.04] bg-navy-800/60 px-2.5 py-2">
-                <div className="flex items-center gap-1.5 rounded-lg border border-white/[0.03] bg-navy-950/40 px-2 py-1.5">
-                  <span className="flex-1 text-[8px] text-slate-600">Nachricht...</span>
-                  <MessageCircle className="h-2.5 w-2.5 text-emerald-400/50" />
+              <div className="border-t border-white/[0.04] bg-navy-800/60 px-3 py-2.5">
+                <div className="flex items-center gap-2 rounded-xl border border-white/[0.04] bg-navy-950/40 px-3 py-2">
+                  <span className="flex-1 text-[11px] text-slate-600">Nachricht...</span>
+                  <MessageCircle className="h-3 w-3 text-emerald-400/50" />
                 </div>
               </div>
             </div>
