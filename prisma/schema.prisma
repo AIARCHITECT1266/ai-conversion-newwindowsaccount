@@ -1,0 +1,126 @@
+// ============================================================
+// Prisma Schema – Multi-Tenant WhatsApp KI-SaaS
+// DSGVO-konform: Nachrichteninhalte verschlüsselt, Retention
+// Policy pro Tenant, Consent-Tracking pro Conversation.
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Mandant / Kunde ----------
+model Tenant {
+  id               String         @id @default(cuid())
+  name             String         // Firmenname des Kunden
+  slug             String         @unique // URL-freundlicher Bezeichner
+  whatsappPhoneId  String         @unique // WhatsApp Business Phone Number ID
+  systemPrompt     String         @db.Text // KI-System-Prompt für diesen Mandanten
+  brandName        String         // Markenname für KI-Antworten
+  brandColor       String         @default("#000000") // Primärfarbe (Hex)
+  retentionDays    Int            @default(90) // DSGVO: Aufbewahrungsfrist in Tagen
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+
+  conversations    Conversation[]
+  leads            Lead[]
+
+  @@map("tenants")
+}
+
+// ---------- Konversation / Chat-Session ----------
+model Conversation {
+  id             String             @id @default(cuid())
+  tenantId       String
+  externalId     String             // WhatsApp Chat-ID (gehashed für DSGVO)
+  consentGiven   Boolean            @default(false) // DSGVO: Einwilligung erteilt
+  consentAt      DateTime?          // Zeitpunkt der Einwilligung
+  language       String             @default("de") // Erkannte Sprache (ISO 639-1)
+  status         ConversationStatus @default(ACTIVE)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messages       Message[]
+  lead           Lead?
+
+  @@unique([tenantId, externalId])
+  @@index([tenantId, status])
+  @@map("conversations")
+}
+
+enum ConversationStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+  ARCHIVED
+}
+
+// ---------- Nachricht ----------
+model Message {
+  id               String      @id @default(cuid())
+  conversationId   String
+  role             MessageRole // Absender: Nutzer, KI oder System
+  contentEncrypted String      @db.Text // DSGVO: AES-256-GCM verschlüsselt
+  messageType      MessageType @default(TEXT)
+  timestamp        DateTime    @default(now())
+
+  conversation     Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, timestamp])
+  @@map("messages")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  AUDIO
+  DOCUMENT
+  LOCATION
+  TEMPLATE
+}
+
+// ---------- Lead / Vertriebskontakt ----------
+model Lead {
+  id               String            @id @default(cuid())
+  tenantId         String
+  conversationId   String            @unique
+  score            Int               @default(0) // Lead-Score (0–100)
+  qualification    LeadQualification @default(UNQUALIFIED)
+  appointmentAt    DateTime?         // Vereinbarter Termin
+  status           LeadStatus        @default(NEW)
+  createdAt        DateTime          @default(now())
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversation     Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, qualification])
+  @@map("leads")
+}
+
+enum LeadQualification {
+  UNQUALIFIED
+  MARKETING_QUALIFIED  // MQL
+  SALES_QUALIFIED      // SQL
+  OPPORTUNITY
+  CUSTOMER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  APPOINTMENT_SET
+  CONVERTED
+  LOST
+}
