@@ -1,7 +1,7 @@
 // ============================================================
 // Notion-Integration – Session-Notizen erstellen
-// Speichert Zusammenfassungen als neue Seiten in einer
-// Notion-Datenbank. Benötigt NOTION_API_KEY und NOTION_DATABASE_ID.
+// Speichert Zusammenfassungen als neue Einträge in einer Notion-Datenbank.
+// Benötigt NOTION_API_KEY und NOTION_DATABASE_ID.
 // ============================================================
 
 import { Client } from "@notionhq/client";
@@ -24,7 +24,7 @@ export interface SessionNoteResult {
 // ---------- Session-Notiz erstellen ----------
 
 /**
- * Erstellt eine neue Seite in der Notion-Datenbank.
+ * Erstellt einen neuen Eintrag in der Notion-Datenbank.
  *
  * @param title - Titel der Notiz
  * @param content - Inhalt als Markdown-Text
@@ -44,7 +44,6 @@ export async function createSessionNote(
     const response = await notion.pages.create({
       parent: { database_id: DATABASE_ID },
       properties: {
-        // Standard-Notion-Datenbank: Titel-Spalte heißt "Name" oder "Title"
         Name: {
           title: [
             {
