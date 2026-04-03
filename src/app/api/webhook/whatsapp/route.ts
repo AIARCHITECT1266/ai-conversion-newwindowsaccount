@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleIncomingMessage } from "@/lib/bot/handler";
 
 // ============================================================
 // WhatsApp Cloud API – Webhook Endpoint
-// Schritt 1: Verifizierung & strukturiertes Logging
-// DSGVO-konform: Keine personenbezogenen Daten (Telefonnummern,
-// Nachrichteninhalte) werden geloggt – nur Message-IDs und Timestamps.
+// GET: Verifizierung für Meta
+// POST: Eingehende Nachrichten → Handler → KI-Antwort
+// DSGVO-konform: Keine personenbezogenen Daten im Log
 // ============================================================
 
 const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
@@ -30,8 +31,10 @@ export async function GET(request: NextRequest) {
 // ---------- Typen für die WhatsApp Cloud API Payload ----------
 interface WhatsAppMessage {
   id: string;
+  from: string;
   timestamp: string;
   type: string;
+  text?: { body: string };
 }
 
 interface WhatsAppChange {
@@ -59,7 +62,7 @@ interface WhatsAppWebhookBody {
   }>;
 }
 
-// ---------- POST: Eingehende Nachrichten empfangen ----------
+// ---------- POST: Eingehende Nachrichten verarbeiten ----------
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as WhatsAppWebhookBody;
@@ -71,14 +74,37 @@ export async function POST(request: NextRequest) {
 
     for (const entry of body.entry) {
       for (const change of entry.changes) {
-        // Eingehende Nachrichten verarbeiten (DSGVO-konform: nur IDs + Timestamps)
+        // Eingehende Textnachrichten an den Handler weiterleiten
         if (change.value.messages) {
           for (const message of change.value.messages) {
+            // Nur Textnachrichten verarbeiten (Bilder, Audio etc. später)
+            if (message.type !== "text" || !message.text?.body) {
+              console.log("[WhatsApp Webhook] Nicht-Text-Nachricht übersprungen", {
+                messageId: message.id,
+                type: message.type,
+              });
+              continue;
+            }
+
             console.log("[WhatsApp Webhook] Nachricht empfangen", {
               messageId: message.id,
-              timestamp: message.timestamp,
               type: message.type,
               phoneNumberId: change.value.metadata.phone_number_id,
+              // DSGVO: Keine Telefonnummer oder Inhalt loggen
+            });
+
+            // Handler aufrufen (async, blockiert nicht die Webhook-Antwort)
+            handleIncomingMessage({
+              phoneNumberId: change.value.metadata.phone_number_id,
+              from: message.from,
+              messageId: message.id,
+              text: message.text.body,
+              timestamp: message.timestamp,
+            }).catch((error) => {
+              console.error("[WhatsApp Webhook] Handler-Fehler", {
+                messageId: message.id,
+                error: error instanceof Error ? error.message : "Unbekannt",
+              });
             });
           }
         }
