@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Impressum | KI Growth Agentur",
-  description: "Impressum der KI Growth Agentur gemäß § 5 TMG.",
+  title: "Impressum | AI Conversion",
+  description: "Impressum von AI Conversion (ai-conversion.ai) gemäß § 5 TMG.",
   robots: "noindex, follow",
 };
 

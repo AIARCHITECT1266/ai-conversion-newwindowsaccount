@@ -83,24 +83,39 @@ export default function FloatingChat() {
 
   return (
     <>
-      {/* Floating button — immer sichtbar, groß */}
+      {/* Floating button — immer sichtbar, mit Label */}
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
+          <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-emerald-500 text-white shadow-[0_0_40px_rgba(37,211,102,0.3)] animate-pulse-green"
-            aria-label="Chat öffnen"
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-3"
           >
-            <MessageCircle className="h-8 w-8" />
-            <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-[11px] font-bold text-white shadow-lg">
-              1
-            </span>
-          </motion.button>
+            {/* Expandable label */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.5, duration: 0.4 }}
+              className="hidden rounded-xl border border-emerald-500/15 bg-navy-900/95 px-4 py-2.5 shadow-lg backdrop-blur-md sm:block"
+            >
+              <p className="text-[13px] font-semibold text-white">100-Leads-Challenge starten</p>
+              <p className="text-[11px] text-emerald-400/70">Kostenlos mit unserer KI sprechen</p>
+            </motion.div>
+
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsOpen(true)}
+              className="relative flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-emerald-500 text-white shadow-[0_0_40px_rgba(37,211,102,0.3)] animate-pulse-green"
+              aria-label="Chat öffnen"
+            >
+              <MessageCircle className="h-8 w-8" />
+              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-[11px] font-bold text-white shadow-lg">
+                1
+              </span>
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
 

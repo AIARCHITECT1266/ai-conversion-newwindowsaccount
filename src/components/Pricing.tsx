@@ -6,13 +6,14 @@ import { Check, MessageCircle, ArrowRight, Crown } from "lucide-react";
 const plans = [
   {
     name: "Starter",
-    price: "997",
+    price: "299",
+    setup: "490",
     description: "Perfekt für den Einstieg",
     features: [
       "1 WhatsApp Business Nummer",
       "KI-Bot mit 5 Gesprächsflüssen",
       "Automatisches Lead-Scoring",
-      "Basis-CRM-Integration",
+      "HubSpot / Google Sheets Integration",
       "E-Mail-Support",
       "Monatliches Reporting",
     ],
@@ -21,14 +22,15 @@ const plans = [
   },
   {
     name: "Professional",
-    price: "1.997",
+    price: "549",
+    setup: "990",
     description: "Für maximale Ergebnisse",
     features: [
       "Bis zu 3 WhatsApp Nummern",
       "Unbegrenzte Gesprächsflüsse",
       "Memory-System & Lead-Scoring",
       "Kalender-Integration",
-      "Volle CRM-Integration",
+      "Volle CRM-Integration (HubSpot, Pipedrive, Salesforce, Brevo)",
       "Prioritäts-Support",
       "Wöchentliche Optimierung",
       "A/B-Testing der Dialoge",
@@ -38,7 +40,8 @@ const plans = [
   },
   {
     name: "Enterprise",
-    price: "Individuell",
+    price: "ab 1.190",
+    setup: "nach Aufwand",
     description: "Für große Organisationen",
     features: [
       "Unbegrenzte WhatsApp Nummern",
@@ -133,14 +136,27 @@ export default function Pricing() {
               <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
               <p className="mt-1 text-sm text-slate-600">{plan.description}</p>
 
-              <div className="my-7 flex items-baseline gap-1">
-                {plan.price !== "Individuell" ? (
-                  <>
-                    <span className="text-4xl font-bold text-white">{plan.price}€</span>
-                    <span className="text-sm text-slate-600">/Monat</span>
-                  </>
-                ) : (
-                  <span className="text-3xl font-bold text-gradient-purple">{plan.price}</span>
+              <div className="my-7">
+                <div className="flex items-baseline gap-1">
+                  {plan.name !== "Enterprise" ? (
+                    <>
+                      <span className="text-4xl font-bold text-white">{plan.price}€</span>
+                      <span className="text-sm text-slate-600">/Monat</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold text-gradient-purple">{plan.price}€</span>
+                      <span className="text-sm text-slate-600">/Monat</span>
+                    </>
+                  )}
+                </div>
+                <p className="mt-1.5 text-[13px] text-slate-600">
+                  + {plan.setup}€ einmaliges Setup
+                </p>
+                {plan.name !== "Enterprise" && (
+                  <p className="mt-1 text-[12px] font-medium text-purple-400/70">
+                    Jährlich zahlen: 10% sparen
+                  </p>
                 )}
               </div>
 

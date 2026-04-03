@@ -108,7 +108,7 @@ export default function HeroSection() {
           >
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[13px] font-medium tracking-wide text-purple-200/80">
-              KI WhatsApp Growth Bot für den DACH-Raum
+              30-Tage-100-Leads-Challenge — Jetzt starten
             </span>
           </motion.div>
 
@@ -118,10 +118,10 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
             className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.06] tracking-tighter text-white sm:text-5xl md:text-6xl lg:text-[4rem]"
           >
-            Ihr KI-Bot qualifiziert Leads
+            100 qualifizierte Leads
             <br className="hidden sm:block" />
-            &amp; bucht Termine —{" "}
-            <span className="text-gradient-purple">rund um die Uhr</span>
+            in 30 Tagen —{" "}
+            <span className="text-gradient-purple">garantiert.</span>
           </motion.h1>
 
           <motion.p
@@ -130,9 +130,9 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.25, ease: "easeOut" }}
             className="mx-auto mt-8 max-w-xl text-[1.1rem] leading-[1.8] text-slate-400"
           >
-            Verwandeln Sie WhatsApp in Ihren stärksten Vertriebskanal.
-            Unser Premium KI-Bot führt Verkaufsgespräche, qualifiziert
-            Leads und bucht Termine — vollautomatisch.
+            Unser KI-Bot übernimmt Ihren WhatsApp-Vertrieb komplett:
+            Leads ansprechen, qualifizieren und Termine buchen — 24/7,
+            vollautomatisch. Keine Leads? Kein Risiko.
           </motion.p>
 
           <motion.div
@@ -142,21 +142,21 @@ export default function HeroSection() {
             className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
           >
             <a
-              href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20den%20KI-Bot%20testen!"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#contact"
               className="btn-glow-green group flex items-center gap-3 rounded-full bg-emerald-500 px-9 py-4.5 text-[15px] font-bold text-white shadow-[0_0_40px_rgba(37,211,102,0.2)] hover:bg-emerald-400 hover:scale-[1.02] animate-pulse-green"
             >
-              <MessageCircle className="h-5 w-5" />
-              Jetzt Demo-Chat starten
+              <Calendar className="h-5 w-5" />
+              Kostenloses Strategiegespräch buchen
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </a>
             <a
-              href="#contact"
+              href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20eine%20Demo%20sehen!"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-full border border-white/[0.06] px-8 py-4.5 text-[15px] font-medium text-slate-500 transition-all duration-300 hover:border-purple-500/20 hover:text-white"
             >
-              <Calendar className="h-4 w-4" />
-              Termin buchen
+              <MessageCircle className="h-4 w-4" />
+              Demo ansehen
             </a>
           </motion.div>
 
@@ -168,7 +168,7 @@ export default function HeroSection() {
           >
             {[
               { icon: Shield, text: "DSGVO-konform" },
-              { icon: TrendingUp, text: "Ø 340% mehr Leads" },
+              { icon: TrendingUp, text: "100+ Leads in 30 Tagen" },
               { icon: Zap, text: "Live in 48h" },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-2">

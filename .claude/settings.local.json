@@ -20,7 +20,9 @@
       "Bash(node:*)",
       "Bash(git commit:*)",
       "Bash(git config:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(vercel login:*)",
+      "Bash(vercel:*)"
     ]
   }
 }

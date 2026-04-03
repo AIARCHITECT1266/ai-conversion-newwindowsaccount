@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Datenschutzerklärung | KI Growth Agentur",
+  title: "Datenschutzerklärung | AI Conversion",
   description:
-    "Datenschutzerklärung der KI Growth Agentur – Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO.",
+    "Datenschutzerklärung von AI Conversion (ai-conversion.ai) – Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO.",
   robots: "noindex, follow",
 };
 

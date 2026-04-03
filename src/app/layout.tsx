@@ -9,25 +9,43 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI Conversion | KI WhatsApp Growth Bot – Ihr 24/7 Vertriebs-Assistent",
+  metadataBase: new URL("https://ai-conversion.ai"),
+  title: "AI Conversion | KI-gestützter WhatsApp-Vertrieb – Ihr 24/7 Sales-Assistent",
   description:
-    "Verwandeln Sie WhatsApp in Ihren leistungsstärksten Vertriebskanal. Unser Premium KI-Chatbot generiert, qualifiziert und konvertiert Leads automatisch – rund um die Uhr. Starten Sie die 30-Tage-100-Leads-Challenge.",
+    "AI Conversion verwandelt WhatsApp in Ihren leistungsstärksten Vertriebskanal. Unser Premium KI-Chatbot generiert, qualifiziert und konvertiert Leads automatisch – rund um die Uhr.",
   keywords: [
+    "AI Conversion",
     "KI WhatsApp Bot",
     "WhatsApp Business Chatbot",
     "Lead Generation",
     "Vertriebsautomatisierung",
-    "AI Conversion",
     "WhatsApp Marketing",
     "KI Vertrieb",
-    "WhatsApp Growth Bot",
+    "ai-conversion.ai",
   ],
   openGraph: {
-    title: "AI Conversion | KI WhatsApp Growth Bot",
+    title: "AI Conversion | KI-gestützter WhatsApp-Vertrieb",
     description:
-      "Premium KI-Chatbot für automatische Lead-Generierung über WhatsApp. 24/7 Vertrieb auf Autopilot.",
+      "AI Conversion – Premium KI-Chatbot für automatische Lead-Generierung über WhatsApp. 24/7 Vertrieb auf Autopilot.",
+    url: "https://ai-conversion.ai",
     type: "website",
     locale: "de_DE",
+    siteName: "AI Conversion",
+    images: [
+      {
+        url: "/logo1.jpg",
+        width: 1024,
+        height: 1024,
+        alt: "AI Conversion – KI-gestützter WhatsApp-Vertrieb",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Conversion | KI-gestützter WhatsApp-Vertrieb",
+    description:
+      "AI Conversion – Premium KI-Chatbot für automatische Lead-Generierung über WhatsApp. 24/7 Vertrieb auf Autopilot.",
+    images: ["/logo1.jpg"],
   },
   robots: "index, follow",
 };
