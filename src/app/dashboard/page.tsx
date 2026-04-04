@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bot,
@@ -20,6 +20,7 @@ import {
   Loader2,
   ChevronDown,
   Phone,
+  RefreshCw,
 } from "lucide-react";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
@@ -29,92 +30,51 @@ interface ChatMessage {
   content: string;
 }
 
-interface KPI {
-  label: string;
-  value: string;
-  change: string;
-  positive: boolean;
-  icon: React.ElementType;
-  color: string;
+interface DashboardStats {
+  kpis: {
+    conversationsToday: number;
+    activeConversations: number;
+    newLeadsToday: number;
+    conversionRate: number;
+  };
+  conversations: {
+    id: string;
+    externalId: string;
+    status: "ACTIVE" | "PAUSED" | "CLOSED" | "ARCHIVED";
+    updatedAt: string;
+    lastMessage: string | null;
+    lastMessageAt: string | null;
+  }[];
+  pipeline: {
+    qualification: string;
+    label: string;
+    count: number;
+  }[];
+  botActivity: {
+    messagesLast24h: number;
+    appointments: number;
+  };
 }
 
-interface Conversation {
-  id: string;
-  phone: string;
-  lastMessage: string;
-  status: "ACTIVE" | "PAUSED" | "CLOSED";
-  time: string;
+/* ───────────────────────────── Hilfs-Funktionen ────────────────── */
+
+// Relative Zeitanzeige
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "gerade eben";
+  if (mins < 60) return `vor ${mins} Min.`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `vor ${hours} Std.`;
+  const days = Math.floor(hours / 24);
+  return `vor ${days} Tag${days > 1 ? "en" : ""}`;
 }
 
-interface Lead {
-  id: string;
-  name: string;
-  score: number;
-  qualification: string;
-  status: string;
-  date: string;
+// Externe ID maskieren (DSGVO)
+function maskId(externalId: string): string {
+  if (externalId.length <= 6) return "•••••";
+  return externalId.slice(0, 3) + " •••• " + externalId.slice(-2);
 }
-
-/* ───────────────────────────── Demo-Daten ───────────────────────── */
-
-const DEMO_KPIS: KPI[] = [
-  {
-    label: "Nachrichten heute",
-    value: "1.284",
-    change: "+12%",
-    positive: true,
-    icon: MessageSquare,
-    color: "purple",
-  },
-  {
-    label: "Aktive Gespräche",
-    value: "47",
-    change: "+5",
-    positive: true,
-    icon: Users,
-    color: "emerald",
-  },
-  {
-    label: "Neue Leads",
-    value: "23",
-    change: "+18%",
-    positive: true,
-    icon: TrendingUp,
-    color: "blue",
-  },
-  {
-    label: "Konversionsrate",
-    value: "34%",
-    change: "+2.1%",
-    positive: true,
-    icon: Zap,
-    color: "amber",
-  },
-];
-
-const DEMO_CONVERSATIONS: Conversation[] = [
-  { id: "1", phone: "+49 170 •••• 42", lastMessage: "Ja, das klingt interessant! Können wir einen Termin machen?", status: "ACTIVE", time: "vor 2 Min." },
-  { id: "2", phone: "+49 151 •••• 88", lastMessage: "Was kostet das Starter-Paket genau?", status: "ACTIVE", time: "vor 8 Min." },
-  { id: "3", phone: "+49 176 •••• 15", lastMessage: "Danke für die Info, ich melde mich nächste Woche.", status: "PAUSED", time: "vor 23 Min." },
-  { id: "4", phone: "+49 162 •••• 71", lastMessage: "Perfekt, Termin steht am Donnerstag.", status: "ACTIVE", time: "vor 31 Min." },
-  { id: "5", phone: "+49 157 •••• 03", lastMessage: "Wir haben uns für einen anderen Anbieter entschieden.", status: "CLOSED", time: "vor 1 Std." },
-];
-
-const DEMO_LEADS: Lead[] = [
-  { id: "1", name: "TechStart GmbH", score: 87, qualification: "Sales Qualified", status: "APPOINTMENT_SET", date: "Heute" },
-  { id: "2", name: "MediaFlow AG", score: 72, qualification: "Marketing Qualified", status: "CONTACTED", date: "Heute" },
-  { id: "3", name: "GreenLogistics", score: 64, qualification: "Marketing Qualified", status: "NEW", date: "Gestern" },
-  { id: "4", name: "FinanceHub", score: 91, qualification: "Opportunity", status: "APPOINTMENT_SET", date: "Gestern" },
-  { id: "5", name: "RetailPlus KG", score: 45, qualification: "Unqualified", status: "NEW", date: "02.04." },
-];
-
-const PIPELINE_STAGES = [
-  { label: "Neu", count: 12, color: "bg-slate-500" },
-  { label: "Kontaktiert", count: 8, color: "bg-blue-500" },
-  { label: "Termin", count: 5, color: "bg-purple-500" },
-  { label: "Konvertiert", count: 3, color: "bg-emerald-500" },
-  { label: "Verloren", count: 2, color: "bg-red-500/60" },
-];
 
 /* ───────────────────────────── Hilfs-Komponenten ────────────────── */
 
@@ -122,20 +82,30 @@ const statusColors: Record<string, string> = {
   ACTIVE: "bg-emerald-500/20 text-emerald-400",
   PAUSED: "bg-amber-500/20 text-amber-400",
   CLOSED: "bg-slate-500/20 text-slate-400",
+  ARCHIVED: "bg-slate-500/20 text-slate-400",
 };
 
 const statusLabels: Record<string, string> = {
   ACTIVE: "Aktiv",
   PAUSED: "Pausiert",
   CLOSED: "Beendet",
+  ARCHIVED: "Archiviert",
+};
+
+const pipelineColors: Record<string, string> = {
+  UNQUALIFIED: "bg-slate-500",
+  MARKETING_QUALIFIED: "bg-blue-500",
+  SALES_QUALIFIED: "bg-purple-500",
+  OPPORTUNITY: "bg-emerald-500",
+  CUSTOMER: "bg-amber-500",
 };
 
 const qualColors: Record<string, string> = {
-  Unqualified: "text-slate-400",
-  "Marketing Qualified": "text-blue-400",
-  "Sales Qualified": "text-purple-400",
-  Opportunity: "text-amber-400",
-  Customer: "text-emerald-400",
+  UNQUALIFIED: "text-slate-400",
+  MARKETING_QUALIFIED: "text-blue-400",
+  SALES_QUALIFIED: "text-purple-400",
+  OPPORTUNITY: "text-emerald-400",
+  CUSTOMER: "text-amber-400",
 };
 
 function ScoreBar({ score }: { score: number }) {
@@ -153,7 +123,35 @@ function ScoreBar({ score }: { score: number }) {
 
 /* ───────────────────────────── Haupt-Dashboard ──────────────────── */
 
+// TODO: tenantId aus Auth/Session beziehen – vorerst per Query-Param oder erster Tenant
+function useTenantId(): string | null {
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("tenantId");
+    if (id) {
+      setTenantId(id);
+    } else {
+      // Fallback: ersten Tenant laden
+      fetch("/api/admin/tenants")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.tenants?.length > 0) {
+            setTenantId(data.tenants[0].id);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+  return tenantId;
+}
+
 export default function TenantDashboard() {
+  const tenantId = useTenantId();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -166,7 +164,30 @@ export default function TenantDashboard() {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Automatisch zum Ende scrollen bei neuen Nachrichten
+  const fetchStats = useCallback(async () => {
+    if (!tenantId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`/api/dashboard/stats?tenantId=${tenantId}`);
+      if (!res.ok) throw new Error("Fehler beim Laden der Daten");
+      const data: DashboardStats = await res.json();
+      setStats(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unbekannter Fehler");
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantId]);
+
+  // Daten laden und alle 30s aktualisieren
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
+
+  // Chat: Automatisch zum Ende scrollen
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
@@ -214,7 +235,55 @@ export default function TenantDashboard() {
   }
 
   const spring = { type: "spring" as const, stiffness: 80, damping: 20 };
-  const totalLeads = PIPELINE_STAGES.reduce((s, p) => s + p.count, 0);
+
+  // KPI-Daten aufbereiten
+  const kpis = stats
+    ? [
+        {
+          label: "Nachrichten heute",
+          value: stats.botActivity.messagesLast24h.toLocaleString("de-DE"),
+          icon: MessageSquare,
+          color: "purple",
+        },
+        {
+          label: "Aktive Gespräche",
+          value: stats.kpis.activeConversations.toString(),
+          icon: Users,
+          color: "emerald",
+        },
+        {
+          label: "Neue Leads",
+          value: stats.kpis.newLeadsToday.toString(),
+          icon: TrendingUp,
+          color: "blue",
+        },
+        {
+          label: "Konversionsrate",
+          value: `${stats.kpis.conversionRate}%`,
+          icon: Zap,
+          color: "amber",
+        },
+      ]
+    : [];
+
+  const totalLeads = stats
+    ? stats.pipeline.reduce((s, p) => s + p.count, 0)
+    : 0;
+
+  // Lade-/Fehlerzustand
+  if (!tenantId && !loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-navy-950 text-white">
+        <div className="text-center">
+          <Bot className="mx-auto h-12 w-12 text-slate-600" />
+          <p className="mt-4 text-slate-400">Kein Tenant gefunden.</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Erstelle zuerst einen Tenant unter /admin
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-navy-950 text-white">
@@ -237,6 +306,13 @@ export default function TenantDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={fetchStats}
+              className="rounded-lg border border-white/[0.06] p-1.5 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-white"
+              title="Aktualisieren"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
             <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5">
               <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
               <span className="text-xs font-medium text-emerald-400">Bot aktiv</span>
@@ -254,234 +330,178 @@ export default function TenantDashboard() {
 
       {/* Dashboard-Inhalt */}
       <main className="relative z-10 mx-auto max-w-7xl px-6 py-8">
-        {/* KPI-Karten */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {DEMO_KPIS.map((kpi, i) => {
-            const Icon = kpi.icon;
-            const colorMap: Record<string, string> = {
-              purple: "bg-purple-500/[0.08] text-purple-400",
-              emerald: "bg-emerald-500/[0.08] text-emerald-400",
-              blue: "bg-blue-500/[0.08] text-blue-400",
-              amber: "bg-amber-500/[0.08] text-amber-400",
-            };
-            return (
+        {/* Fehlermeldung */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
+        {/* Lade-Skeleton oder echte Daten */}
+        {loading && !stats ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+          </div>
+        ) : stats ? (
+          <>
+            {/* KPI-Karten */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {kpis.map((kpi, i) => {
+                const Icon = kpi.icon;
+                const colorMap: Record<string, string> = {
+                  purple: "bg-purple-500/[0.08] text-purple-400",
+                  emerald: "bg-emerald-500/[0.08] text-emerald-400",
+                  blue: "bg-blue-500/[0.08] text-blue-400",
+                  amber: "bg-amber-500/[0.08] text-amber-400",
+                };
+                return (
+                  <motion.div
+                    key={kpi.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ ...spring, delay: i * 0.08 }}
+                    className="glass-card rounded-xl bg-navy-900/60 p-5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${colorMap[kpi.color]}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                    </div>
+                    <p className="mt-3 text-2xl font-bold">{kpi.value}</p>
+                    <p className="mt-1 text-xs text-slate-500">{kpi.label}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}
+            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+              {/* Letzte Gespräche */}
               <motion.div
-                key={kpi.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ ...spring, delay: i * 0.08 }}
-                className="glass-card rounded-xl bg-navy-900/60 p-5"
+                transition={{ ...spring, delay: 0.35 }}
+                className="glass-card rounded-xl bg-navy-900/60 p-6 lg:col-span-2"
               >
-                <div className="flex items-center justify-between">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${colorMap[kpi.color]}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className={`text-xs font-medium ${kpi.positive ? "text-emerald-400" : "text-red-400"}`}>
-                    {kpi.change}
-                  </span>
-                </div>
-                <p className="mt-3 text-2xl font-bold">{kpi.value}</p>
-                <p className="mt-1 text-xs text-slate-500">{kpi.label}</p>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          {/* Letzte Gespräche */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...spring, delay: 0.35 }}
-            className="glass-card rounded-xl bg-navy-900/60 p-6 lg:col-span-2"
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-purple-400" />
-                <h2 className="text-sm font-semibold">Letzte Gespräche</h2>
-              </div>
-              <span className="text-xs text-slate-500">Live-Übersicht</span>
-            </div>
-            <div className="space-y-3">
-              {DEMO_CONVERSATIONS.map((conv) => (
-                <div
-                  key={conv.id}
-                  className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-colors hover:border-purple-500/10 hover:bg-purple-500/[0.02]"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
-                    <MessageSquare className="h-4 w-4 text-slate-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{conv.phone}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[conv.status]}`}>
-                        {statusLabels[conv.status]}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-slate-500">
-                      {conv.lastMessage}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-[11px] text-slate-600">{conv.time}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Lead-Pipeline */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...spring, delay: 0.45 }}
-            className="glass-card rounded-xl bg-navy-900/60 p-6"
-          >
-            <div className="mb-5 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-purple-400" />
-              <h2 className="text-sm font-semibold">Lead-Pipeline</h2>
-            </div>
-
-            {/* Gestapelter Balken */}
-            <div className="mb-6 flex h-3 overflow-hidden rounded-full bg-white/[0.04]">
-              {PIPELINE_STAGES.map((stage) => (
-                <div
-                  key={stage.label}
-                  className={`${stage.color} transition-all`}
-                  style={{ width: `${(stage.count / totalLeads) * 100}%` }}
-                />
-              ))}
-            </div>
-
-            {/* Stufen-Details */}
-            <div className="space-y-3">
-              {PIPELINE_STAGES.map((stage) => (
-                <div key={stage.label} className="flex items-center justify-between">
+                <div className="mb-5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={`h-2.5 w-2.5 rounded-full ${stage.color}`} />
-                    <span className="text-xs text-slate-400">{stage.label}</span>
+                    <Phone className="h-4 w-4 text-purple-400" />
+                    <h2 className="text-sm font-semibold">Letzte Gespräche</h2>
                   </div>
-                  <span className="text-sm font-semibold">{stage.count}</span>
+                  <span className="text-xs text-slate-500">Live-Übersicht</span>
                 </div>
-              ))}
-            </div>
+                <div className="space-y-3">
+                  {stats.conversations.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-slate-600">
+                      Noch keine Gespräche vorhanden
+                    </p>
+                  ) : (
+                    stats.conversations.map((conv) => (
+                      <div
+                        key={conv.id}
+                        className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-colors hover:border-purple-500/10 hover:bg-purple-500/[0.02]"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
+                          <MessageSquare className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{maskId(conv.externalId)}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[conv.status]}`}>
+                              {statusLabels[conv.status]}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 truncate text-xs text-slate-500">
+                            {conv.lastMessage ?? "Keine Nachricht"}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-slate-600">
+                          {conv.lastMessageAt ? timeAgo(conv.lastMessageAt) : timeAgo(conv.updatedAt)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
 
-            <div className="mt-5 border-t border-white/[0.06] pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Gesamt</span>
-                <span className="text-lg font-bold">{totalLeads}</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Lead-Tabelle */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...spring, delay: 0.55 }}
-          className="glass-card mt-6 rounded-xl bg-navy-900/60 p-6"
-        >
-          <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-purple-400" />
-              <h2 className="text-sm font-semibold">Aktuelle Leads</h2>
-            </div>
-            <span className="text-xs text-slate-500">Top 5 nach Score</span>
-          </div>
-
-          {/* Desktop-Tabelle */}
-          <div className="hidden sm:block">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/[0.06] text-left text-[11px] uppercase tracking-wider text-slate-600">
-                  <th className="pb-3 font-medium">Unternehmen</th>
-                  <th className="pb-3 font-medium">Score</th>
-                  <th className="pb-3 font-medium">Qualifizierung</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 text-right font-medium">Datum</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {DEMO_LEADS.map((lead) => (
-                  <tr
-                    key={lead.id}
-                    className="border-b border-white/[0.03] transition-colors hover:bg-white/[0.02]"
-                  >
-                    <td className="py-3 font-medium">{lead.name}</td>
-                    <td className="py-3">
-                      <ScoreBar score={lead.score} />
-                    </td>
-                    <td className={`py-3 text-xs font-medium ${qualColors[lead.qualification]}`}>
-                      {lead.qualification}
-                    </td>
-                    <td className="py-3">
-                      <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                        {lead.status === "APPOINTMENT_SET" && <Calendar className="h-3 w-3 text-purple-400" />}
-                        {lead.status === "CONTACTED" && <CheckCircle2 className="h-3 w-3 text-blue-400" />}
-                        {lead.status === "NEW" && <Activity className="h-3 w-3 text-slate-500" />}
-                        {lead.status === "CONVERTED" && <ArrowUpRight className="h-3 w-3 text-emerald-400" />}
-                        {lead.status === "LOST" && <XCircle className="h-3 w-3 text-red-400" />}
-                        {lead.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="py-3 text-right text-xs text-slate-500">{lead.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobil-Karten */}
-          <div className="space-y-3 sm:hidden">
-            {DEMO_LEADS.map((lead) => (
-              <div
-                key={lead.id}
-                className="rounded-lg border border-white/[0.04] bg-white/[0.02] p-4"
+              {/* Lead-Pipeline */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...spring, delay: 0.45 }}
+                className="glass-card rounded-xl bg-navy-900/60 p-6"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{lead.name}</span>
-                  <ScoreBar score={lead.score} />
+                <div className="mb-5 flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-purple-400" />
+                  <h2 className="text-sm font-semibold">Lead-Pipeline</h2>
                 </div>
-                <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                  <span className={qualColors[lead.qualification]}>{lead.qualification}</span>
-                  <span>•</span>
-                  <span>{lead.date}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
 
-        {/* Bot-Aktivität */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...spring, delay: 0.65 }}
-          className="glass-card mt-6 rounded-xl bg-navy-900/60 p-6"
-        >
-          <div className="mb-5 flex items-center gap-2">
-            <Bot className="h-4 w-4 text-purple-400" />
-            <h2 className="text-sm font-semibold">Bot-Aktivität (24h)</h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              { label: "Beantwortete Fragen", value: "847", icon: CheckCircle2, color: "text-emerald-400" },
-              { label: "Termine vereinbart", value: "12", icon: Calendar, color: "text-purple-400" },
-              { label: "Ø Antwortzeit", value: "1.8s", icon: Clock, color: "text-blue-400" },
-            ].map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div key={stat.label} className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-4">
-                  <Icon className={`h-5 w-5 ${stat.color}`} />
-                  <div>
-                    <p className="text-xl font-bold">{stat.value}</p>
-                    <p className="text-[11px] text-slate-500">{stat.label}</p>
+                {/* Gestapelter Balken */}
+                <div className="mb-6 flex h-3 overflow-hidden rounded-full bg-white/[0.04]">
+                  {totalLeads > 0 &&
+                    stats.pipeline.map((stage) => (
+                      <div
+                        key={stage.qualification}
+                        className={`${pipelineColors[stage.qualification] ?? "bg-slate-500"} transition-all`}
+                        style={{ width: `${(stage.count / totalLeads) * 100}%` }}
+                      />
+                    ))}
+                </div>
+
+                {/* Stufen-Details */}
+                <div className="space-y-3">
+                  {stats.pipeline.map((stage) => (
+                    <div key={stage.qualification} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2.5 w-2.5 rounded-full ${pipelineColors[stage.qualification] ?? "bg-slate-500"}`} />
+                        <span className="text-xs text-slate-400">{stage.label}</span>
+                      </div>
+                      <span className="text-sm font-semibold">{stage.count}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 border-t border-white/[0.06] pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500">Gesamt</span>
+                    <span className="text-lg font-bold">{totalLeads}</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Bot-Aktivität */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...spring, delay: 0.55 }}
+              className="glass-card mt-6 rounded-xl bg-navy-900/60 p-6"
+            >
+              <div className="mb-5 flex items-center gap-2">
+                <Bot className="h-4 w-4 text-purple-400" />
+                <h2 className="text-sm font-semibold">Bot-Aktivität (24h)</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {[
+                  { label: "Beantwortete Nachrichten", value: stats.botActivity.messagesLast24h.toLocaleString("de-DE"), icon: CheckCircle2, color: "text-emerald-400" },
+                  { label: "Termine vereinbart", value: stats.botActivity.appointments.toString(), icon: Calendar, color: "text-purple-400" },
+                  { label: "Gespräche heute", value: stats.kpis.conversationsToday.toString(), icon: Clock, color: "text-blue-400" },
+                ].map((stat) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div key={stat.label} className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-4">
+                      <Icon className={`h-5 w-5 ${stat.color}`} />
+                      <div>
+                        <p className="text-xl font-bold">{stat.value}</p>
+                        <p className="text-[11px] text-slate-500">{stat.label}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
+        ) : null}
       </main>
 
       {/* ──────────── Plattform-Bot Chat-Widget ──────────── */}
