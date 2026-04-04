@@ -6,56 +6,82 @@ import { Check, MessageCircle, ArrowRight, Crown } from "lucide-react";
 const plans = [
   {
     name: "Starter",
-    price: "299",
-    setup: "490",
+    price: "497",
+    setup: "497",
     description: "Perfekt für den Einstieg",
     features: [
-      "1 WhatsApp Business Nummer",
-      "KI-Bot mit 5 Gesprächsflüssen",
-      "Automatisches Lead-Scoring",
-      "HubSpot / Google Sheets Integration",
-      "E-Mail-Support",
-      "Monatliches Reporting",
+      "1 WhatsApp Bot",
+      "1 Mandant",
+      "Bis 500 Konversationen/Monat",
+      "KI-Verkaufsgespräche DACH-optimiert",
+      "Lead-Scoring 0–100",
+      "E-Mail Benachrichtigung bei heißen Leads",
+      "Basis-Dashboard",
+      "E-Mail Support",
     ],
     cta: "Jetzt starten",
     popular: false,
   },
   {
-    name: "Professional",
-    price: "549",
-    setup: "990",
-    description: "Für maximale Ergebnisse",
+    name: "Growth",
+    price: "1.497",
+    setup: "997",
+    description: "Für wachsende Unternehmen",
     features: [
-      "Bis zu 3 WhatsApp Nummern",
-      "Unbegrenzte Gesprächsflüsse",
-      "Memory-System & Lead-Scoring",
-      "Kalender-Integration",
-      "Volle CRM-Integration (HubSpot, Pipedrive, Salesforce, Brevo)",
-      "Prioritäts-Support",
-      "Wöchentliche Optimierung",
-      "A/B-Testing der Dialoge",
+      "Bis 3 WhatsApp Bots",
+      "3 Mandanten",
+      "Bis 2.000 Konversationen/Monat",
+      "Alles aus Starter",
+      "Admin Dashboard",
+      "Nachrichtenvorlagen",
+      "Reporting & Analytics",
+      "Priority Support",
+      "Onboarding Call",
     ],
     cta: "Beliebteste Wahl",
     popular: true,
   },
   {
-    name: "Enterprise",
-    price: "ab 1.190",
-    setup: "nach Aufwand",
-    description: "Für große Organisationen",
+    name: "Professional",
+    price: "2.997",
+    setup: "1.997",
+    description: "Für maximale Skalierung",
     features: [
-      "Unbegrenzte WhatsApp Nummern",
-      "Custom KI-Modell-Training",
+      "Bis 10 WhatsApp Bots",
+      "10 Mandanten",
+      "Unbegrenzte Konversationen",
+      "Alles aus Growth",
+      "Custom KI-Training",
       "Multi-Language Support",
       "Dedizierter Account Manager",
       "API-Zugang",
+      "SLA-Garantie",
+    ],
+    cta: "Kontakt aufnehmen",
+    popular: false,
+  },
+  {
+    name: "Enterprise",
+    price: "ab 5.000",
+    setup: "nach Aufwand",
+    description: "Für große Organisationen",
+    features: [
+      "Unbegrenzte Bots & Mandanten",
+      "White-Label Option",
       "Custom Integrationen",
+      "Dedizierter Account Manager",
       "SLA-Garantie",
       "Onsite-Onboarding",
     ],
     cta: "Kontakt aufnehmen",
     popular: false,
   },
+];
+
+const addons = [
+  { name: "Voice Agent", price: "+500€/Monat" },
+  { name: "E-Mail Automatisierung", price: "+300€/Monat" },
+  { name: "Multi-AI Dashboard", price: "+200€/Monat" },
 ];
 
 export default function Pricing() {
@@ -113,7 +139,7 @@ export default function Pricing() {
         </motion.div>
 
         {/* Plans */}
-        <div className="mt-16 grid gap-5 lg:grid-cols-3">
+        <div className="mt-16 grid gap-5 lg:grid-cols-4">
           {plans.map((plan, i) => (
             <motion.div
               key={i}
@@ -184,6 +210,41 @@ export default function Pricing() {
             </motion.div>
           ))}
         </div>
+
+        {/* Add-ons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="mt-16"
+        >
+          <h3 className="mb-6 text-center text-xl font-semibold text-white">
+            Optionale Add-ons
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {addons.map((addon, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.015] px-6 py-4"
+              >
+                <span className="text-sm font-medium text-slate-300">{addon.name}</span>
+                <span className="text-sm font-semibold text-purple-400">{addon.price}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Geld-zurück-Garantie */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="mt-12 text-center text-sm text-slate-500"
+        >
+          🛡️ 30-Tage Geld-zurück-Garantie — Nicht zufrieden? Volle Erstattung, keine Fragen.
+        </motion.p>
       </div>
     </section>
   );
