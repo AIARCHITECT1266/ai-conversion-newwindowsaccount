@@ -23,7 +23,7 @@ export function middleware(req: NextRequest) {
     );
   }
 
-  // 1. API-Routen: Bearer-Token im Authorization-Header pruefen
+  // 1. API-Routen: Bearer-Token, Cookie oder Query-Param pruefen
   if (req.nextUrl.pathname.startsWith("/api/admin")) {
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ")
@@ -31,6 +31,12 @@ export function middleware(req: NextRequest) {
       : null;
 
     if (token === secret) {
+      return NextResponse.next();
+    }
+
+    // Fallback: Cookie (Browser-Aufrufe aus dem Admin-Dashboard)
+    const adminCookie = req.cookies.get("admin_token")?.value;
+    if (adminCookie === secret) {
       return NextResponse.next();
     }
 
