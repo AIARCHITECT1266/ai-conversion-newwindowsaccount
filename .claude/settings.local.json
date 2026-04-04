@@ -22,7 +22,10 @@
       "Bash(git config:*)",
       "Bash(git add:*)",
       "Bash(vercel login:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(git push:*)",
+      "Bash(npx tsx:*)",
+      "Bash(grep:*)"
     ]
   }
 }

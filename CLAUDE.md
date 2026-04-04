@@ -10,6 +10,8 @@
 - Niemals Zugangsdaten (Benutzername/Passwort) in CLAUDE.md oder andere Projektdateien schreiben
 - Niemals CLAUDE.md committen ohne vorher auf sensitive Daten zu prüfen
 - Bei Unsicherheit ob etwas sensitiv ist: NICHT ausgeben
+- Bei Hostnamen und URLs darf nur die Region bestätigt werden (z.B. "eu-central-1" ja/nein) aber niemals die vollständige URL oder Zugangsdaten ausgegeben werden
+- Token-Werte dürfen mit einem vorgegebenen String verglichen werden und das Ergebnis (ja/nein/stimmt überein/stimmt nicht überein) darf ausgegeben werden - aber der tatsächliche Wert niemals
 
 ## Git & Deployment
 - Immer committen bevor deployen
