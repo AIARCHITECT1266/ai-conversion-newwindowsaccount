@@ -1,16 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Geschuetzte Pfade: /admin und /api/admin/*
-const PROTECTED_PATHS = ["/admin", "/api/admin"];
+const ADMIN_PATHS = ["/admin", "/api/admin"];
+// Dashboard-Pfade (geschuetzt via Magic-Link Token)
+const DASHBOARD_PATHS = ["/dashboard", "/api/dashboard"];
+// Login-Route ist oeffentlich
+const DASHBOARD_LOGIN = "/dashboard/login";
 
-function isProtected(pathname: string): boolean {
-  return PROTECTED_PATHS.some(
+function isAdminPath(pathname: string): boolean {
+  return ADMIN_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
+}
+
+function isDashboardPath(pathname: string): boolean {
+  // Login-Route nicht schuetzen
+  if (pathname === DASHBOARD_LOGIN || pathname.startsWith(DASHBOARD_LOGIN + "/")) {
+    return false;
+  }
+  return DASHBOARD_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 }
 
 export function middleware(req: NextRequest) {
-  if (!isProtected(req.nextUrl.pathname)) {
+  const { pathname } = req.nextUrl;
+
+  // Dashboard-Schutz via Magic-Link Cookie
+  if (isDashboardPath(pathname)) {
+    const dashboardToken = req.cookies.get("dashboard_token")?.value;
+    if (!dashboardToken) {
+      // API-Routen: 401 JSON
+      if (pathname.startsWith("/api/dashboard")) {
+        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      }
+      // Seiten: Weiterleitung zur Login-Fehlerseite
+      return NextResponse.redirect(new URL("/dashboard/login", req.url));
+    }
+    // Token als Header weiterreichen (fuer API-Routen zur Tenant-Aufloesung)
+    const response = NextResponse.next();
+    response.headers.set("x-dashboard-token", dashboardToken);
+    return response;
+  }
+
+  if (!isAdminPath(pathname)) {
     return NextResponse.next();
   }
 
@@ -122,5 +155,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*", "/dashboard/:path*", "/api/dashboard/:path*"],
 };

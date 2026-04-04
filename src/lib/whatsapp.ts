@@ -63,13 +63,16 @@ function getConfig() {
  *
  * @param to - Empfänger-Telefonnummer im internationalen Format (z.B. "4915123456789")
  * @param body - Nachrichtentext (max. 4096 Zeichen)
+ * @param phoneNumberId - Tenant-spezifische Phone Number ID (Multi-Tenant)
  * @returns Ergebnis mit Message-ID bei Erfolg oder Fehlermeldung
  */
 export async function sendMessage(
   to: string,
-  body: string
+  body: string,
+  phoneNumberId?: string
 ): Promise<SendMessageResult> {
-  const { token, phoneId } = getConfig();
+  const { token, phoneId: defaultPhoneId } = getConfig();
+  const phoneId = phoneNumberId || defaultPhoneId;
 
   const payload: WhatsAppTextMessage = {
     messaging_product: "whatsapp",

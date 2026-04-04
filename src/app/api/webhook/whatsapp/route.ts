@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHmac } from "crypto";
 import { handleIncomingMessage } from "@/lib/bot/handler";
 
 // ============================================================
@@ -9,6 +10,14 @@ import { handleIncomingMessage } from "@/lib/bot/handler";
 // ============================================================
 
 const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
+const APP_SECRET = process.env.WHATSAPP_APP_SECRET;
+
+// ---------- Signatur-Validierung (Meta X-Hub-Signature-256) ----------
+function verifySignature(rawBody: string, signature: string | null): boolean {
+  if (!APP_SECRET || !signature) return false;
+  const expected = "sha256=" + createHmac("sha256", APP_SECRET).update(rawBody).digest("hex");
+  return expected === signature;
+}
 
 // ---------- GET: Webhook-Verifizierung für Meta ----------
 export async function GET(request: NextRequest) {
@@ -65,7 +74,18 @@ interface WhatsAppWebhookBody {
 // ---------- POST: Eingehende Nachrichten verarbeiten ----------
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as WhatsAppWebhookBody;
+    const rawBody = await request.text();
+
+    // Signatur-Validierung (Meta sendet X-Hub-Signature-256)
+    if (APP_SECRET) {
+      const signature = request.headers.get("x-hub-signature-256");
+      if (!verifySignature(rawBody, signature)) {
+        console.warn("[WhatsApp Webhook] Ungültige Signatur");
+        return NextResponse.json({ error: "Ungültige Signatur" }, { status: 401 });
+      }
+    }
+
+    const body = JSON.parse(rawBody) as WhatsAppWebhookBody;
 
     // Nur WhatsApp-Business-Account Events verarbeiten
     if (body.object !== "whatsapp_business_account") {

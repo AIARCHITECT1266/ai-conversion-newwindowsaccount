@@ -123,31 +123,37 @@ function ScoreBar({ score }: { score: number }) {
 
 /* ───────────────────────────── Haupt-Dashboard ──────────────────── */
 
-// TODO: tenantId aus Auth/Session beziehen – vorerst per Query-Param oder erster Tenant
-function useTenantId(): string | null {
+// Tenant-Info aus dem authentifizierten Cookie laden
+function useTenantInfo(): { tenantId: string | null; tenantName: string | null; loading: boolean } {
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [tenantName, setTenantName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("tenantId");
-    if (id) {
-      setTenantId(id);
-    } else {
-      // Fallback: ersten Tenant laden
-      fetch("/api/admin/tenants")
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.tenants?.length > 0) {
-            setTenantId(data.tenants[0].id);
-          }
-        })
-        .catch(() => {});
-    }
+    fetch("/api/dashboard/me")
+      .then((r) => {
+        if (!r.ok) {
+          // Nicht authentifiziert – zur Login-Seite weiterleiten
+          window.location.href = "/dashboard/login";
+          return null;
+        }
+        return r.json();
+      })
+      .then((data) => {
+        if (data) {
+          setTenantId(data.tenantId);
+          setTenantName(data.tenantName);
+        }
+      })
+      .catch(() => {
+        window.location.href = "/dashboard/login";
+      })
+      .finally(() => setLoading(false));
   }, []);
-  return tenantId;
+  return { tenantId, tenantName, loading };
 }
 
 export default function TenantDashboard() {
-  const tenantId = useTenantId();
+  const { tenantId, tenantName, loading: authLoading } = useTenantInfo();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -169,7 +175,7 @@ export default function TenantDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/dashboard/stats?tenantId=${tenantId}`);
+      const res = await fetch("/api/dashboard/stats");
       if (!res.ok) throw new Error("Fehler beim Laden der Daten");
       const data: DashboardStats = await res.json();
       setStats(data);
@@ -270,17 +276,11 @@ export default function TenantDashboard() {
     ? stats.pipeline.reduce((s, p) => s + p.count, 0)
     : 0;
 
-  // Lade-/Fehlerzustand
-  if (!tenantId && !loading) {
+  // Auth lädt noch
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-navy-950 text-white">
-        <div className="text-center">
-          <Bot className="mx-auto h-12 w-12 text-slate-600" />
-          <p className="mt-4 text-slate-400">Kein Tenant gefunden.</p>
-          <p className="mt-1 text-sm text-slate-600">
-            Erstelle zuerst einen Tenant unter /admin
-          </p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
       </div>
     );
   }
@@ -301,7 +301,7 @@ export default function TenantDashboard() {
               <Bot className="h-5 w-5 text-purple-400" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold">Mein Dashboard</h1>
+              <h1 className="text-lg font-semibold">{tenantName ?? "Mein Dashboard"}</h1>
               <p className="text-xs text-slate-500">AI Conversion • WhatsApp Bot</p>
             </div>
           </div>

@@ -23,6 +23,7 @@ model Tenant {
   brandName        String         // Markenname für KI-Antworten
   brandColor       String         @default("#000000") // Primärfarbe (Hex)
   retentionDays    Int            @default(90) // DSGVO: Aufbewahrungsfrist in Tagen
+  dashboardToken   String?        @unique // Magic-Link Token für Tenant-Dashboard
   isActive         Boolean        @default(true)
   createdAt        DateTime       @default(now())
 

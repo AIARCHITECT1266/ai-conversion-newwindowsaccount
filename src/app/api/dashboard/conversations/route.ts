@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getDashboardTenant } from "@/lib/dashboard-auth";
 
-// GET /api/dashboard/conversations?tenantId=xxx&status=ACTIVE&limit=20
+// GET /api/dashboard/conversations?status=ACTIVE&limit=20
 export async function GET(req: NextRequest) {
-  const tenantId = req.nextUrl.searchParams.get("tenantId");
-  if (!tenantId) {
-    return NextResponse.json({ error: "tenantId fehlt" }, { status: 400 });
+  const tenant = await getDashboardTenant();
+  if (!tenant) {
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
+  const tenantId = tenant.id;
 
   const status = req.nextUrl.searchParams.get("status") as
     | "ACTIVE"

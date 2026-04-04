@@ -6,6 +6,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 
 // ---------- GET: Alle Tenants auflisten ----------
@@ -73,6 +74,9 @@ export async function POST(request: NextRequest) {
       .replace(/[^a-z0-9-]/g, "-")
       .replace(/-+/g, "-");
 
+    // Dashboard Magic-Link Token generieren
+    const dashboardToken = randomBytes(32).toString("hex");
+
     const tenant = await db.tenant.create({
       data: {
         name: body.name,
@@ -82,6 +86,7 @@ export async function POST(request: NextRequest) {
         brandColor: body.brandColor || "#000000",
         retentionDays: body.retentionDays || 90,
         systemPrompt: body.systemPrompt || "",
+        dashboardToken,
         isActive: true,
       },
     });
@@ -91,7 +96,10 @@ export async function POST(request: NextRequest) {
       slug: tenant.slug,
     });
 
-    return NextResponse.json({ tenant }, { status: 201 });
+    return NextResponse.json({
+      tenant,
+      dashboardLoginPath: `/dashboard/login?token=${dashboardToken}`,
+    }, { status: 201 });
   } catch (error) {
     // Duplikat-Fehler abfangen (slug oder whatsappPhoneId bereits vergeben)
     if (

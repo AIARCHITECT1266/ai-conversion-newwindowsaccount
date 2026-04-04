@@ -124,7 +124,7 @@ export async function handleIncomingMessage(
       });
 
       // Neue Konversation: DSGVO-Consent anfordern
-      await sendMessage(message.from, CONSENT_MESSAGE);
+      await sendMessage(message.from, CONSENT_MESSAGE, message.phoneNumberId);
 
       console.log("[Handler] Neue Konversation, Consent angefordert", {
         conversationId: conversation.id,
@@ -144,7 +144,8 @@ export async function handleIncomingMessage(
         message.from,
         "Ihre Daten werden nicht mehr verarbeitet. " +
           "Bestehende Daten werden nach Ablauf der Aufbewahrungsfrist gelöscht. " +
-          "Vielen Dank für Ihr Vertrauen."
+          "Vielen Dank für Ihr Vertrauen.",
+        message.phoneNumberId
       );
 
       console.log("[Handler] Konversation beendet (STOP)", {
@@ -191,7 +192,7 @@ export async function handleIncomingMessage(
 
     // 7. Claude-Antwort verschlüsselt speichern & senden
     await saveMessage(conversation.id, "ASSISTANT", claudeResult.reply);
-    await sendMessage(message.from, claudeResult.reply);
+    await sendMessage(message.from, claudeResult.reply, message.phoneNumberId);
 
     // 8. Lead-Score aktualisieren (async, blockiert nicht die Antwort)
     const updatedHistory = await loadConversationHistory(conversation.id);

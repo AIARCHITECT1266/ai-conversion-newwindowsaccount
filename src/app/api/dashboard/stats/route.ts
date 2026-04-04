@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getDashboardTenant } from "@/lib/dashboard-auth";
 
-// GET /api/dashboard/stats?tenantId=xxx
-export async function GET(req: NextRequest) {
-  const tenantId = req.nextUrl.searchParams.get("tenantId");
-  if (!tenantId) {
-    return NextResponse.json({ error: "tenantId fehlt" }, { status: 400 });
+// GET /api/dashboard/stats — Tenant wird aus dem Cookie aufgelöst
+export async function GET() {
+  const tenant = await getDashboardTenant();
+  if (!tenant) {
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
+  const tenantId = tenant.id;
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
