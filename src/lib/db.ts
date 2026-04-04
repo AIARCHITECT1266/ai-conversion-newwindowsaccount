@@ -20,6 +20,5 @@ function createPrismaClient(): PrismaClient {
 export const db =
   globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
-}
+// Singleton in allen Environments sicherstellen (verhindert Connection-Leaks)
+globalForPrisma.prisma = db;

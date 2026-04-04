@@ -11,6 +11,7 @@ import { encryptText, decryptText } from "../encryption";
 import { generateReply } from "./claude";
 import { scoreLeadFromConversation } from "./gpt";
 import { sendMessage } from "../whatsapp";
+import { auditLog } from "../audit-log";
 import type { MessageRole } from "@/generated/prisma/enums";
 
 // DSGVO: Telefonnummern nie als Klartext speichern
@@ -135,9 +136,8 @@ export async function handleIncomingMessage(
     if (!conversationBefore) {
       await sendMessage(message.from, CONSENT_MESSAGE, message.phoneNumberId);
 
-      console.log("[Handler] Neue Konversation, Consent angefordert", {
-        conversationId: conversation.id,
-      });
+      auditLog("bot.conversation_created", { tenantId: tenant.id, details: { conversationId: conversation.id } });
+      auditLog("bot.consent_requested", { tenantId: tenant.id, details: { conversationId: conversation.id } });
 
       return { success: true, conversationId: conversation.id };
     }
@@ -157,9 +157,7 @@ export async function handleIncomingMessage(
         message.phoneNumberId
       );
 
-      console.log("[Handler] Konversation beendet (STOP)", {
-        conversationId: conversation.id,
-      });
+      auditLog("bot.conversation_stopped", { tenantId: tenant.id, details: { conversationId: conversation.id } });
 
       return { success: true, conversationId: conversation.id };
     }
@@ -203,9 +201,12 @@ export async function handleIncomingMessage(
     await saveMessage(conversation.id, "ASSISTANT", claudeResult.reply);
     await sendMessage(message.from, claudeResult.reply, message.phoneNumberId);
 
-    // 8. Lead-Score aktualisieren (async, blockiert nicht die Antwort)
-    const updatedHistory = await loadConversationHistory(conversation.id);
-    const scoringText = formatConversationForScoring(updatedHistory);
+    // 8. Lead-Score aktualisieren – History wiederverwenden statt erneut laden
+    const fullHistory = [
+      ...history,
+      { role: "assistant" as const, content: claudeResult.reply },
+    ];
+    const scoringText = formatConversationForScoring(fullHistory);
     const scoreResult = await scoreLeadFromConversation(scoringText);
 
     if (scoreResult.success && scoreResult.score !== undefined) {
@@ -227,11 +228,10 @@ export async function handleIncomingMessage(
       });
     }
 
-    console.log("[Handler] Nachricht verarbeitet", {
-      conversationId: conversation.id,
-      leadScore: scoreResult.score,
-      // DSGVO: Keine Inhalte loggen
-    });
+    auditLog("bot.reply_sent", { tenantId: tenant.id, details: { conversationId: conversation.id } });
+    if (scoreResult.success) {
+      auditLog("bot.lead_scored", { tenantId: tenant.id, details: { conversationId: conversation.id, score: scoreResult.score } });
+    }
 
     return { success: true, conversationId: conversation.id };
   } catch (error) {

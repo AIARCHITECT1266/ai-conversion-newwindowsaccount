@@ -67,9 +67,16 @@ export async function generateReply(
   conversationHistory: ChatMessage[],
   userMessage: string
 ): Promise<ClaudeResponse> {
+  // brandName bereinigen: Newlines und Steuerzeichen entfernen (Prompt-Injection-Schutz)
+  const safeBrandName = brandName
+    .replace(/[\r\n]+/g, " ")
+    .replace(/[^\p{L}\p{N}\s\-_.&]/gu, "")
+    .substring(0, 200)
+    .trim();
+
   const systemPrompt = [
     tenantSystemPrompt || DEFAULT_SYSTEM_PROMPT,
-    `Du antwortest im Namen von "${brandName}".`,
+    `Du antwortest im Namen von "${safeBrandName}".`,
   ].join("\n\n");
 
   // Gesprächsverlauf + aktuelle Nachricht zusammenführen

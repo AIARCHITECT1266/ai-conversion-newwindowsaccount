@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { auditLog } from "@/lib/audit-log";
 
 // POST /api/admin/login – Validiert Admin-Secret und setzt HttpOnly Cookie
 export async function POST(request: NextRequest) {
+  // Rate-Limiting: 5 Login-Versuche pro Minute pro IP
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`admin-login:${ip}`, { max: 5, windowMs: 60_000 });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Zu viele Versuche. Bitte warten." },
+      { status: 429 }
+    );
+  }
+
   const secret = process.env.ADMIN_SECRET;
   if (!secret) {
     return NextResponse.json(
@@ -21,12 +33,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (!body.secret || body.secret !== secret) {
+    auditLog("admin.login_failed", { ip });
     return NextResponse.json(
       { error: "Falsches Secret" },
       { status: 401 }
     );
   }
 
+  auditLog("admin.login", { ip });
   const response = NextResponse.json({ success: true });
   response.cookies.set("admin_token", secret, {
     httpOnly: true,

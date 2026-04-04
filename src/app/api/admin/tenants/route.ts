@@ -2,7 +2,7 @@
 // Admin-API: Tenant-Verwaltung
 // POST: Neuen Mandanten anlegen
 // GET: Alle Mandanten auflisten
-// Hinweis: Keine Authentifizierung – nur für lokale Nutzung/Tests
+// Authentifizierung: via Middleware (Bearer-Token / Cookie)
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -66,6 +66,41 @@ export async function POST(request: NextRequest) {
         { error: "Pflichtfelder: name, slug, whatsappPhoneId, brandName" },
         { status: 400 }
       );
+    }
+
+    // Laengenlimits validieren
+    if (body.name.length > 255 || body.brandName.length > 255) {
+      return NextResponse.json(
+        { error: "name und brandName duerfen maximal 255 Zeichen lang sein" },
+        { status: 400 }
+      );
+    }
+    if (body.slug.length > 64) {
+      return NextResponse.json(
+        { error: "slug darf maximal 64 Zeichen lang sein" },
+        { status: 400 }
+      );
+    }
+    if (body.whatsappPhoneId.length > 64) {
+      return NextResponse.json(
+        { error: "whatsappPhoneId darf maximal 64 Zeichen lang sein" },
+        { status: 400 }
+      );
+    }
+    if (body.systemPrompt && body.systemPrompt.length > 10000) {
+      return NextResponse.json(
+        { error: "systemPrompt darf maximal 10.000 Zeichen lang sein" },
+        { status: 400 }
+      );
+    }
+    if (body.retentionDays !== undefined) {
+      const days = Number(body.retentionDays);
+      if (!Number.isInteger(days) || days < 1 || days > 3650) {
+        return NextResponse.json(
+          { error: "retentionDays muss zwischen 1 und 3650 liegen" },
+          { status: 400 }
+        );
+      }
     }
 
     // Slug normalisieren (Kleinbuchstaben, keine Sonderzeichen)

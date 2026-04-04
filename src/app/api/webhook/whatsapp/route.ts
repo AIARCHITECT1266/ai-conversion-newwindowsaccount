@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { handleIncomingMessage } from "@/lib/bot/handler";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // ============================================================
 // WhatsApp Cloud API – Webhook Endpoint
@@ -11,6 +12,23 @@ import { handleIncomingMessage } from "@/lib/bot/handler";
 
 const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET;
+
+// Deduplizierung: Bereits verarbeitete Message-IDs (TTL 10 Minuten)
+const processedMessages = new Map<string, number>();
+const DEDUP_TTL = 10 * 60 * 1000;
+
+function isDuplicate(messageId: string): boolean {
+  const now = Date.now();
+  // Alte Eintraege aufraeumen
+  if (processedMessages.size > 1000) {
+    for (const [id, ts] of processedMessages) {
+      if (now - ts > DEDUP_TTL) processedMessages.delete(id);
+    }
+  }
+  if (processedMessages.has(messageId)) return true;
+  processedMessages.set(messageId, now);
+  return false;
+}
 
 // ---------- Signatur-Validierung (Meta X-Hub-Signature-256) ----------
 function verifySignature(rawBody: string, signature: string | null): boolean {
@@ -73,6 +91,13 @@ interface WhatsAppWebhookBody {
 
 // ---------- POST: Eingehende Nachrichten verarbeiten ----------
 export async function POST(request: NextRequest) {
+  // Rate-Limiting: 100 Webhook-Calls pro Minute pro IP
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`webhook:${ip}`, { max: 100, windowMs: 60_000 });
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
+
   try {
     const rawBody = await request.text();
 
@@ -100,6 +125,12 @@ export async function POST(request: NextRequest) {
         // Eingehende Textnachrichten an den Handler weiterleiten
         if (change.value.messages) {
           for (const message of change.value.messages) {
+            // Duplikate ignorieren (WhatsApp sendet bei Timeout erneut)
+            if (isDuplicate(message.id)) {
+              console.log("[WhatsApp Webhook] Duplikat uebersprungen", { messageId: message.id });
+              continue;
+            }
+
             // Nur Textnachrichten verarbeiten (Bilder, Audio etc. später)
             if (message.type !== "text" || !message.text?.body) {
               console.log("[WhatsApp Webhook] Nicht-Text-Nachricht übersprungen", {

@@ -43,6 +43,16 @@ export async function GET(req: NextRequest) {
   return response;
 }
 
+// XSS-Schutz: HTML-Sonderzeichen escapen
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // Einfache Fehlerseite
 function loginPage(message: string): string {
   return `<!DOCTYPE html>
@@ -63,7 +73,7 @@ function loginPage(message: string): string {
 <body>
   <div class="card">
     <h1>Dashboard-Zugang</h1>
-    <p>${message}</p>
+    <p>${escapeHtml(message)}</p>
     <p class="hint">Bitte verwende den Login-Link, den du von deinem Administrator erhalten hast.</p>
   </div>
 </body>

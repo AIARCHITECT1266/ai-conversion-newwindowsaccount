@@ -70,14 +70,22 @@ export async function scoreLeadFromConversation(
       return { success: false, error: "Keine Antwort von GPT-4o erhalten" };
     }
 
-    const parsed = JSON.parse(content) as {
-      score: number;
-      qualification: string;
-      reasoning: string;
-    };
+    let parsed: { score: unknown; qualification: unknown; reasoning: unknown };
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      console.error("[GPT-4o] JSON-Parse fehlgeschlagen", {
+        content: content.slice(0, 100),
+      });
+      return { success: false, error: "GPT-Antwort ist kein gueltiges JSON" };
+    }
 
-    // Score auf 0–100 begrenzen
-    const score = Math.max(0, Math.min(100, Math.round(parsed.score)));
+    // Score validieren
+    const rawScore = Number(parsed.score);
+    if (!Number.isFinite(rawScore)) {
+      return { success: false, error: "GPT-Score ist keine gueltige Zahl" };
+    }
+    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 
     // Qualifikation validieren
     const validQualifications: LeadQualification[] = [
@@ -88,10 +96,9 @@ export async function scoreLeadFromConversation(
       "CUSTOMER",
     ];
 
-    const qualification = validQualifications.includes(
-      parsed.qualification as LeadQualification
-    )
-      ? (parsed.qualification as LeadQualification)
+    const qualStr = typeof parsed.qualification === "string" ? parsed.qualification : "";
+    const qualification = validQualifications.includes(qualStr as LeadQualification)
+      ? (qualStr as LeadQualification)
       : "UNQUALIFIED";
 
     console.log("[GPT-4o] Lead bewertet", {
@@ -105,7 +112,7 @@ export async function scoreLeadFromConversation(
       success: true,
       score,
       qualification,
-      reasoning: parsed.reasoning,
+      reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : undefined,
     };
   } catch (error) {
     const errorMessage =

@@ -2,7 +2,7 @@
 // Admin-API: Einzelnen Tenant lesen und aktualisieren
 // GET: Tenant-Details inkl. systemPrompt
 // PATCH: Tenant-Einstellungen ändern
-// Hinweis: Keine Authentifizierung – nur für lokale Nutzung/Tests
+// Authentifizierung: via Middleware (Bearer-Token / Cookie)
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -86,6 +86,17 @@ export async function PATCH(
         { error: "Keine gültigen Felder zum Aktualisieren" },
         { status: 400 }
       );
+    }
+
+    // Laengenlimits validieren
+    if (typeof data.name === "string" && data.name.length > 255) {
+      return NextResponse.json({ error: "name darf maximal 255 Zeichen lang sein" }, { status: 400 });
+    }
+    if (typeof data.brandName === "string" && data.brandName.length > 255) {
+      return NextResponse.json({ error: "brandName darf maximal 255 Zeichen lang sein" }, { status: 400 });
+    }
+    if (typeof data.systemPrompt === "string" && data.systemPrompt.length > 10000) {
+      return NextResponse.json({ error: "systemPrompt darf maximal 10.000 Zeichen lang sein" }, { status: 400 });
     }
 
     // retentionDays validieren

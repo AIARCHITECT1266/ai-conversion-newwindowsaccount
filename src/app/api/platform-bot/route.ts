@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // Plattform-Wissensbasis für den Support-Bot
 const PLATFORM_KNOWLEDGE = `
@@ -50,12 +51,26 @@ Antworte immer auf Deutsch, freundlich und hilfreich. Halte dich kurz und präzi
 `;
 
 export async function POST(req: NextRequest) {
+  // Rate-Limiting: 20 Anfragen pro Minute pro IP
+  const ip = getClientIp(req);
+  const limit = checkRateLimit(`platform-bot:${ip}`, { max: 20, windowMs: 60_000 });
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "Zu viele Anfragen" }, { status: 429 });
+  }
+
   try {
     const { message, history } = await req.json();
 
     if (!message || typeof message !== "string") {
       return NextResponse.json(
         { error: "Nachricht fehlt" },
+        { status: 400 }
+      );
+    }
+
+    if (message.length > 2000) {
+      return NextResponse.json(
+        { error: "Nachricht darf maximal 2.000 Zeichen lang sein" },
         { status: 400 }
       );
     }

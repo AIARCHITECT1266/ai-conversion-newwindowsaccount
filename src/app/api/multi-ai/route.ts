@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // Typen für die Anfrage
 interface MultiAiRequest {
@@ -112,12 +113,26 @@ const modelHandlers: Record<string, (prompt: string) => Promise<ModelResult>> =
   };
 
 export async function POST(request: NextRequest) {
+  // Rate-Limiting: 10 Anfragen pro Minute pro IP
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`multi-ai:${ip}`, { max: 10, windowMs: 60_000 });
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "Zu viele Anfragen" }, { status: 429 });
+  }
+
   try {
     const body = (await request.json()) as MultiAiRequest;
 
     if (!body.prompt?.trim()) {
       return NextResponse.json(
         { error: "Prompt darf nicht leer sein" },
+        { status: 400 }
+      );
+    }
+
+    if (body.prompt.length > 5000) {
+      return NextResponse.json(
+        { error: "Prompt darf maximal 5.000 Zeichen lang sein" },
         { status: 400 }
       );
     }

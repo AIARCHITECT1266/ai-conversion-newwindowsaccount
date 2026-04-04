@@ -14,22 +14,30 @@ const IV_LENGTH = 12; // 96 Bit – empfohlen für GCM
 const AUTH_TAG_LENGTH = 16; // 128 Bit
 
 /**
- * Liest den Verschlüsselungsschlüssel aus der Umgebungsvariable.
- * Wirft einen Fehler wenn der Schlüssel fehlt oder ungültig ist.
+ * Validiert und liest den Verschlüsselungsschlüssel beim Modul-Load.
+ * Fehler werden sofort beim Serverstart erkannt, nicht erst beim ersten Request.
  */
-function getEncryptionKey(): Buffer {
+function validateEncryptionKey(): Buffer {
   const keyHex = process.env.ENCRYPTION_KEY;
 
   if (!keyHex || keyHex.length !== 64) {
     throw new Error(
-      "[Encryption] ENCRYPTION_KEY fehlt oder ist ungültig. " +
+      "[Encryption] ENCRYPTION_KEY fehlt oder ist ungueltig. " +
         "Erwartet: 64 Hex-Zeichen (32 Byte). " +
         'Erzeugen mit: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
     );
   }
 
-  return Buffer.from(keyHex, "hex");
+  const key = Buffer.from(keyHex, "hex");
+  if (key.length !== 32) {
+    throw new Error("[Encryption] ENCRYPTION_KEY ergibt keinen 32-Byte-Schluessel");
+  }
+
+  return key;
 }
+
+// Key wird beim Modul-Load validiert – Fehler sofort beim Serverstart
+const ENCRYPTION_KEY_BUFFER = validateEncryptionKey();
 
 /**
  * Verschlüsselt einen Klartext mit AES-256-GCM.
@@ -38,7 +46,7 @@ function getEncryptionKey(): Buffer {
  * @param plaintext - Der zu verschlüsselnde Text
  */
 export function encryptText(plaintext: string): string {
-  const key = getEncryptionKey();
+  const key = ENCRYPTION_KEY_BUFFER;
   const iv = randomBytes(IV_LENGTH);
 
   const cipher = createCipheriv(ALGORITHM, key, iv, {
@@ -66,7 +74,7 @@ export function encryptText(plaintext: string): string {
  * @param encryptedData - Verschlüsselter String im Format [IV]:[AuthTag]:[Ciphertext]
  */
 export function decryptText(encryptedData: string): string {
-  const key = getEncryptionKey();
+  const key = ENCRYPTION_KEY_BUFFER;
 
   const parts = encryptedData.split(":");
   if (parts.length !== 3) {
