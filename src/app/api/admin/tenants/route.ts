@@ -19,6 +19,7 @@ export async function GET() {
         name: true,
         slug: true,
         whatsappPhoneId: true,
+        systemPrompt: true,
         brandName: true,
         brandColor: true,
         retentionDays: true,

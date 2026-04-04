@@ -25,7 +25,10 @@
       "Bash(vercel:*)",
       "Bash(git push:*)",
       "Bash(npx tsx:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(winget install:*)",
+      "Bash(sed 's/[^A-Z_].*//')",
+      "Bash(curl:*)"
     ]
   }
 }
