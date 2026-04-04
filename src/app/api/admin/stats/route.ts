@@ -1,7 +1,7 @@
 // ============================================================
 // Admin-API: Lead-Pipeline-Statistiken
 // GET: Aggregierte Pipeline-Daten pro Tenant + Global
-// Hinweis: Keine Authentifizierung – nur für lokale Nutzung/Tests
+// Authentifizierung: via Middleware (Bearer-Token / Cookie)
 // ============================================================
 
 import { NextResponse } from "next/server";

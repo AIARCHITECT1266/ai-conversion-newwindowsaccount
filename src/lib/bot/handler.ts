@@ -4,6 +4,7 @@
 // → Claude antwortet → GPT bewertet Lead → Antwort senden
 // ============================================================
 
+import { createHash } from "crypto";
 import { db } from "../db";
 import { getTenantByPhoneId } from "../tenant";
 import { encryptText, decryptText } from "../encryption";
@@ -11,6 +12,12 @@ import { generateReply } from "./claude";
 import { scoreLeadFromConversation } from "./gpt";
 import { sendMessage } from "../whatsapp";
 import type { MessageRole } from "@/generated/prisma/enums";
+
+// DSGVO: Telefonnummern nie als Klartext speichern
+function hashPhoneNumber(phone: string): string {
+  const salt = process.env.ENCRYPTION_KEY || "";
+  return createHash("sha256").update(phone + salt).digest("hex");
+}
 
 // ---------- Typen ----------
 
@@ -103,27 +110,29 @@ export async function handleIncomingMessage(
       return { success: false, error: "Kein Tenant für diese Phone ID" };
     }
 
-    // 2. Conversation finden oder erstellen (externalId = gehashte Absendernummer)
-    const externalId = message.from; // In Produktion: Hash verwenden
-    let conversation = await db.conversation.findUnique({
+    // 2. Conversation finden oder erstellen (atomar via upsert gegen Race Conditions)
+    const externalId = hashPhoneNumber(message.from);
+    const conversationBefore = await db.conversation.findUnique({
       where: {
-        tenantId_externalId: {
-          tenantId: tenant.id,
-          externalId,
-        },
+        tenantId_externalId: { tenantId: tenant.id, externalId },
       },
+      select: { id: true },
     });
 
-    if (!conversation) {
-      conversation = await db.conversation.create({
-        data: {
-          tenantId: tenant.id,
-          externalId,
-          status: "ACTIVE",
-        },
-      });
+    const conversation = await db.conversation.upsert({
+      where: {
+        tenantId_externalId: { tenantId: tenant.id, externalId },
+      },
+      create: {
+        tenantId: tenant.id,
+        externalId,
+        status: "ACTIVE",
+      },
+      update: {}, // Keine Aenderung wenn bereits vorhanden
+    });
 
-      // Neue Konversation: DSGVO-Consent anfordern
+    // Neue Konversation: DSGVO-Consent anfordern
+    if (!conversationBefore) {
       await sendMessage(message.from, CONSENT_MESSAGE, message.phoneNumberId);
 
       console.log("[Handler] Neue Konversation, Consent angefordert", {

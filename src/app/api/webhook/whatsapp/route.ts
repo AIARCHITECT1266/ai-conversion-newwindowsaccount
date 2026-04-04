@@ -76,13 +76,16 @@ export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
 
-    // Signatur-Validierung (Meta sendet X-Hub-Signature-256)
-    if (APP_SECRET) {
-      const signature = request.headers.get("x-hub-signature-256");
-      if (!verifySignature(rawBody, signature)) {
-        console.warn("[WhatsApp Webhook] Ungültige Signatur");
-        return NextResponse.json({ error: "Ungültige Signatur" }, { status: 401 });
-      }
+    // Signatur-Validierung ist Pflicht – ohne APP_SECRET kein Webhook-Betrieb
+    if (!APP_SECRET) {
+      console.error("[WhatsApp Webhook] WHATSAPP_APP_SECRET nicht konfiguriert");
+      return NextResponse.json({ error: "Webhook nicht konfiguriert" }, { status: 500 });
+    }
+
+    const signature = request.headers.get("x-hub-signature-256");
+    if (!verifySignature(rawBody, signature)) {
+      console.warn("[WhatsApp Webhook] Ungueltige Signatur");
+      return NextResponse.json({ error: "Ungueltige Signatur" }, { status: 401 });
     }
 
     const body = JSON.parse(rawBody) as WhatsAppWebhookBody;

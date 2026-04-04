@@ -4,10 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 const ADMIN_PATHS = ["/admin", "/api/admin"];
 // Dashboard-Pfade (geschuetzt via Magic-Link Token)
 const DASHBOARD_PATHS = ["/dashboard", "/api/dashboard"];
-// Login-Route ist oeffentlich
+// Login-Routen sind oeffentlich
 const DASHBOARD_LOGIN = "/dashboard/login";
+const ADMIN_LOGIN = "/api/admin/login";
 
 function isAdminPath(pathname: string): boolean {
+  // Login-Route nicht schuetzen (POST-basiertes Login)
+  if (pathname === ADMIN_LOGIN) return false;
   return ADMIN_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
@@ -73,12 +76,6 @@ export function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // Fallback: Query-Parameter ?secret=...
-    const querySecret = req.nextUrl.searchParams.get("secret");
-    if (querySecret === secret) {
-      return NextResponse.next();
-    }
-
     return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
@@ -86,24 +83,6 @@ export function middleware(req: NextRequest) {
   const adminCookie = req.cookies.get("admin_token")?.value;
   if (adminCookie === secret) {
     return NextResponse.next();
-  }
-
-  // Pruefe ob Login-Versuch (POST mit secret im Body geht nicht in Middleware,
-  // daher per Query-Param beim ersten Aufruf)
-  const loginSecret = req.nextUrl.searchParams.get("secret");
-  if (loginSecret === secret) {
-    // Cookie setzen und secret aus URL entfernen
-    const cleanUrl = new URL(req.nextUrl);
-    cleanUrl.searchParams.delete("secret");
-    const response = NextResponse.redirect(cleanUrl);
-    response.cookies.set("admin_token", secret, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24, // 24 Stunden
-      path: "/",
-    });
-    return response;
   }
 
   // Nicht authentifiziert → Login-Seite anzeigen
@@ -142,7 +121,26 @@ export function middleware(req: NextRequest) {
       e.preventDefault();
       var s = document.getElementById('secret').value.trim();
       if (!s) return;
-      window.location.href = window.location.pathname + '?secret=' + encodeURIComponent(s);
+      var btn = document.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Prüfe…';
+      fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: s })
+      }).then(function(res) {
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          document.getElementById('error').style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Anmelden';
+        }
+      }).catch(function() {
+        document.getElementById('error').style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Anmelden';
+      });
     });
   </script>
 </body>
