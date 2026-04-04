@@ -15,6 +15,18 @@
 - Selbst generierte Secrets (z.B. via crypto.randomBytes) sind genauso sensitiv wie bestehende – niemals im Output anzeigen, auch nicht beim Generieren oder Setzen in .env.local / Vercel
 - Bei Bash-Befehlen die Secrets erzeugen oder verarbeiten: Werte direkt in Variablen/Dateien schreiben, niemals in stdout leaken
 
+## Selbst generierte Secrets und Tokens
+- Secrets, Tokens und Magic-Links die Claude selbst generiert
+  gelten genauso als sensitiv wie externe API Keys
+- Niemals selbst generierte Secrets, Tokens oder Magic-Links
+  im Output anzeigen - auch nicht "zur Bestätigung"
+- Nach Generierung eines Secrets nur bestätigen:
+  "Secret generiert und gesetzt ✓" - niemals den Wert zeigen
+- Magic-Link Tokens nur in lokale Dateien schreiben die in
+  .gitignore stehen (z.B. dashboard-links.txt)
+- Bei Token-Regenerierung: alten Wert niemals anzeigen,
+  neuen Wert niemals anzeigen
+
 ## Git & Deployment
 - Immer committen bevor deployen
 - Commit-Messages auf Englisch, beschreibend
