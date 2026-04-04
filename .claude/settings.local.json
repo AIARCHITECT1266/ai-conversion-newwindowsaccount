@@ -28,7 +28,9 @@
       "Bash(grep:*)",
       "Bash(winget install:*)",
       "Bash(sed 's/[^A-Z_].*//')",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\accou\\\\AI-Conversion-New\\\\src\\\\app\\\\api\\\\dashboard\\\\stats\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\accou\\\\AI-Conversion-New\\\\src\\\\app\\\\api\\\\dashboard\\\\conversations\")"
     ]
   }
 }
