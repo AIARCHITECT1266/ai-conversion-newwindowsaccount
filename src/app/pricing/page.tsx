@@ -280,8 +280,8 @@ function ChatMockup() {
         {/* Status-Bar */}
         <div className="flex items-center justify-between rounded-t-[20px] bg-navy-800/80 px-5 py-2.5">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20">
-              <Bot className="h-4 w-4 text-emerald-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/20">
+              <Bot className="h-4 w-4 text-purple-400" />
             </div>
             <div>
               <p className="text-xs font-semibold text-white">AI Conversion Bot</p>
@@ -303,7 +303,7 @@ function ChatMockup() {
               <div
                 className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-[12px] leading-relaxed ${
                   msg.from === "user"
-                    ? "rounded-br-sm bg-emerald-500/20 text-emerald-100"
+                    ? "rounded-br-sm bg-purple-500/20 text-purple-100"
                     : "rounded-bl-sm bg-white/[0.06] text-slate-300"
                 }`}
               >
@@ -373,19 +373,23 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
-      className={`group relative flex flex-col rounded-2xl border transition-all duration-500 ${
+      className={`group relative flex flex-col rounded-2xl transition-all duration-500 ${
         plan.popular
-          ? "z-10 border-[#C9A84C]/30 bg-gradient-to-b from-[#C9A84C]/[0.04] via-purple-500/[0.03] to-navy-900/80 shadow-[0_0_60px_rgba(201,168,76,0.06)] lg:scale-[1.04]"
-          : "border-white/[0.06] bg-white/[0.015] hover:border-purple-500/15 hover:bg-white/[0.025]"
+          ? "z-10 bg-gradient-to-b from-[#C9A84C]/[0.06] via-[#C9A84C]/[0.02] to-navy-900/80 lg:scale-[1.04]"
+          : "border border-white/[0.06] bg-white/[0.015] hover:border-purple-500/15 hover:bg-white/[0.025]"
       }`}
+      style={plan.popular ? {
+        border: "2px solid rgba(201,168,76,0.4)",
+        boxShadow: "0 0 60px rgba(201,168,76,0.08), 0 0 120px rgba(201,168,76,0.04)",
+      } : undefined}
     >
       {plan.popular && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-1.5 rounded-full px-5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg"
-            style={{ background: "linear-gradient(135deg, #C9A84C, #a8893a)", boxShadow: "0 4px 20px rgba(201,168,76,0.25)" }}
+            className="flex items-center gap-1.5 rounded-full px-5 py-1.5 text-[11px] font-bold uppercase tracking-wider shadow-lg"
+            style={{ background: "linear-gradient(135deg, #C9A84C, #e8d5a0, #C9A84C)", color: "#0e0e1a", boxShadow: "0 4px 20px rgba(201,168,76,0.3)" }}
           >
             <Sparkles className="h-3 w-3" />
             Empfohlen
@@ -415,7 +419,7 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
         {/* Preis */}
         <div className="mt-5">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-4xl font-extrabold tracking-tight text-white">
+            <span className={`text-4xl font-extrabold tracking-tight ${plan.popular ? "text-[#C9A84C]" : "text-white"}`}>
               {displayPrice}€
             </span>
             <span className="text-sm text-slate-500">/Monat</span>
@@ -469,13 +473,9 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
           rel="noopener noreferrer"
           className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-semibold transition-all duration-300 ${
             plan.popular
-              ? "text-white shadow-lg hover:scale-[1.02]"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 hover:bg-purple-500 hover:scale-[1.02]"
               : "border border-white/[0.08] text-slate-300 hover:border-purple-500/25 hover:bg-purple-500/[0.04] hover:text-white"
           }`}
-          style={plan.popular ? {
-            background: "linear-gradient(135deg, #C9A84C, #a8893a)",
-            boxShadow: "0 4px 24px rgba(201,168,76,0.2)",
-          } : undefined}
         >
           <MessageCircle className="h-4 w-4" />
           {plan.cta}
@@ -492,7 +492,7 @@ function ComparisonCell({ value }: { value: boolean | string }) {
     return <span className="text-sm font-medium text-white">{value}</span>;
   }
   return value ? (
-    <Check className="mx-auto h-4 w-4 text-emerald-400" />
+    <Check className="mx-auto h-4 w-4 text-purple-400" />
   ) : (
     <X className="mx-auto h-4 w-4 text-slate-700" />
   );
@@ -538,7 +538,8 @@ export default function PricingPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]"
+                className="font-extrabold tracking-tight text-white"
+                style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", lineHeight: 1.15 }}
               >
                 Dein Vertrieb arbeitet{" "}
                 <span style={{ color: "#C9A84C" }}>24/7 automatisch</span>
@@ -560,10 +561,10 @@ export default function PricingPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="mt-6 inline-flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-3"
+                className="mt-6 inline-flex items-center gap-3 rounded-xl border border-[#C9A84C]/20 bg-[#C9A84C]/[0.06] px-5 py-3"
               >
-                <Shield className="h-5 w-5 shrink-0 text-emerald-400" />
-                <p className="text-sm font-medium text-emerald-300">
+                <Shield className="h-5 w-5 shrink-0 text-[#C9A84C]" />
+                <p className="text-sm font-medium text-[#C9A84C]/90">
                   Bis zu 100 qualifizierte Leads in 30 Tagen &ndash; oder Geld zurueck
                 </p>
               </motion.div>
@@ -578,7 +579,7 @@ export default function PricingPage() {
                   href={`${WA_LINK}?text=Hi%2C%20ich%20m%C3%B6chte%20eine%20Demo%20sehen!`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-glow-green flex items-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/15 transition hover:bg-emerald-400 hover:scale-[1.02] animate-pulse-green"
+                  className="flex items-center gap-2 rounded-full bg-purple-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Demo per WhatsApp
@@ -595,7 +596,7 @@ export default function PricingPage() {
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="hidden lg:block"
+              className="hidden lg:flex lg:items-center lg:justify-center"
             >
               <ChatMockup />
             </motion.div>
@@ -697,7 +698,7 @@ export default function PricingPage() {
             {" "}&ndash; bei{" "}
             <span className="font-bold text-white">1.497€/Monat</span>
             {" "}und{" "}
-            <span className="font-semibold text-emerald-400">24/7 Verfuegbarkeit</span>.
+            <span className="font-semibold text-purple-400">24/7 Verfuegbarkeit</span>.
           </p>
         </motion.div>
       </section>
@@ -784,7 +785,7 @@ export default function PricingPage() {
           </p>
         </motion.div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
           {addons.map((addon, i) => (
             <motion.div
               key={addon.name}
@@ -855,8 +856,8 @@ export default function PricingPage() {
               {comparisonRows.map((row, i) => {
                 if (row.category) {
                   return (
-                    <tr key={i} className="border-t border-white/[0.04] bg-white/[0.02]">
-                      <td colSpan={5} className="sticky left-0 z-10 bg-[rgba(255,255,255,0.02)] px-6 py-3 text-xs font-bold uppercase tracking-wider" style={{ color: "rgba(201,168,76,0.6)" }}>
+                    <tr key={i} className="border-t border-white/[0.06] bg-white/[0.02]">
+                      <td colSpan={5} className="sticky left-0 z-10 bg-[rgba(255,255,255,0.02)] px-6 py-4 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: "#C9A84C" }}>
                         {row.feature}
                       </td>
                     </tr>
@@ -864,18 +865,19 @@ export default function PricingPage() {
                 }
                 return (
                   <tr key={i} className="border-t border-white/[0.03] transition hover:bg-white/[0.015]">
-                    <td className="sticky left-0 z-10 bg-navy-950 px-6 py-3.5 text-sm text-slate-400">
-                      {row.feature}
+                    <td className="sticky left-0 z-10 bg-navy-950 px-6 py-4 text-sm text-slate-400">
+                      <span>{row.feature}</span>
                       {row.tooltip && (
-                        <span className="ml-1.5 text-[10px] text-purple-400/50" title={row.tooltip}>
+                        <span className="ml-1.5 inline-flex items-center gap-1 text-[10px] text-purple-400/50" title={row.tooltip}>
                           &#9432;
+                          <span className="text-[10px] text-slate-600">{row.tooltip}</span>
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-center"><ComparisonCell value={row.starter} /></td>
-                    <td className="px-4 py-3.5 text-center bg-[#C9A84C]/[0.02]"><ComparisonCell value={row.growth} /></td>
-                    <td className="px-4 py-3.5 text-center"><ComparisonCell value={row.professional} /></td>
-                    <td className="px-4 py-3.5 text-center"><ComparisonCell value={row.enterprise} /></td>
+                    <td className="px-4 py-4 text-center"><ComparisonCell value={row.starter} /></td>
+                    <td className="px-4 py-4 text-center bg-[#C9A84C]/[0.02]"><ComparisonCell value={row.growth} /></td>
+                    <td className="px-4 py-4 text-center"><ComparisonCell value={row.professional} /></td>
+                    <td className="px-4 py-4 text-center"><ComparisonCell value={row.enterprise} /></td>
                   </tr>
                 );
               })}
@@ -904,7 +906,7 @@ export default function PricingPage() {
               href={`${WA_LINK}?text=Hi%2C%20ich%20m%C3%B6chte%20mit%20AI%20Conversion%20starten!`}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-glow-green flex items-center gap-2 rounded-full bg-emerald-500 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/15 transition hover:bg-emerald-400 hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-full bg-purple-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
             >
               <MessageCircle className="h-4 w-4" />
               Jetzt per WhatsApp starten

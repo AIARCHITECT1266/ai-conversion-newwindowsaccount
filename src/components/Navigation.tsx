@@ -107,7 +107,7 @@ export default function Navigation() {
             href="https://wa.me/4917647666407?text=Hi%2C%20ich%20m%C3%B6chte%20den%20KI-Bot%20testen!"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-glow-green flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600 hover:scale-[1.02] animate-pulse-green"
+            className="flex items-center gap-2 rounded-full bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
           >
             <MessageCircle className="h-4 w-4" />
             Demo buchen
@@ -177,7 +177,7 @@ export default function Navigation() {
                 href="https://wa.me/4917647666407?text=Hi%2C%20ich%20m%C3%B6chte%20den%20KI-Bot%20testen!"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-white"
+                className="mt-2 flex items-center justify-center gap-2 rounded-full bg-purple-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500"
               >
                 <MessageCircle className="h-4 w-4" />
                 Demo buchen

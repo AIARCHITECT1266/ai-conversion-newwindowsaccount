@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
-import { Building2, Wrench, Users, Shield, Database, Clock, Brain, Lock, Server, Globe } from "lucide-react";
+import Image from "next/image";
+import { Building2, Wrench, Users, Shield, Database, Clock, Brain, Lock, Server } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════════
    DATEN
@@ -429,8 +430,8 @@ export default function PageV2() {
         >
           <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 2rem", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
             {/* Logo */}
-            <a href="/" style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 700, textDecoration: "none", color: "var(--text)", letterSpacing: "-0.02em" }}>
-              AI Conversion<span style={{ color: "var(--gold)" }}>.</span>
+            <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+              <Image src="/logo1.png" alt="AI Conversion" width={512} height={512} style={{ height: 44, width: "auto" }} priority />
             </a>
 
             {/* Mitte-Links */}
@@ -660,11 +661,11 @@ export default function PageV2() {
           <section style={{ padding: "6rem 2rem", borderTop: "1px solid var(--gold-border)", borderBottom: "1px solid var(--gold-border)" }}>
             <div className="stats-grid" style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
               {[
-                { value: "3", prefix: "< ", suffix: " Sek.", label: "Antwortzeit" },
-                { value: "3,4", suffix: "×", label: "mehr Conversions" },
-                { value: "24", suffix: " / 7", label: "Verfügbarkeit" },
-                { value: "DSGVO", suffix: "", label: "Vollständig konform" },
-                { value: "497", prefix: "Ab ", suffix: "€/Mo.", label: "Einstiegspreis", small: true },
+                { display: "< 3 Sek.", label: "Antwortzeit" },
+                { display: "3,4×", label: "mehr Conversions" },
+                { display: "24 / 7", label: "Verfügbarkeit" },
+                { display: "DSGVO", label: "Vollständig konform" },
+                { animateValue: "497", prefix: "Ab ", suffix: "€/Mo.", label: "Einstiegspreis", small: true },
               ].map((stat, i) => (
                 <div
                   key={stat.label}
@@ -674,8 +675,8 @@ export default function PageV2() {
                   }}
                 >
                   <p style={{ fontFamily: "var(--serif)", fontSize: ("small" in stat && stat.small) ? "clamp(1.4rem, 2.5vw, 2rem)" : "clamp(1.8rem, 3.5vw, 2.8rem)", fontWeight: 700, color: "var(--text)", margin: 0, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
-                    {stat.value === "DSGVO" ? stat.value : (
-                      <AnimatedCounter value={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix} />
+                    {"display" in stat ? stat.display : (
+                      <AnimatedCounter value={stat.animateValue} prefix={stat.prefix || ""} suffix={stat.suffix} />
                     )}
                   </p>
                   <p style={{ fontFamily: "var(--sans)", fontSize: 13, fontWeight: 400, color: "var(--text-muted)", marginTop: 8 }}>
@@ -707,9 +708,10 @@ export default function PageV2() {
                     onMouseEnter={() => setHoveredTarget(i)}
                     onMouseLeave={() => setHoveredTarget(null)}
                     style={{
-                      background: "var(--surface)", borderRadius: 16, padding: "40px 36px",
-                      border: `1px solid ${hoveredTarget === i ? "var(--gold-border-hover)" : "var(--gold-border)"}`,
+                      background: "rgba(255,255,255,0.04)", borderRadius: 16, padding: "40px 36px",
+                      border: `1px solid ${hoveredTarget === i ? "rgba(201,168,76,0.45)" : "var(--gold-border)"}`,
                       transform: hoveredTarget === i ? "translateY(-4px)" : "translateY(0)",
+                      boxShadow: hoveredTarget === i ? "0 8px 32px rgba(201,168,76,0.06)" : "none",
                       transition: "all 0.3s var(--ease)",
                       cursor: "default",
                     }}
@@ -719,12 +721,12 @@ export default function PageV2() {
                     </div>
                     <h3 style={{ fontFamily: "var(--serif)", fontSize: 26, fontWeight: 700, margin: "0 0 24px", letterSpacing: "-0.01em" }}>{group.title}</h3>
                     <div style={{ marginBottom: 20 }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "var(--red-subtle)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Problem</p>
-                      <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-muted)", margin: 0 }}>{group.problem}</p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(239,68,68,0.75)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Problem</p>
+                      <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(237,232,223,0.6)", margin: 0 }}>{group.problem}</p>
                     </div>
                     <div>
                       <p style={{ fontSize: 12, fontWeight: 600, color: "var(--gold)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Lösung</p>
-                      <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text)", margin: 0, opacity: 0.8 }}>{group.solution}</p>
+                      <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(237,232,223,0.88)", margin: 0 }}>{group.solution}</p>
                     </div>
                   </div>
                 ))}
