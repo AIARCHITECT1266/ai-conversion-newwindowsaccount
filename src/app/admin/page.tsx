@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [createdMagicLink, setCreatedMagicLink] = useState<string | null>(null);
   const [selectedTenant, setSelectedTenant] = useState<TenantDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [editingTenant, setEditingTenant] = useState<TenantDetail | null>(null);
@@ -428,10 +429,11 @@ export default function AdminDashboard() {
       </section>
 
       {/* Modal: Neuen Tenant anlegen */}
-      {showCreateForm && (
+      {(showCreateForm || createdMagicLink) && (
         <CreateTenantModal
           creating={creating}
-          onClose={() => setShowCreateForm(false)}
+          magicLink={createdMagicLink}
+          onClose={() => { setShowCreateForm(false); setCreatedMagicLink(null); }}
           onCreate={async (data) => {
             setCreating(true);
             try {
@@ -444,7 +446,13 @@ export default function AdminDashboard() {
                 const err = await res.json();
                 throw new Error(err.error || "Fehler beim Erstellen");
               }
-              setShowCreateForm(false);
+              const result = await res.json();
+              // Magic-Link aus API-Response anzeigen
+              if (result.dashboardLoginPath) {
+                setCreatedMagicLink(
+                  `${window.location.origin}${result.dashboardLoginPath}`
+                );
+              }
               await loadData();
             } catch (err) {
               alert(err instanceof Error ? err.message : "Fehler");
@@ -554,10 +562,12 @@ function MiniPipeline({ data }: { data?: Record<string, number> }) {
 
 function CreateTenantModal({
   creating,
+  magicLink,
   onClose,
   onCreate,
 }: {
   creating: boolean;
+  magicLink: string | null;
   onClose: () => void;
   onCreate: (data: {
     name: string;
@@ -567,6 +577,7 @@ function CreateTenantModal({
     brandColor: string;
   }) => void;
 }) {
+  const [copied, setCopied] = useState(false);
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -600,79 +611,149 @@ function CreateTenantModal({
           border: "1px solid var(--gold-border)",
         }}
       >
-        <h3
-          className="mb-6 text-xl font-semibold text-white"
-          style={{ fontFamily: "var(--serif)" }}
-        >
-          Neuen Tenant anlegen
-        </h3>
-        <div className="space-y-4">
-          <Field
-            label="Firmenname"
-            value={form.name}
-            onChange={(v) => handleNameChange(v)}
-            placeholder="Muster GmbH"
-          />
-          <Field
-            label="Slug"
-            value={form.slug}
-            onChange={(v) => setForm((f) => ({ ...f, slug: v }))}
-            placeholder="muster-gmbh"
-            mono
-          />
-          <Field
-            label="WhatsApp Phone ID"
-            value={form.whatsappPhoneId}
-            onChange={(v) => setForm((f) => ({ ...f, whatsappPhoneId: v }))}
-            placeholder="1234567890"
-            mono
-          />
-          <Field
-            label="Markenname"
-            value={form.brandName}
-            onChange={(v) => setForm((f) => ({ ...f, brandName: v }))}
-            placeholder="Muster"
-          />
-          <div>
-            <label
-              className="mb-1 block text-xs"
-              style={{ color: "var(--text-muted)" }}
+        {magicLink ? (
+          <>
+            {/* Erfolgs-Ansicht nach Erstellung */}
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/15">
+              <svg className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3
+              className="mb-2 text-xl font-semibold text-white"
+              style={{ fontFamily: "var(--serif)" }}
             >
-              Markenfarbe
-            </label>
-            <input
-              type="color"
-              value={form.brandColor}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, brandColor: e.target.value }))
-              }
-              className="h-10 w-20 cursor-pointer rounded"
+              Tenant erstellt
+            </h3>
+            <p className="mb-6 text-sm" style={{ color: "var(--text-muted)" }}>
+              Der Dashboard-Login-Link fuer den neuen Mandanten:
+            </p>
+            <div
+              className="mb-4 flex items-center gap-2 rounded-lg p-3 font-mono text-xs break-all"
+              style={{
+                background: "var(--bg)",
+                border: "1px solid var(--gold-border)",
+                color: "var(--gold)",
+              }}
+            >
+              <span className="flex-1 select-all">{magicLink}</span>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(magicLink);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition"
               style={{
                 border: "1px solid var(--gold-border)",
-                background: "var(--surface)",
+                color: copied ? "#8b5cf6" : "var(--gold)",
+                background: copied ? "rgba(139,92,246,0.08)" : "transparent",
               }}
-            />
-          </div>
-        </div>
-        <div className="mt-8 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm transition"
-            style={{
-              border: "1px solid var(--gold-border)",
-              color: "var(--gold)",
-            }}
-          >
-            Abbrechen
-          </button>
-          <button
-            onClick={() => isValid && onCreate(form)}
-            disabled={!isValid || creating}
-            className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
-          >
-            {creating ? "Erstelle…" : "Erstellen"}
-          </button>
-        </div>
+            >
+              {copied ? (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Kopiert!
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Link kopieren
+                </>
+              )}
+            </button>
+            <div className="flex justify-end">
+              <button
+                onClick={onClose}
+                className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500"
+              >
+                Fertig
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Erstellungs-Formular */}
+            <h3
+              className="mb-6 text-xl font-semibold text-white"
+              style={{ fontFamily: "var(--serif)" }}
+            >
+              Neuen Tenant anlegen
+            </h3>
+            <div className="space-y-4">
+              <Field
+                label="Firmenname"
+                value={form.name}
+                onChange={(v) => handleNameChange(v)}
+                placeholder="Muster GmbH"
+              />
+              <Field
+                label="Slug"
+                value={form.slug}
+                onChange={(v) => setForm((f) => ({ ...f, slug: v }))}
+                placeholder="muster-gmbh"
+                mono
+              />
+              <Field
+                label="WhatsApp Phone ID"
+                value={form.whatsappPhoneId}
+                onChange={(v) => setForm((f) => ({ ...f, whatsappPhoneId: v }))}
+                placeholder="1234567890"
+                mono
+              />
+              <Field
+                label="Markenname"
+                value={form.brandName}
+                onChange={(v) => setForm((f) => ({ ...f, brandName: v }))}
+                placeholder="Muster"
+              />
+              <div>
+                <label
+                  className="mb-1 block text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Markenfarbe
+                </label>
+                <input
+                  type="color"
+                  value={form.brandColor}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, brandColor: e.target.value }))
+                  }
+                  className="h-10 w-20 cursor-pointer rounded"
+                  style={{
+                    border: "1px solid var(--gold-border)",
+                    background: "var(--surface)",
+                  }}
+                />
+              </div>
+            </div>
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                onClick={onClose}
+                className="rounded-lg px-4 py-2 text-sm transition"
+                style={{
+                  border: "1px solid var(--gold-border)",
+                  color: "var(--gold)",
+                }}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={() => isValid && onCreate(form)}
+                disabled={!isValid || creating}
+                className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
+              >
+                {creating ? "Erstelle…" : "Erstellen"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
