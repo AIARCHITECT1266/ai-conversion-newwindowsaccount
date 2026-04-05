@@ -13,6 +13,7 @@ import { scoreLeadFromConversation } from "./gpt";
 import { sendMessage } from "../whatsapp";
 import { auditLog } from "../audit-log";
 import { notifyHighScoreLead } from "../lead-notification";
+import { loadSystemPrompt } from "./system-prompts";
 import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
 
 // DSGVO: Telefonnummern nie als Klartext speichern
@@ -205,8 +206,16 @@ export async function handleIncomingMessage(
 
     // 6. Gesprächsverlauf laden und Claude-Antwort generieren
     const history = await loadConversationHistory(conversation.id);
+    // System-Prompt laden: Tenant-eigener Prompt oder plan-spezifischer Default
+    const resolvedPrompt = loadSystemPrompt({
+      systemPrompt: tenant.systemPrompt,
+      paddlePlan: tenant.paddlePlan,
+      brandName: tenant.brandName,
+      name: tenant.name,
+    });
+
     const claudeResult = await generateReply(
-      tenant.systemPrompt,
+      resolvedPrompt,
       tenant.brandName,
       history.slice(0, -1), // Ohne die gerade gespeicherte Nachricht (wird als userMessage übergeben)
       message.text
