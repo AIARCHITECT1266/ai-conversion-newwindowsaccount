@@ -79,8 +79,8 @@ function maskId(externalId: string): string {
 /* ───────────────────────────── Hilfs-Komponenten ────────────────── */
 
 const statusColors: Record<string, string> = {
-  ACTIVE: "bg-emerald-500/20 text-emerald-400",
-  PAUSED: "bg-amber-500/20 text-amber-400",
+  ACTIVE: "bg-purple-500/20 text-purple-400",
+  PAUSED: "bg-[rgba(201,168,76,0.2)] text-[#c9a84c]",
   CLOSED: "bg-slate-500/20 text-slate-400",
   ARCHIVED: "bg-slate-500/20 text-slate-400",
 };
@@ -110,7 +110,7 @@ const qualColors: Record<string, string> = {
 
 function ScoreBar({ score }: { score: number }) {
   const color =
-    score >= 80 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500/70";
+    score >= 80 ? "bg-emerald-500" : score >= 50 ? "bg-[#c9a84c]" : "bg-red-500/70";
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-16 rounded-full bg-white/[0.06]">
@@ -279,43 +279,65 @@ export default function TenantDashboard() {
   // Auth lädt noch
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-navy-950 text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+      <div className="flex min-h-screen items-center justify-center text-white" style={{ background: '#07070d' }}>
+        <Loader2 className="h-8 w-8 animate-spin text-[#c9a84c]" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-navy-950 text-white">
+    <div
+      className="relative min-h-screen text-white"
+      style={{ background: 'var(--bg)', fontFamily: 'var(--sans)' }}
+    >
+      {/* Design-Token CSS-Variablen + Schrift-Import */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
+        :root {
+          --bg: #07070d;
+          --surface: #0e0e1a;
+          --gold: #c9a84c;
+          --gold-border: rgba(201,168,76,0.1);
+          --gold-border-hover: rgba(201,168,76,0.35);
+          --purple: #8b5cf6;
+          --text: #ede8df;
+          --text-muted: rgba(237,232,223,0.45);
+          --serif: 'Cormorant Garamond', Georgia, serif;
+          --sans: 'Geist', system-ui, sans-serif;
+        }
+      `}</style>
+
       {/* Hintergrund-Glows */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute -left-[10%] -top-[5%] h-[600px] w-[600px] rounded-full bg-purple-600/[0.08] blur-[160px]" />
-        <div className="absolute right-[5%] top-[30%] h-[400px] w-[400px] rounded-full bg-emerald-500/[0.05] blur-[140px]" />
+        <div className="absolute -left-[10%] -top-[5%] h-[600px] w-[600px] rounded-full bg-[rgba(201,168,76,0.05)] blur-[160px]" />
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/[0.06] bg-navy-950/80 backdrop-blur-md">
+      <header
+        className="relative z-10 backdrop-blur-md"
+        style={{ borderBottom: '1px solid var(--gold-border)', background: 'rgba(7,7,13,0.8)' }}
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/15">
-              <Bot className="h-5 w-5 text-purple-400" />
-            </div>
             <div>
-              <h1 className="text-lg font-semibold">{tenantName ?? "Mein Dashboard"}</h1>
-              <p className="text-xs text-slate-500">AI Conversion • WhatsApp Bot</p>
+              <h1 className="text-lg font-semibold flex items-center gap-2">
+                <span style={{ fontFamily: 'var(--serif)', color: 'var(--gold)', fontSize: '1.25rem', fontWeight: 700 }}>AI Conversion.</span>
+                <span style={{ fontFamily: 'var(--serif)', color: 'var(--text)' }}>{tenantName ?? "Mein Dashboard"}</span>
+              </h1>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>AI Conversion • WhatsApp Bot</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchStats}
-              className="rounded-lg border border-white/[0.06] p-1.5 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-white"
+              className="rounded-lg border border-white/[0.06] p-1.5 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-[#c9a84c]"
               title="Aktualisieren"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </button>
-            <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              <span className="text-xs font-medium text-emerald-400">Bot aktiv</span>
+            <div className="flex items-center gap-2 rounded-full bg-purple-500/10 px-3 py-1.5">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-purple-400" />
+              <span className="text-xs font-medium text-purple-400">Bot aktiv</span>
             </div>
             <button
               onClick={() => setChatOpen(!chatOpen)}
@@ -340,7 +362,7 @@ export default function TenantDashboard() {
         {/* Lade-Skeleton oder echte Daten */}
         {loading && !stats ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#c9a84c]" />
           </div>
         ) : stats ? (
           <>
@@ -360,15 +382,16 @@ export default function TenantDashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...spring, delay: i * 0.08 }}
-                    className="glass-card rounded-xl bg-navy-900/60 p-5"
+                    className="rounded-xl p-5"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
                   >
                     <div className="flex items-center justify-between">
                       <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${colorMap[kpi.color]}`}>
                         <Icon className="h-5 w-5" />
                       </div>
                     </div>
-                    <p className="mt-3 text-2xl font-bold">{kpi.value}</p>
-                    <p className="mt-1 text-xs text-slate-500">{kpi.label}</p>
+                    <p className="mt-3 text-2xl font-bold" style={{ fontFamily: 'var(--serif)' }}>{kpi.value}</p>
+                    <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{kpi.label}</p>
                   </motion.div>
                 );
               })}
@@ -381,11 +404,12 @@ export default function TenantDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: 0.35 }}
-                className="glass-card rounded-xl bg-navy-900/60 p-6 lg:col-span-2"
+                className="rounded-xl p-6 lg:col-span-2"
+                style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
               >
                 <div className="mb-5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-purple-400" />
+                    <Phone className="h-4 w-4 text-[#c9a84c]" />
                     <h2 className="text-sm font-semibold">Letzte Gespräche</h2>
                   </div>
                   <span className="text-xs text-slate-500">Live-Übersicht</span>
@@ -399,7 +423,7 @@ export default function TenantDashboard() {
                     stats.conversations.map((conv) => (
                       <div
                         key={conv.id}
-                        className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-colors hover:border-purple-500/10 hover:bg-purple-500/[0.02]"
+                        className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-colors hover:border-[rgba(201,168,76,0.15)] hover:bg-white/[0.03]"
                       >
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
                           <MessageSquare className="h-4 w-4 text-slate-400" />
@@ -429,10 +453,11 @@ export default function TenantDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: 0.45 }}
-                className="glass-card rounded-xl bg-navy-900/60 p-6"
+                className="rounded-xl p-6"
+                style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
               >
                 <div className="mb-5 flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-purple-400" />
+                  <BarChart3 className="h-4 w-4 text-[#c9a84c]" />
                   <h2 className="text-sm font-semibold">Lead-Pipeline</h2>
                 </div>
 
@@ -475,10 +500,11 @@ export default function TenantDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...spring, delay: 0.55 }}
-              className="glass-card mt-6 rounded-xl bg-navy-900/60 p-6"
+              className="mt-6 rounded-xl p-6"
+              style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
             >
               <div className="mb-5 flex items-center gap-2">
-                <Bot className="h-4 w-4 text-purple-400" />
+                <Bot className="h-4 w-4 text-[#c9a84c]" />
                 <h2 className="text-sm font-semibold">Bot-Aktivität (24h)</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
@@ -489,7 +515,11 @@ export default function TenantDashboard() {
                 ].map((stat) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={stat.label} className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-4">
+                    <div
+                      key={stat.label}
+                      className="flex items-center gap-4 rounded-lg p-4"
+                      style={{ border: '1px solid var(--gold-border)', background: 'var(--surface)' }}
+                    >
                       <Icon className={`h-5 w-5 ${stat.color}`} />
                       <div>
                         <p className="text-xl font-bold">{stat.value}</p>
@@ -512,10 +542,14 @@ export default function TenantDashboard() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 z-50 flex h-[520px] w-[380px] flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-navy-900/95 shadow-2xl shadow-black/40 backdrop-blur-xl"
+            className="fixed bottom-6 right-6 z-50 flex h-[520px] w-[380px] flex-col overflow-hidden rounded-2xl shadow-2xl shadow-black/40 backdrop-blur-xl"
+            style={{ border: '1px solid rgba(201,168,76,0.15)', background: 'rgba(14,14,26,0.95)' }}
           >
             {/* Chat-Header */}
-            <div className="flex items-center justify-between border-b border-white/[0.06] bg-purple-500/[0.06] px-5 py-3.5">
+            <div
+              className="flex items-center justify-between px-5 py-3.5"
+              style={{ borderBottom: '1px solid rgba(201,168,76,0.1)', background: 'rgba(201,168,76,0.04)' }}
+            >
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
                   <HelpCircle className="h-4 w-4 text-purple-400" />

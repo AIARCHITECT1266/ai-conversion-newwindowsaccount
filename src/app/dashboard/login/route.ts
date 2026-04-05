@@ -61,18 +61,21 @@ function loginPage(message: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Geist:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0a0a1a; color: #fff; font-family: system-ui, -apple-system, sans-serif; }
-    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; text-align: center; }
-    h1 { font-size: 1.25rem; margin-bottom: 12px; }
-    p { font-size: 0.875rem; color: #f87171; }
-    .hint { color: #64748b; margin-top: 16px; font-size: 0.8rem; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #07070d; color: #ede8df; font-family: 'Geist', system-ui, -apple-system, sans-serif; }
+    .card { background: #0e0e1a; border: 1px solid rgba(201,168,76,0.1); border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; text-align: center; }
+    h1 { font-family: 'Cormorant Garamond', Georgia, serif; color: #c9a84c; font-size: 1.5rem; margin-bottom: 4px; }
+    h2 { font-size: 1rem; color: #ede8df; margin-bottom: 12px; font-weight: 400; }
+    p { font-size: 0.875rem; color: #c9a84c; }
+    .hint { color: rgba(237,232,223,0.45); margin-top: 16px; font-size: 0.8rem; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Dashboard-Zugang</h1>
+    <h1>AI Conversion.</h1>
+    <h2>Dashboard-Zugang</h2>
     <p>${escapeHtml(message)}</p>
     <p class="hint">Bitte verwende den Login-Link, den du von deinem Administrator erhalten hast.</p>
   </div>

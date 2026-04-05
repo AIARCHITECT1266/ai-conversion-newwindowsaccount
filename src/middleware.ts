@@ -93,22 +93,25 @@ export function middleware(req: NextRequest) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Geist:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0a0a1a; color: #fff; font-family: system-ui, -apple-system, sans-serif; }
-    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; }
-    h1 { font-size: 1.25rem; margin-bottom: 8px; }
-    p { font-size: 0.875rem; color: #64748b; margin-bottom: 24px; }
-    input { width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 0.875rem; outline: none; margin-bottom: 16px; }
-    input:focus { border-color: rgba(139,92,246,0.5); }
-    button { width: 100%; padding: 12px; background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; color: #c4b5fd; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    button:hover { background: rgba(139,92,246,0.3); }
-    .error { color: #f87171; font-size: 0.8rem; margin-bottom: 12px; display: none; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #07070d; color: #ede8df; font-family: 'Geist', system-ui, -apple-system, sans-serif; }
+    .card { background: #0e0e1a; border: 1px solid rgba(201,168,76,0.1); border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; }
+    h1 { font-family: 'Cormorant Garamond', Georgia, serif; color: #c9a84c; font-size: 1.5rem; margin-bottom: 4px; }
+    h2 { font-size: 1rem; color: #ede8df; margin-bottom: 4px; font-weight: 400; }
+    p { font-size: 0.875rem; color: rgba(237,232,223,0.45); margin-bottom: 24px; margin-top: 8px; }
+    input { width: 100%; padding: 12px 16px; background: #0e0e1a; border: 1px solid rgba(201,168,76,0.1); border-radius: 10px; color: #ede8df; font-size: 0.875rem; outline: none; margin-bottom: 16px; }
+    input:focus { border-color: rgba(201,168,76,0.35); }
+    button { width: 100%; padding: 12px; background: #8b5cf6; border: none; border-radius: 10px; color: #fff; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    button:hover { background: #7c3aed; }
+    .error { color: #c9a84c; font-size: 0.8rem; margin-bottom: 12px; display: none; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Admin-Bereich</h1>
+    <h1>AI Conversion.</h1>
+    <h2>Admin-Bereich</h2>
     <p>Bitte Admin-Secret eingeben</p>
     <div class="error" id="error">Falsches Secret</div>
     <form id="form">

@@ -155,14 +155,50 @@ export default function AdminDashboard() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-navy-950 p-6 md:p-10">
+    <div
+      className="min-h-screen p-6 md:p-10"
+      style={{ background: "var(--bg)", fontFamily: "var(--sans)" }}
+    >
+      {/* CSS-Variablen und Font-Import */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700;900&family=Geist:wght@400;500;600&display=swap');
+        :root {
+          --bg: #07070d;
+          --surface: #0e0e1a;
+          --gold: #c9a84c;
+          --gold-subtle: rgba(201,168,76,0.08);
+          --gold-border: rgba(201,168,76,0.1);
+          --gold-border-hover: rgba(201,168,76,0.35);
+          --purple: #8b5cf6;
+          --text: #ede8df;
+          --text-muted: rgba(237,232,223,0.45);
+          --serif: 'Cormorant Garamond', Georgia, serif;
+          --sans: 'Geist', system-ui, sans-serif;
+        }
+      `}</style>
+
       {/* Header */}
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <div className="mb-1">
+            <span
+              style={{
+                fontFamily: "var(--serif)",
+                color: "var(--gold)",
+                fontSize: "1.5rem",
+                fontWeight: 700,
+              }}
+            >
+              AI Conversion.
+            </span>
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-white">
             Admin Dashboard
           </h1>
-          <p className="mt-1 text-sm text-purple-300/60">
+          <p
+            className="mt-1 text-sm"
+            style={{ color: "var(--text-muted)" }}
+          >
             AI Conversion – Tenant-Verwaltung
           </p>
         </div>
@@ -170,7 +206,12 @@ export default function AdminDashboard() {
           <button
             onClick={loadData}
             disabled={loading}
-            className="rounded-lg border border-purple-500/20 bg-navy-800 px-4 py-2 text-sm text-purple-300 transition hover:border-purple-500/40 hover:bg-navy-700 disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-sm transition disabled:opacity-50"
+            style={{
+              border: "1px solid var(--gold-border)",
+              color: "var(--gold)",
+              background: "transparent",
+            }}
           >
             {loading ? "Laden…" : "Aktualisieren"}
           </button>
@@ -185,7 +226,14 @@ export default function AdminDashboard() {
 
       {/* Fehler-Anzeige */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+        <div
+          className="mb-6 rounded-lg p-4"
+          style={{
+            border: "1px solid rgba(201,168,76,0.3)",
+            background: "rgba(201,168,76,0.06)",
+            color: "var(--gold)",
+          }}
+        >
           {error}
         </div>
       )}
@@ -214,9 +262,15 @@ export default function AdminDashboard() {
         <h2 className="mb-4 text-lg font-semibold text-white">
           Lead-Pipeline
         </h2>
-        <div className="glass-card rounded-xl bg-navy-900/60 p-6">
+        <div
+          className="rounded-xl p-6"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--gold-border)",
+          }}
+        >
           {totalLeads === 0 ? (
-            <p className="text-sm text-purple-300/40">
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               Noch keine Leads vorhanden
             </p>
           ) : (
@@ -266,20 +320,29 @@ export default function AdminDashboard() {
         <h2 className="mb-4 text-lg font-semibold text-white">
           Tenant-Übersicht
         </h2>
-        <div className="glass-card overflow-hidden rounded-xl bg-navy-900/60">
+        <div
+          className="overflow-hidden rounded-xl"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--gold-border)",
+          }}
+        >
           {loading && tenants.length === 0 ? (
-            <div className="p-10 text-center text-purple-300/40">
+            <div className="p-10 text-center" style={{ color: "var(--text-muted)" }}>
               Daten werden geladen…
             </div>
           ) : tenants.length === 0 ? (
-            <div className="p-10 text-center text-purple-300/40">
+            <div className="p-10 text-center" style={{ color: "var(--text-muted)" }}>
               Keine Tenants vorhanden
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-purple-500/10 text-xs uppercase tracking-wider text-purple-300/50">
+                  <tr
+                    className="border-b border-purple-500/10 text-xs uppercase tracking-wider"
+                    style={{ color: "var(--gold)", opacity: 0.6 }}
+                  >
                     <th className="px-6 py-4">Tenant</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">WhatsApp ID</th>
@@ -296,7 +359,7 @@ export default function AdminDashboard() {
                       <tr
                         key={tenant.id}
                         onClick={() => loadTenantDetail(tenant.id)}
-                        className="cursor-pointer transition hover:bg-purple-500/5"
+                        className="cursor-pointer transition hover:bg-[rgba(201,168,76,0.04)]"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -325,14 +388,14 @@ export default function AdminDashboard() {
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               tenant.isActive
-                                ? "bg-emerald-500/10 text-emerald-400"
+                                ? "bg-purple-500/10 text-purple-400"
                                 : "bg-red-500/10 text-red-400"
                             }`}
                           >
                             <span
                               className={`h-1.5 w-1.5 rounded-full ${
                                 tenant.isActive
-                                  ? "bg-emerald-400"
+                                  ? "bg-purple-400"
                                   : "bg-red-400"
                               }`}
                             />
@@ -429,14 +492,30 @@ function KpiCard({
   highlight?: boolean;
 }) {
   return (
-    <div className="glass-card rounded-xl bg-navy-900/60 p-5">
-      <p className="text-xs uppercase tracking-wider text-purple-300/50">
+    <div
+      className="rounded-xl p-5"
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--gold-border)",
+      }}
+    >
+      <p
+        className="text-xs uppercase tracking-wider"
+        style={{
+          color: "var(--text-muted)",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          fontSize: "0.7rem",
+        }}
+      >
         {label}
       </p>
       <p
-        className={`mt-2 text-3xl font-bold ${
-          highlight ? "text-emerald-400" : "text-white"
-        }`}
+        className="mt-2 text-3xl font-bold"
+        style={{
+          fontFamily: "var(--serif)",
+          color: highlight ? "var(--gold)" : "var(--text)",
+        }}
       >
         {value}
       </p>
@@ -514,8 +593,17 @@ function CreateTenantModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-lg rounded-2xl bg-navy-900 p-8">
-        <h3 className="mb-6 text-xl font-semibold text-white">
+      <div
+        className="w-full max-w-lg rounded-2xl p-8"
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--gold-border)",
+        }}
+      >
+        <h3
+          className="mb-6 text-xl font-semibold text-white"
+          style={{ fontFamily: "var(--serif)" }}
+        >
           Neuen Tenant anlegen
         </h3>
         <div className="space-y-4">
@@ -546,7 +634,10 @@ function CreateTenantModal({
             placeholder="Muster"
           />
           <div>
-            <label className="mb-1 block text-xs text-purple-300/50">
+            <label
+              className="mb-1 block text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
               Markenfarbe
             </label>
             <input
@@ -555,14 +646,22 @@ function CreateTenantModal({
               onChange={(e) =>
                 setForm((f) => ({ ...f, brandColor: e.target.value }))
               }
-              className="h-10 w-20 cursor-pointer rounded border border-purple-500/20 bg-navy-800"
+              className="h-10 w-20 cursor-pointer rounded"
+              style={{
+                border: "1px solid var(--gold-border)",
+                background: "var(--surface)",
+              }}
             />
           </div>
         </div>
         <div className="mt-8 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-lg border border-purple-500/20 px-4 py-2 text-sm text-gray-400 transition hover:border-purple-500/40 hover:text-white"
+            className="rounded-lg px-4 py-2 text-sm transition"
+            style={{
+              border: "1px solid var(--gold-border)",
+              color: "var(--gold)",
+            }}
           >
             Abbrechen
           </button>
@@ -598,11 +697,15 @@ function TenantDetailModal({
       onClick={onClose}
     >
       <div
-        className="glass-card w-full max-w-2xl rounded-2xl bg-navy-900 p-8"
+        className="w-full max-w-2xl rounded-2xl p-8"
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--gold-border)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {loading || !tenant ? (
-          <div className="py-10 text-center text-purple-300/40">
+          <div className="py-10 text-center" style={{ color: "var(--text-muted)" }}>
             Lade Tenant-Details…
           </div>
         ) : (
@@ -621,7 +724,10 @@ function TenantDetailModal({
                   {tenant.brandName.charAt(0)}
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-white">
+                  <h3
+                    className="text-xl font-semibold text-white"
+                    style={{ fontFamily: "var(--serif)" }}
+                  >
                     {tenant.name}
                   </h3>
                   <p className="font-mono text-sm text-gray-500">
@@ -632,13 +738,13 @@ function TenantDetailModal({
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   tenant.isActive
-                    ? "bg-emerald-500/10 text-emerald-400"
+                    ? "bg-purple-500/10 text-purple-400"
                     : "bg-red-500/10 text-red-400"
                 }`}
               >
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
-                    tenant.isActive ? "bg-emerald-400" : "bg-red-400"
+                    tenant.isActive ? "bg-purple-400" : "bg-red-400"
                   }`}
                 />
                 {tenant.isActive ? "Aktiv" : "Inaktiv"}
@@ -675,10 +781,19 @@ function TenantDetailModal({
 
             {/* System-Prompt */}
             <div className="mb-6">
-              <p className="mb-2 text-xs uppercase tracking-wider text-purple-300/50">
+              <p
+                className="mb-2 text-xs uppercase tracking-wider"
+                style={{ color: "var(--text-muted)" }}
+              >
                 System-Prompt
               </p>
-              <div className="max-h-40 overflow-y-auto rounded-lg border border-purple-500/10 bg-navy-800/50 p-4 text-sm leading-relaxed text-gray-300">
+              <div
+                className="max-h-40 overflow-y-auto rounded-lg p-4 text-sm leading-relaxed text-gray-300"
+                style={{
+                  border: "1px solid var(--gold-border)",
+                  background: "rgba(14,14,26,0.5)",
+                }}
+              >
                 {tenant.systemPrompt || (
                   <span className="italic text-gray-600">Kein System-Prompt definiert</span>
                 )}
@@ -689,7 +804,11 @@ function TenantDetailModal({
             <div className="flex justify-end gap-3">
               <button
                 onClick={onClose}
-                className="rounded-lg border border-purple-500/20 px-4 py-2 text-sm text-gray-400 transition hover:border-purple-500/40 hover:text-white"
+                className="rounded-lg px-4 py-2 text-sm transition"
+                style={{
+                  border: "1px solid var(--gold-border)",
+                  color: "var(--gold)",
+                }}
               >
                 Schliessen
               </button>
@@ -720,7 +839,10 @@ function DetailField({
 }) {
   return (
     <div>
-      <p className="mb-1 text-xs uppercase tracking-wider text-purple-300/50">
+      <p
+        className="mb-1 text-xs uppercase tracking-wider"
+        style={{ color: "var(--text-muted)" }}
+      >
         {label}
       </p>
       <p className={`text-sm text-white ${mono ? "font-mono" : ""}`}>
@@ -779,10 +901,17 @@ function EditTenantModal({
       onClick={onClose}
     >
       <div
-        className="glass-card w-full max-w-2xl rounded-2xl bg-navy-900 p-8"
+        className="w-full max-w-2xl rounded-2xl p-8"
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--gold-border)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-6 text-xl font-semibold text-white">
+        <h3
+          className="mb-6 text-xl font-semibold text-white"
+          style={{ fontFamily: "var(--serif)" }}
+        >
           Tenant bearbeiten – {tenant.name}
         </h3>
 
@@ -801,7 +930,10 @@ function EditTenantModal({
           />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs text-purple-300/50">
+              <label
+                className="mb-1 block text-xs"
+                style={{ color: "var(--text-muted)" }}
+              >
                 Markenfarbe
               </label>
               <div className="flex items-center gap-3">
@@ -811,7 +943,11 @@ function EditTenantModal({
                   onChange={(e) =>
                     setForm((f) => ({ ...f, brandColor: e.target.value }))
                   }
-                  className="h-10 w-20 cursor-pointer rounded border border-purple-500/20 bg-navy-800"
+                  className="h-10 w-20 cursor-pointer rounded"
+                  style={{
+                    border: "1px solid var(--gold-border)",
+                    background: "var(--surface)",
+                  }}
                 />
                 <span className="font-mono text-sm text-gray-400">
                   {form.brandColor}
@@ -827,7 +963,10 @@ function EditTenantModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-purple-300/50">
+            <label
+              className="mb-1 block text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
               System-Prompt
             </label>
             <textarea
@@ -837,7 +976,11 @@ function EditTenantModal({
               }
               rows={5}
               placeholder="Du bist ein freundlicher Assistent…"
-              className="w-full resize-y rounded-lg border border-purple-500/20 bg-navy-800 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:border-purple-500/50"
+              className="w-full resize-y rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:border-[rgba(201,168,76,0.35)]"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--gold-border)",
+              }}
             />
           </div>
           <div className="flex items-center gap-3">
@@ -863,7 +1006,11 @@ function EditTenantModal({
         <div className="mt-8 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-lg border border-purple-500/20 px-4 py-2 text-sm text-gray-400 transition hover:border-purple-500/40 hover:text-white"
+            className="rounded-lg px-4 py-2 text-sm transition"
+            style={{
+              border: "1px solid var(--gold-border)",
+              color: "var(--gold)",
+            }}
           >
             Abbrechen
           </button>
@@ -897,15 +1044,24 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs text-purple-300/50">{label}</label>
+      <label
+        className="mb-1 block text-xs"
+        style={{ color: "var(--text-muted)" }}
+      >
+        {label}
+      </label>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full rounded-lg border border-purple-500/20 bg-navy-800 px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:border-purple-500/50 ${
+        className={`w-full rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:border-[rgba(201,168,76,0.35)] ${
           mono ? "font-mono" : ""
         }`}
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--gold-border)",
+        }}
       />
     </div>
   );
