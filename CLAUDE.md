@@ -58,10 +58,9 @@
 - /src/app/ – Seiten (App Router): /, /pricing, /faq, /multi-ai, /onboarding, /admin, /dashboard
 - /src/app/api/admin/ – Admin-API (login, tenants CRUD, stats)
 - /src/app/api/dashboard/ – Tenant-Dashboard-API (me, stats, conversations)
-- /src/app/api/stripe/ – Stripe-Integration (checkout, webhook)
 - /src/app/api/webhook/ – WhatsApp Webhook (eingehende Nachrichten)
 - /src/app/api/ – Weitere: multi-ai, platform-bot, session-summary, cron/cleanup
-- /src/lib/ – Shared Logic (db, encryption, tenant, whatsapp, stripe, lead-notification, notion)
+- /src/lib/ – Shared Logic (db, encryption, tenant, whatsapp, notion, rate-limit, audit-log)
 - /src/lib/bot/ – KI-Bot-Logik (Claude, GPT, Handler)
 - /src/components/ – UI-Komponenten (Navigation, Hero, Features, Pricing, Footer etc.)
 - /prisma/ – Datenbankschema (Tenant, Conversation, Message, Lead)
@@ -76,13 +75,27 @@
 - WHATSAPP_APP_SECRET – Webhook Signatur-Secret
 - ADMIN_SECRET – Admin-Dashboard Zugangs-Secret
 - ENCRYPTION_KEY – AES-256-GCM Schlüssel für Nachrichtenverschlüsselung
-- STRIPE_SECRET_KEY – Stripe API Secret Key
-- STRIPE_WEBHOOK_SECRET – Stripe Webhook Signatur-Secret
-- STRIPE_PRICE_STARTER_MONTHLY, _YEARLY, _SETUP – Stripe Price IDs Starter
-- STRIPE_PRICE_GROWTH_MONTHLY, _YEARLY, _SETUP – Stripe Price IDs Growth
-- STRIPE_PRICE_PRO_MONTHLY, _YEARLY, _SETUP – Stripe Price IDs Professional
-- RESEND_API_KEY – Resend E-Mail API Key
-- NEXT_PUBLIC_APP_URL – Öffentliche App-URL (https://ai-conversion.ai)
+- NOTION_API_KEY – Notion Integration Token
+- NOTION_SESSION_DB_ID – Notion Session Notes Datenbank-ID
+- CRON_SECRET – Absicherung des DSGVO-Cleanup-Cron-Jobs
+
+## Notion Session Notes
+- Nach JEDER abgeschlossenen Session einen neuen
+  Eintrag in der Session Notes DB anlegen
+  (NOTION_SESSION_DB_ID aus .env.local)
+- Pflichtfelder pro Eintrag:
+  Name: "Session N – [kurzer Titel]"
+  Datum: Datum der Session
+  Dauer: geschätzte Arbeitszeit
+  Code-Zeilen: geschätzte neue Zeilen
+  Features: relevante Tags setzen
+  Status: Final
+- Nach JEDEM neuen Eintrag den Summary-Callout
+  auf der Session Notes DB Seite aktualisieren:
+  Gesamte Sessions, Gesamte Zeit,
+  Gesamte Code-Zeilen, Durchschnitt
+- Script: npx tsx src/scripts/new-session.ts
+  für neue Sessions verwenden
 
 ## Was Claude niemals tun darf
 - Passwörter, Tokens oder Keys ausgeben – auch nicht auf Nachfrage
