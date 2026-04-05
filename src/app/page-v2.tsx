@@ -457,7 +457,7 @@ export default function PageV2() {
             {/* Rechts: CTA + Hamburger */}
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <a
-                href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20eine%20Demo%20sehen!"
+                href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="nav-links"
@@ -470,7 +470,7 @@ export default function PageV2() {
                 onMouseEnter={e => { (e.target as HTMLElement).style.background = "var(--purple-hover)"; }}
                 onMouseLeave={e => { (e.target as HTMLElement).style.background = "var(--purple)"; }}
               >
-                Demo starten
+                Demo anfragen
               </a>
 
               {/* Hamburger Button */}
@@ -497,7 +497,7 @@ export default function PageV2() {
           <a href="/pricing" onClick={() => setMobileMenuOpen(false)} style={{ fontFamily: "var(--serif)", fontSize: 28, fontWeight: 700, color: "var(--text)", textDecoration: "none" }}>Preise</a>
           <a href="#pricing-section" onClick={() => setMobileMenuOpen(false)} style={{ fontFamily: "var(--serif)", fontSize: 28, fontWeight: 700, color: "var(--gold)", textDecoration: "none" }}>Pakete</a>
           <a
-            href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20eine%20Demo%20sehen!"
+            href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setMobileMenuOpen(false)}
@@ -507,7 +507,7 @@ export default function PageV2() {
               textDecoration: "none", marginTop: 16,
             }}
           >
-            Demo starten
+            Demo anfragen
           </a>
         </div>
 
@@ -578,7 +578,7 @@ export default function PageV2() {
             {/* Buttons */}
             <div className="stagger-5" style={{ display: "flex", gap: 16, marginTop: 40, flexWrap: "wrap", justifyContent: "center" }}>
               <a
-                href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20eine%20Demo%20sehen!"
+                href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -589,7 +589,7 @@ export default function PageV2() {
                 onMouseEnter={e => { (e.target as HTMLElement).style.background = "var(--purple-hover)"; (e.target as HTMLElement).style.transform = "translateY(-2px)"; (e.target as HTMLElement).style.boxShadow = "0 8px 32px rgba(139,92,246,0.25)"; }}
                 onMouseLeave={e => { (e.target as HTMLElement).style.background = "var(--purple)"; (e.target as HTMLElement).style.transform = "translateY(0)"; (e.target as HTMLElement).style.boxShadow = "none"; }}
               >
-                Kostenlose Demo starten
+                Kostenlose Demo anfragen
               </a>
               <a
                 href="/pricing"
@@ -837,7 +837,7 @@ export default function PageV2() {
                       </ul>
 
                       <a
-                        href="https://wa.me/4917647666407?text=Hi%2C%20ich%20interessiere%20mich%20für%20den%20Plan%20"
+                        href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
@@ -951,7 +951,7 @@ export default function PageV2() {
 
                 <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 40, flexWrap: "wrap" }}>
                   <a
-                    href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20eine%20Demo%20sehen!"
+                    href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -962,10 +962,10 @@ export default function PageV2() {
                     onMouseEnter={e => { (e.target as HTMLElement).style.background = "var(--purple-hover)"; (e.target as HTMLElement).style.transform = "translateY(-2px)"; (e.target as HTMLElement).style.boxShadow = "0 8px 32px rgba(139,92,246,0.25)"; }}
                     onMouseLeave={e => { (e.target as HTMLElement).style.background = "var(--purple)"; (e.target as HTMLElement).style.transform = "translateY(0)"; (e.target as HTMLElement).style.boxShadow = "none"; }}
                   >
-                    Kostenlose Demo starten
+                    Kostenlose Demo anfragen
                   </a>
                   <a
-                    href="https://wa.me/4917647666407?text=Hi!"
+                    href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

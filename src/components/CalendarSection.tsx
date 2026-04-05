@@ -88,13 +88,13 @@ export default function CalendarSection() {
               </div>
 
               <a
-                href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20einen%20Beratungstermin%20buchen!"
+                href="mailto:hello@ai-conversion.ai?subject=Beratungstermin"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-glow-green mt-8 inline-flex items-center gap-3 rounded-full bg-emerald-500 px-8 py-4 text-base font-bold text-white shadow-lg shadow-emerald-500/15 hover:bg-emerald-400 hover:scale-[1.02]"
               >
                 <MessageCircle className="h-5 w-5" />
-                Direkt per WhatsApp anfragen
+                Beratungstermin anfragen
                 <ArrowRight className="h-5 w-5" />
               </a>
             </motion.div>

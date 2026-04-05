@@ -41,7 +41,7 @@ import Link from "next/link";
 // DATEN
 // ══════════════════════════════════════════════════��════
 
-const WA_LINK = "https://wa.me/4917647666407";
+const CONTACT_LINK = "mailto:hello@ai-conversion.ai";
 
 interface Plan {
   name: string;
@@ -468,7 +468,7 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
       {/* CTA */}
       <div className="p-8 pt-0">
         <a
-          href={`${WA_LINK}?text=${plan.ctaMsg}`}
+          href={`${CONTACT_LINK}?subject=${encodeURIComponent(plan.name + ' Plan Anfrage')}`}
           target="_blank"
           rel="noopener noreferrer"
           className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-semibold transition-all duration-300 ${
@@ -576,13 +576,13 @@ export default function PricingPage() {
                 className="mt-8 flex flex-wrap items-center gap-4"
               >
                 <a
-                  href={`${WA_LINK}?text=Hi%2C%20ich%20m%C3%B6chte%20eine%20Demo%20sehen!`}
+                  href={`${CONTACT_LINK}?subject=Demo%20Anfrage`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 rounded-full bg-purple-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Demo per WhatsApp
+                  Demo anfragen
                   <ArrowRight className="h-4 w-4" />
                 </a>
                 <a href="#pricing" className="text-sm font-medium text-slate-500 transition hover:text-white">
@@ -741,7 +741,7 @@ export default function PricingPage() {
             </div>
             <div className="flex flex-col items-center gap-4 lg:items-end">
               <a
-                href={`${WA_LINK}?text=Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20die%20Enterprise-Loesung!`}
+                href={`${CONTACT_LINK}?subject=Enterprise%20Anfrage`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-full px-8 py-4 text-sm font-bold text-white shadow-lg transition hover:scale-[1.02]"
@@ -903,13 +903,13 @@ export default function PricingPage() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <a
-              href={`${WA_LINK}?text=Hi%2C%20ich%20m%C3%B6chte%20mit%20AI%20Conversion%20starten!`}
+              href={`${CONTACT_LINK}?subject=AI%20Conversion%20Anfrage`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-full bg-purple-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
             >
               <MessageCircle className="h-4 w-4" />
-              Jetzt per WhatsApp starten
+              Jetzt per E-Mail anfragen
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link href="/faq" className="text-sm text-slate-500 transition hover:text-[#C9A84C]">

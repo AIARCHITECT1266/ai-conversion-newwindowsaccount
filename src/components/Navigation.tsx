@@ -102,9 +102,9 @@ export default function Navigation() {
             Anmelden
           </Link>
 
-          {/* WhatsApp CTA */}
+          {/* CTA */}
           <a
-            href="https://wa.me/4917647666407?text=Hi%2C%20ich%20m%C3%B6chte%20den%20KI-Bot%20testen!"
+            href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
@@ -172,9 +172,9 @@ export default function Navigation() {
                 Anmelden
               </Link>
 
-              {/* WhatsApp CTA (Mobile) */}
+              {/* CTA (Mobile) */}
               <a
-                href="https://wa.me/4917647666407?text=Hi%2C%20ich%20m%C3%B6chte%20den%20KI-Bot%20testen!"
+                href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 flex items-center justify-center gap-2 rounded-full bg-purple-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500"

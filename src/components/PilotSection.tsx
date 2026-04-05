@@ -103,7 +103,7 @@ export default function PilotSection() {
           className="mt-14 text-center"
         >
           <a
-            href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20mich%20als%20Pilotpartner%20bewerben!"
+            href="mailto:hello@ai-conversion.ai?subject=Pilotpartner%20Anfrage"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-glow-green group inline-flex items-center gap-3 rounded-full bg-emerald-500 px-9 py-4.5 text-[15px] font-bold text-white shadow-[0_0_40px_rgba(37,211,102,0.2)] hover:bg-emerald-400 hover:scale-[1.02]"

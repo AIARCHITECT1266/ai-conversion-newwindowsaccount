@@ -127,7 +127,7 @@ export default function Pricing() {
             oder Sie zahlen nichts. Null Risiko.
           </p>
           <a
-            href="https://wa.me/4917647666407?text=Hi%2C%20ich%20interessiere%20mich%20für%20die%2030-Tage-Challenge!"
+            href="mailto:hello@ai-conversion.ai?subject=Anfrage"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-glow-green mt-8 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/15 hover:bg-emerald-400 hover:scale-[1.02]"
@@ -196,7 +196,7 @@ export default function Pricing() {
               </ul>
 
               <a
-                href="https://wa.me/4917647666407?text=Hi%2C%20ich%20interessiere%20mich%20für%20den%20Plan%20"
+                href="mailto:hello@ai-conversion.ai?subject=Anfrage"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`block w-full rounded-full py-3.5 text-center text-sm font-semibold transition-all duration-300 ${

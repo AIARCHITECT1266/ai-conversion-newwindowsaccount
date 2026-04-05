@@ -105,12 +105,12 @@ export default function FAQ() {
             Schreiben Sie uns direkt — wir antworten innerhalb von 24 Stunden.
           </p>
           <a
-            href="https://wa.me/4917647666407?text=Hi%2C%20ich%20habe%20eine%20Frage!"
+            href="mailto:hello@ai-conversion.ai?subject=Anfrage"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/15 transition-all hover:bg-emerald-400"
           >
-            Per WhatsApp fragen
+            Jetzt Kontakt aufnehmen
           </a>
         </div>
 

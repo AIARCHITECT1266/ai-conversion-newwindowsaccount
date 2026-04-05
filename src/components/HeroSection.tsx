@@ -150,7 +150,7 @@ export default function HeroSection() {
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </a>
             <a
-              href="https://wa.me/4917647666407?text=Hi%2C%20ich%20möchte%20eine%20Demo%20sehen!"
+              href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-full border border-white/[0.06] px-8 py-4.5 text-[15px] font-medium text-slate-500 transition-all duration-300 hover:border-purple-500/20 hover:text-white"

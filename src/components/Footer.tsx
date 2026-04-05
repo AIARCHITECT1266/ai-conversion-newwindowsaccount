@@ -33,13 +33,13 @@ export default function Footer() {
 
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <a
-              href="https://wa.me/4917647666407?text=Hi%2C%20ich%20will%20die%2030-Tage-100-Leads-Challenge%20starten!"
+              href="mailto:hello@ai-conversion.ai?subject=Anfrage"
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center gap-3 rounded-full bg-emerald-500 px-9 py-4.5 text-[15px] font-bold text-white shadow-[0_0_50px_rgba(37,211,102,0.25)] transition-all hover:bg-emerald-400 hover:shadow-[0_0_60px_rgba(37,211,102,0.35)] hover:scale-[1.02]"
             >
               <MessageCircle className="h-5 w-5" />
-              Jetzt per WhatsApp starten
+              Jetzt starten
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </a>
           </div>
@@ -81,13 +81,13 @@ export default function Footer() {
               verwandeln wollen.
             </p>
             <a
-              href="https://wa.me/4917647666407?text=Hi!"
+              href="mailto:hello@ai-conversion.ai?subject=Anfrage"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-8 inline-flex items-center gap-2 rounded-full border border-emerald-500/10 bg-emerald-500/[0.04] px-6 py-3 text-sm font-medium text-emerald-400/80 transition-all hover:bg-emerald-500/[0.08]"
             >
               <MessageCircle className="h-4 w-4" />
-              +49 176 47666407
+              hello@ai-conversion.ai
             </a>
           </div>
 
