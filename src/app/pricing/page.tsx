@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import {
   Check,
   X,
@@ -17,6 +17,22 @@ import {
   Zap,
   Building2,
   Rocket,
+  Bot,
+  Globe,
+  Target,
+  Brain,
+  Calendar,
+  BookOpen,
+  Flame,
+  Users,
+  TrendingUp,
+  Headphones,
+  Megaphone,
+  Palette,
+  Clock,
+  Server,
+  Link2,
+  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -222,6 +238,73 @@ function formatMonthlyFromYearly(yearlyPrice: number): string {
   return Math.round(yearlyPrice / 12).toLocaleString("de-DE");
 }
 
+// ---------- Feature-Icon-Zuordnung ----------
+
+const FEATURE_ICONS: Record<string, React.ReactNode> = {
+  "WhatsApp KI-Vertriebsbot": <Bot className="h-3.5 w-3.5" />,
+  "Multisprachen-Bot": <Globe className="h-3.5 w-3.5" />,
+  "Lead-Pipeline": <Target className="h-3.5 w-3.5" />,
+  "ROI-Rechner": <TrendingUp className="h-3.5 w-3.5" />,
+  "Competitor-Mentions": <Flame className="h-3.5 w-3.5" />,
+  "DSGVO": <Shield className="h-3.5 w-3.5" />,
+  "E-Mail Support": <Mail className="h-3.5 w-3.5" />,
+  "Persoenlichkeitsanalyse": <Brain className="h-3.5 w-3.5" />,
+  "Einwand-Bibliothek": <BookOpen className="h-3.5 w-3.5" />,
+  "Heatmap": <BarChart3 className="h-3.5 w-3.5" />,
+  "Termin-Intelligenz": <Calendar className="h-3.5 w-3.5" />,
+  "A/B Testing": <SlidersHorizontal className="h-3.5 w-3.5" />,
+  "Broadcast": <Megaphone className="h-3.5 w-3.5" />,
+  "Multi-AI": <Sparkles className="h-3.5 w-3.5" />,
+  "Priority Support": <Headphones className="h-3.5 w-3.5" />,
+  "Coaching": <Users className="h-3.5 w-3.5" />,
+  "CRM-Sync": <Link2 className="h-3.5 w-3.5" />,
+  "Kalender-Integration": <Calendar className="h-3.5 w-3.5" />,
+  "Bot-Persona": <Palette className="h-3.5 w-3.5" />,
+  "Voice Agent": <Mic className="h-3.5 w-3.5" />,
+  "Onboarding": <Rocket className="h-3.5 w-3.5" />,
+  "SLA": <Shield className="h-3.5 w-3.5" />,
+};
+
+function getFeatureIcon(feature: string): React.ReactNode {
+  for (const [key, icon] of Object.entries(FEATURE_ICONS)) {
+    if (feature.includes(key)) return icon;
+  }
+  return <Check className="h-3.5 w-3.5" />;
+}
+
+// ---------- Animierter Counter ----------
+
+function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const [display, setDisplay] = useState("0");
+
+  useEffect(() => {
+    if (!isInView) return;
+    const num = parseInt(target, 10);
+    if (isNaN(num)) {
+      setDisplay(target);
+      return;
+    }
+    const duration = 1200;
+    const start = performance.now();
+    function animate(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * num).toString());
+      if (progress < 1) requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+  }, [isInView, target]);
+
+  return (
+    <span ref={ref}>
+      {display}{suffix}
+    </span>
+  );
+}
+
 // ---------- Komponenten ----------
 
 function BillingToggle({
@@ -254,18 +337,15 @@ function BillingToggle({
       >
         Jaehrlich
       </span>
-      <AnimatePresence>
-        {isYearly && (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.8, x: -8 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.8, x: -8 }}
-            className="rounded-full bg-emerald-500/15 px-4 py-1.5 text-sm font-bold text-emerald-400"
-          >
-            2 Monate gratis
-          </motion.span>
-        )}
-      </AnimatePresence>
+      <span
+        className={`rounded-full px-4 py-1.5 text-sm font-bold transition-all duration-300 ${
+          isYearly
+            ? "bg-emerald-500/15 text-emerald-400"
+            : "bg-white/[0.04] text-slate-500"
+        }`}
+      >
+        2 Monate gratis &ndash; 17% sparen
+      </span>
     </div>
   );
 }
@@ -367,7 +447,9 @@ function PlanCard({
                   </span>
                 ) : (
                   <>
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-purple-400/60" />
+                    <span className="mt-0.5 shrink-0 text-purple-400/70">
+                      {getFeatureIcon(f)}
+                    </span>
                     <span className="text-slate-400">{f}</span>
                   </>
                 )}
@@ -464,10 +546,11 @@ export default function PricingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl"
+            className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl"
           >
-            Preise &{" "}
-            <span className="text-gradient-purple">Pakete</span>
+            Der WhatsApp Inbound Sales Agent,
+            <br />
+            <span className="text-gradient-purple">der Vertriebskosten halbiert</span>
           </motion.h1>
 
           <motion.p
@@ -476,7 +559,7 @@ export default function PricingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mx-auto mt-5 max-w-xl text-lg text-slate-500"
           >
-            Transparente Preise. Keine versteckten Kosten. Monatlich kuendbar.
+            Transparent. DSGVO-sicher. Messbar mehr Umsatz.
           </motion.p>
 
           {/* Billing Toggle */}
@@ -507,6 +590,25 @@ export default function PricingPage() {
           ))}
         </div>
 
+        {/* Value-Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-10 rounded-2xl border border-purple-500/15 bg-gradient-to-r from-purple-500/[0.06] via-navy-900/80 to-purple-500/[0.06] px-8 py-5 text-center"
+        >
+          <p className="text-sm leading-relaxed text-slate-300 sm:text-base">
+            <span className="font-semibold text-white">Growth</span> ersetzt
+            1&ndash;2 Vertriebsmitarbeiter
+            <span className="text-slate-500"> (Kosten: 4.000&ndash;8.000€/Monat)</span>
+            {" "}&ndash; bei{" "}
+            <span className="font-bold text-purple-300">1.497€/Monat</span>
+            {" "}und{" "}
+            <span className="font-semibold text-emerald-400">24/7 Verfuegbarkeit</span>.
+          </p>
+        </motion.div>
+
         {/* Meta-Kosten Hinweis */}
         <motion.p
           initial={{ opacity: 0 }}
@@ -519,6 +621,38 @@ export default function PricingPage() {
           Marketing-Nachricht, direkt ueber Meta). Service-Antworten innerhalb
           24h sind kostenlos.
         </motion.p>
+      </section>
+
+      {/* ROI-Highlight Sektion */}
+      <section className="relative z-10 mx-auto max-w-4xl px-6 py-12">
+        <div className="grid grid-cols-3 gap-6">
+          {[
+            { value: "24/7", label: "Immer verfuegbar", icon: <Clock className="h-6 w-6" /> },
+            { value: "80", label: "Leads automatisch qualifiziert", suffix: "%", icon: <Target className="h-6 w-6" /> },
+            { value: "48", label: "Bis zum ersten Termin", suffix: "h", icon: <Calendar className="h-6 w-6" /> },
+          ].map((item, i) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.12 }}
+              className="text-center"
+            >
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-400">
+                {item.icon}
+              </div>
+              <p className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                {item.value === "24/7" ? (
+                  "24/7"
+                ) : (
+                  <AnimatedCounter target={item.value} suffix={item.suffix} />
+                )}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">{item.label}</p>
+            </motion.div>
+          ))}
+        </div>
       </section>
 
       {/* Enterprise Banner – eigene Full-Width Section */}
@@ -678,7 +812,7 @@ export default function PricingPage() {
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-slate-500">
+                <th className="sticky left-0 z-10 bg-navy-950 px-6 py-4 text-xs font-medium uppercase tracking-wider text-slate-500">
                   Feature
                 </th>
                 <th className="px-4 py-4 text-center text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -707,7 +841,7 @@ export default function PricingPage() {
                     >
                       <td
                         colSpan={5}
-                        className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-purple-300/70"
+                        className="sticky left-0 z-10 bg-[rgba(255,255,255,0.02)] px-6 py-3 text-xs font-bold uppercase tracking-wider text-purple-300/70"
                       >
                         {row.feature}
                       </td>
@@ -719,7 +853,7 @@ export default function PricingPage() {
                     key={i}
                     className="border-t border-white/[0.03] transition hover:bg-white/[0.015]"
                   >
-                    <td className="px-6 py-3.5 text-sm text-slate-400">
+                    <td className="sticky left-0 z-10 bg-navy-950 px-6 py-3.5 text-sm text-slate-400">
                       {row.feature}
                     </td>
                     <td className="px-4 py-3.5 text-center">
