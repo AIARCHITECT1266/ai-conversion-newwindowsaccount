@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Send, Loader2, Clock, History, X, Bot } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 // Modell-Konfiguration
 const MODELS = [
@@ -137,7 +138,8 @@ export default function MultiAiPage() {
 
   return (
     <div className="min-h-screen bg-[var(--navy-950)] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <Navigation />
+      <div className="mx-auto max-w-7xl px-4 pt-32 pb-12 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

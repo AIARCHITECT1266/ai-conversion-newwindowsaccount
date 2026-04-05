@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import Navigation from "@/components/Navigation";
 import {
   Check,
   X,
   MessageCircle,
   ArrowRight,
-  ArrowLeft,
   Shield,
   Mic,
   Mail,
@@ -499,27 +499,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-navy-950">
-      {/* Navigation */}
-      <nav className="fixed top-0 z-50 w-full border-b border-white/[0.04] bg-navy-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Zurueck zur Startseite
-          </Link>
-          <a
-            href="https://wa.me/4917647666407?text=Hi%2C%20ich%20habe%20eine%20Frage%20zu%20den%20Preisen!"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Fragen? WhatsApp
-          </a>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-32 pb-8">

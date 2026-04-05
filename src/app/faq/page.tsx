@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ArrowLeft } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
+import Navigation from "@/components/Navigation";
 
 const faqs = [
   {
@@ -71,22 +72,15 @@ function AccordionItem({ q, a }: { q: string; a: string }) {
 export default function FAQ() {
   return (
     <main className="relative min-h-screen">
+      <Navigation />
+
       {/* Ambient background glows */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute -left-[10%] -top-[5%] h-[700px] w-[700px] rounded-full bg-purple-600/[0.12] blur-[180px]" />
         <div className="absolute right-[5%] top-[40%] h-[500px] w-[500px] rounded-full bg-emerald-500/[0.06] blur-[160px]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-3xl px-6 py-20 lg:py-32">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="mb-12 inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-purple-400"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Zurück zur Startseite
-        </Link>
-
+      <div className="relative z-10 mx-auto max-w-3xl px-6 pt-32 pb-20 lg:pt-40 lg:pb-32">
         {/* Header */}
         <h1 className="text-gradient-purple mb-4 text-4xl font-bold tracking-tight sm:text-5xl">
           Häufige Fragen

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Navigation from "@/components/Navigation";
 
 // ---------- Typen ----------
 
@@ -174,7 +175,8 @@ export default function OnboardingWizard() {
   // ---------- Render ----------
 
   return (
-    <div className="min-h-screen bg-navy-950 flex items-center justify-center p-4 sm:p-8">
+    <div className="min-h-screen bg-navy-950 flex flex-col items-center justify-center p-4 pt-32 sm:p-8 sm:pt-36">
+      <Navigation />
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-10">
