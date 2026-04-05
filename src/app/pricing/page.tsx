@@ -43,28 +43,8 @@ import Link from "next/link";
 
 const CONTACT_LINK = "mailto:hello@ai-conversion.ai";
 
-// Paddle Checkout aufrufen
-async function startCheckout(planSlug: string, billing: string) {
-  try {
-    const res = await fetch("/api/paddle/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: planSlug, billing }),
-    });
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      window.location.href = `${CONTACT_LINK}?subject=${encodeURIComponent(planSlug + ' Plan Anfrage')}`;
-    }
-  } catch {
-    window.location.href = `${CONTACT_LINK}?subject=${encodeURIComponent(planSlug + ' Plan Anfrage')}`;
-  }
-}
-
 interface Plan {
   name: string;
-  slug: string;
   icon: React.ReactNode;
   monthlyPrice: number;
   yearlyPrice: number;
@@ -83,7 +63,6 @@ interface Plan {
 const plans: Plan[] = [
   {
     name: "Starter",
-    slug: "starter",
     icon: <Zap className="h-5 w-5" />,
     monthlyPrice: 497,
     yearlyPrice: 4970,
@@ -108,7 +87,6 @@ const plans: Plan[] = [
   },
   {
     name: "Growth",
-    slug: "growth",
     icon: <Rocket className="h-5 w-5" />,
     monthlyPrice: 1497,
     yearlyPrice: 14970,
@@ -135,7 +113,6 @@ const plans: Plan[] = [
   },
   {
     name: "Professional",
-    slug: "professional",
     icon: <Building2 className="h-5 w-5" />,
     monthlyPrice: 2997,
     yearlyPrice: 29970,
@@ -490,21 +467,20 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
 
       {/* CTA */}
       <div className="p-8 pt-0">
-        <button
-          onClick={() => startCheckout(plan.slug, isYearly ? "yearly" : "monthly")}
-          className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-full py-3.5 text-sm font-semibold transition-all duration-300 ${
+        <a
+          href={`${CONTACT_LINK}?subject=${encodeURIComponent(plan.name + ' Plan Anfrage')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-semibold transition-all duration-300 ${
             plan.popular
-              ? "text-white shadow-lg hover:scale-[1.02]"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 hover:bg-purple-500 hover:scale-[1.02]"
               : "border border-white/[0.08] text-slate-300 hover:border-purple-500/25 hover:bg-purple-500/[0.04] hover:text-white"
           }`}
-          style={plan.popular ? {
-            background: "linear-gradient(135deg, #C9A84C, #a8893a)",
-            boxShadow: "0 4px 24px rgba(201,168,76,0.2)",
-          } : undefined}
         >
+          <MessageCircle className="h-4 w-4" />
           {plan.cta}
           <ArrowRight className="h-4 w-4" />
-        </button>
+        </a>
       </div>
     </motion.div>
   );
