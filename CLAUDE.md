@@ -48,20 +48,41 @@
 - Datenbank: PostgreSQL Frankfurt (DSGVO-konform)
 - KI: Anthropic Claude (Verkaufsgespräche), OpenAI GPT-4o (Lead-Scoring)
 - Messaging: WhatsApp Cloud API v21.0
+- Zahlung: Stripe (Checkout Sessions, Subscriptions, Webhooks)
+- E-Mail: Resend (Lead-Benachrichtigungen)
 - Verschlüsselung: AES-256-GCM für Nachrichteninhalte
 - Hosting: Vercel (Fluid Compute)
 - Domain: ai-conversion.ai
 
 ## Projektstruktur
-- /src/app/ – Seiten (App Router)
-- /src/app/api/ – API-Routen (Webhook, Admin, Dashboard, Platform-Bot)
-- /src/app/admin/ – Admin-Dashboard (Tenant-Verwaltung)
-- /src/app/dashboard/ – Tenant-Dashboard (KPIs, Conversations)
-- /src/lib/ – Shared Logic (db, encryption, tenant, whatsapp, notion)
+- /src/app/ – Seiten (App Router): /, /pricing, /faq, /multi-ai, /onboarding, /admin, /dashboard
+- /src/app/api/admin/ – Admin-API (login, tenants CRUD, stats)
+- /src/app/api/dashboard/ – Tenant-Dashboard-API (me, stats, conversations)
+- /src/app/api/stripe/ – Stripe-Integration (checkout, webhook)
+- /src/app/api/webhook/ – WhatsApp Webhook (eingehende Nachrichten)
+- /src/app/api/ – Weitere: multi-ai, platform-bot, session-summary, cron/cleanup
+- /src/lib/ – Shared Logic (db, encryption, tenant, whatsapp, stripe, lead-notification, notion)
 - /src/lib/bot/ – KI-Bot-Logik (Claude, GPT, Handler)
-- /src/components/ – Wiederverwendbare UI-Komponenten (Landing Page)
-- /prisma/ – Datenbankschema
-- /scripts/ – Einmalige Notion-Setup- und Migrations-Skripte
+- /src/components/ – UI-Komponenten (Navigation, Hero, Features, Pricing, Footer etc.)
+- /prisma/ – Datenbankschema (Tenant, Conversation, Message, Lead)
+
+## Umgebungsvariablen (in .env.local und Vercel)
+- DATABASE_URL – PostgreSQL Connection String
+- ANTHROPIC_API_KEY – Claude API Key
+- OPENAI_API_KEY – GPT-4o API Key
+- WHATSAPP_TOKEN – WhatsApp Cloud API Token
+- WHATSAPP_PHONE_ID – Default WhatsApp Phone Number ID
+- WHATSAPP_VERIFY_TOKEN – Webhook Verifizierungs-Token
+- WHATSAPP_APP_SECRET – Webhook Signatur-Secret
+- ADMIN_SECRET – Admin-Dashboard Zugangs-Secret
+- ENCRYPTION_KEY – AES-256-GCM Schlüssel für Nachrichtenverschlüsselung
+- STRIPE_SECRET_KEY – Stripe API Secret Key
+- STRIPE_WEBHOOK_SECRET – Stripe Webhook Signatur-Secret
+- STRIPE_PRICE_STARTER_MONTHLY, _YEARLY, _SETUP – Stripe Price IDs Starter
+- STRIPE_PRICE_GROWTH_MONTHLY, _YEARLY, _SETUP – Stripe Price IDs Growth
+- STRIPE_PRICE_PRO_MONTHLY, _YEARLY, _SETUP – Stripe Price IDs Professional
+- RESEND_API_KEY – Resend E-Mail API Key
+- NEXT_PUBLIC_APP_URL – Öffentliche App-URL (https://ai-conversion.ai)
 
 ## Was Claude niemals tun darf
 - Passwörter, Tokens oder Keys ausgeben – auch nicht auf Nachfrage
