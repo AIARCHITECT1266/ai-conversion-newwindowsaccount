@@ -232,25 +232,25 @@ function BillingToggle({
   onToggle: () => void;
 }) {
   return (
-    <div className="flex items-center justify-center gap-4">
+    <div className="mx-auto inline-flex items-center gap-5 rounded-full border border-purple-500/20 bg-navy-900/60 px-6 py-3 backdrop-blur-sm">
       <span
-        className={`text-sm font-medium transition-colors ${!isYearly ? "text-white" : "text-slate-500"}`}
+        className={`text-base font-semibold transition-colors ${!isYearly ? "text-white" : "text-slate-500"}`}
       >
         Monatlich
       </span>
       <button
         onClick={onToggle}
-        className="relative h-7 w-14 rounded-full bg-navy-800 border border-purple-500/20 transition-colors hover:border-purple-500/40"
+        className="relative h-9 w-[4.5rem] rounded-full bg-navy-800 border border-purple-500/30 transition-colors hover:border-purple-500/50"
         aria-label="Abrechnungszeitraum wechseln"
       >
         <motion.div
-          className="absolute top-0.5 h-6 w-6 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"
-          animate={{ left: isYearly ? 30 : 2 }}
+          className="absolute top-1 h-7 w-7 rounded-full bg-purple-500 shadow-lg shadow-purple-500/30"
+          animate={{ left: isYearly ? 37 : 3 }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
         />
       </button>
       <span
-        className={`text-sm font-medium transition-colors ${isYearly ? "text-white" : "text-slate-500"}`}
+        className={`text-base font-semibold transition-colors ${isYearly ? "text-white" : "text-slate-500"}`}
       >
         Jaehrlich
       </span>
@@ -260,7 +260,7 @@ function BillingToggle({
             initial={{ opacity: 0, scale: 0.8, x: -8 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.8, x: -8 }}
-            className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-400"
+            className="rounded-full bg-emerald-500/15 px-4 py-1.5 text-sm font-bold text-emerald-400"
           >
             2 Monate gratis
           </motion.span>
@@ -336,8 +336,8 @@ function PlanCard({
               {totalYearly}€/Jahr (2 Monate gratis)
             </p>
           )}
-          <p className="mt-1.5 text-xs text-slate-600">
-            + {plan.setupFee}€ einmaliges Setup
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/15 bg-amber-500/[0.06] px-3 py-1 text-xs font-medium text-amber-400/90">
+            + {plan.setupFee}€ einmalige Setup-Fee
           </p>
         </div>
 
@@ -507,51 +507,6 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Enterprise Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-8 overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-r from-navy-900 via-purple-500/[0.04] to-navy-900"
-        >
-          <div className="flex flex-col items-center justify-between gap-6 p-8 sm:flex-row sm:gap-8 sm:p-10">
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/5 border border-white/5">
-                  <Building2 className="h-5 w-5 text-purple-300" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Enterprise</h3>
-                  <p className="text-sm text-slate-500">
-                    {enterprise.monthlyPrice}€/Monat &bull; individuell
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {enterprise.features.map((f, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.03] px-3 py-1 text-xs text-slate-400 border border-white/[0.04]"
-                  >
-                    <Check className="h-3 w-3 text-purple-400/60" />
-                    {f}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <a
-              href="https://wa.me/4917647666407?text=Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20die%20Enterprise-Loesung!"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 flex items-center gap-2 rounded-full border border-purple-500/25 bg-purple-500/[0.06] px-6 py-3.5 text-sm font-semibold text-purple-300 transition hover:bg-purple-500/[0.12] hover:text-white"
-            >
-              Demo buchen
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
-        </motion.div>
-
         {/* Meta-Kosten Hinweis */}
         <motion.p
           initial={{ opacity: 0 }}
@@ -566,9 +521,81 @@ export default function PricingPage() {
         </motion.p>
       </section>
 
+      {/* Enterprise Banner – eigene Full-Width Section */}
+      <section className="relative z-10 mx-auto max-w-6xl px-6 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="relative overflow-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-500/[0.08] via-navy-900 to-purple-500/[0.04]"
+        >
+          {/* Dekorativer Glow */}
+          <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-purple-500/[0.08] blur-[80px]" />
+          <div className="pointer-events-none absolute -left-20 -bottom-20 h-60 w-60 rounded-full bg-purple-500/[0.06] blur-[80px]" />
+
+          <div className="relative flex flex-col gap-8 p-10 sm:p-14 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/25 to-purple-600/10 border border-purple-500/20 shadow-lg shadow-purple-500/10">
+                  <Building2 className="h-7 w-7 text-purple-300" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white sm:text-3xl">Enterprise</h3>
+                  <p className="text-sm text-purple-300/60">
+                    {enterprise.monthlyPrice}€/Monat &bull; individuell angepasst
+                  </p>
+                </div>
+              </div>
+
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-400">
+                Massgeschneiderte Loesung fuer Unternehmen mit hohem Volumen.
+                White-Label, eigene Infrastruktur und dedizierter Support.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {enterprise.features.slice(0, -1).map((f, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-2 text-sm text-slate-300"
+                  >
+                    <Check className="h-4 w-4 shrink-0 text-purple-400" />
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-4 lg:items-end">
+              <a
+                href="https://wa.me/4917647666407?text=Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20die%20Enterprise-Loesung!"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-full bg-purple-500 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-400 hover:scale-[1.02]"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Demo buchen
+                <ArrowRight className="h-4 w-4" />
+              </a>
+              <span className="text-xs text-slate-600">
+                Antwort innerhalb 24 Stunden
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Visuelle Trennung: Enterprise → Add-Ons */}
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="flex items-center gap-4">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+          <Sparkles className="h-4 w-4 text-purple-500/30" />
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+        </div>
+      </div>
+
       {/* Add-Ons */}
       <section className="relative z-10 mx-auto max-w-6xl px-6 py-16">
-        <div className="divider-purple mb-16" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
