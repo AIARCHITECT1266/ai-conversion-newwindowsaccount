@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
+import {
+  BRANCHEN_TEMPLATES,
+  getTemplateById,
+  fillPromptTemplate,
+} from "@/lib/bot/system-prompts";
 
 // ---------- Typen ----------
 
@@ -20,18 +25,10 @@ interface TenantData {
 
 const STEPS = [
   { number: 1, title: "Unternehmen", description: "Firmendaten erfassen" },
-  { number: 2, title: "KI-Prompt", description: "Bot-Verhalten definieren" },
-  { number: 3, title: "Live schalten", description: "Bot aktivieren" },
+  { number: 2, title: "Branche", description: "Bot-Vorlage wählen" },
+  { number: 3, title: "KI-Prompt", description: "Bot-Verhalten definieren" },
+  { number: 4, title: "Live schalten", description: "Bot aktivieren" },
 ];
-
-const DEFAULT_SYSTEM_PROMPT = `Du bist ein freundlicher und professioneller Vertriebsassistent. Deine Aufgabe ist es, Interessenten zu begrüßen, ihre Bedürfnisse zu verstehen und sie zu qualifizieren.
-
-Regeln:
-- Stelle dich kurz vor und frage nach dem Anliegen
-- Stelle maximal 2-3 gezielte Fragen zur Bedarfsermittlung
-- Sei höflich, aber zielorientiert
-- Biete bei Interesse einen Beratungstermin an
-- Antworte immer auf Deutsch`;
 
 // ---------- Hilfsfunktionen ----------
 
@@ -55,18 +52,23 @@ export default function OnboardingWizard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Schritt 1: Formulardaten
+  // Schritt 1: Firmendaten
   const [companyName, setCompanyName] = useState("");
   const [whatsappPhoneId, setWhatsappPhoneId] = useState("");
+  const [botName, setBotName] = useState("");
+  const [region, setRegion] = useState("");
 
-  // Schritt 2: System-Prompt
-  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
+  // Schritt 2: Branchenauswahl
+  const [selectedBranche, setSelectedBranche] = useState<string | null>(null);
+
+  // Schritt 3: System-Prompt (wird aus Template vorausgefuellt)
+  const [systemPrompt, setSystemPrompt] = useState("");
 
   // ---------- Schritt 1: Tenant erstellen ----------
 
   async function handleStep1() {
     if (!companyName.trim() || !whatsappPhoneId.trim()) {
-      setError("Bitte alle Felder ausfüllen.");
+      setError("Bitte Firmenname und WhatsApp Phone ID ausfüllen.");
       return;
     }
 
@@ -103,9 +105,32 @@ export default function OnboardingWizard() {
     }
   }
 
-  // ---------- Schritt 2: System-Prompt speichern ----------
+  // ---------- Schritt 2: Branche wählen → Prompt generieren ----------
 
-  async function handleStep2() {
+  function handleStep2() {
+    if (!selectedBranche) {
+      setError("Bitte wählen Sie eine Branche aus.");
+      return;
+    }
+
+    setError(null);
+
+    // Template mit Firmendaten vorausfuellen
+    const template = getTemplateById(selectedBranche);
+    const filledPrompt = fillPromptTemplate(template.template, {
+      botName: botName.trim() || "Max",
+      firmenname: companyName.trim(),
+      branche: template.label,
+      region: region.trim() || "DACH-Raum",
+    });
+
+    setSystemPrompt(filledPrompt);
+    setStep(3);
+  }
+
+  // ---------- Schritt 3: System-Prompt speichern ----------
+
+  async function handleStep3() {
     if (!tenant) return;
 
     setLoading(true);
@@ -126,7 +151,7 @@ export default function OnboardingWizard() {
       }
 
       setTenant(data.tenant);
-      setStep(3);
+      setStep(4);
     } catch {
       setError("Netzwerkfehler. Bitte erneut versuchen.");
     } finally {
@@ -134,7 +159,7 @@ export default function OnboardingWizard() {
     }
   }
 
-  // ---------- Schritt 3: Bot aktivieren ----------
+  // ---------- Schritt 4: Bot aktivieren ----------
 
   async function handleGoLive() {
     if (!tenant) return;
@@ -184,7 +209,7 @@ export default function OnboardingWizard() {
             Bot-<span className="text-gradient-purple">Onboarding</span>
           </h1>
           <p className="text-gray-400 mt-2">
-            In 3 Schritten zum eigenen WhatsApp-Bot
+            In 4 Schritten zum eigenen WhatsApp-Bot
           </p>
         </div>
 
@@ -218,7 +243,7 @@ export default function OnboardingWizard() {
               </div>
               {i < STEPS.length - 1 && (
                 <div
-                  className={`w-12 sm:w-20 h-px mx-2 transition-colors duration-300 ${
+                  className={`w-8 sm:w-14 h-px mx-1.5 transition-colors duration-300 ${
                     step > s.number ? "bg-emerald-500/40" : "bg-white/10"
                   }`}
                 />
@@ -261,13 +286,13 @@ export default function OnboardingWizard() {
                 <div className="space-y-5">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                      Firmenname
+                      Firmenname <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="z.B. Mustermann GmbH"
+                      placeholder="z.B. Mustermann Immobilien GmbH"
                       className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-colors"
                     />
                     {companyName && (
@@ -279,7 +304,7 @@ export default function OnboardingWizard() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                      WhatsApp Phone ID
+                      WhatsApp Phone ID <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -291,6 +316,40 @@ export default function OnboardingWizard() {
                     <p className="text-xs text-gray-500 mt-1">
                       Aus dem WhatsApp Business Manager (Meta Developer Portal)
                     </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                        Bot-Name
+                      </label>
+                      <input
+                        type="text"
+                        value={botName}
+                        onChange={(e) => setBotName(e.target.value)}
+                        placeholder="z.B. Max, Lisa"
+                        className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-colors"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optional – Standard: Max
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                        Region
+                      </label>
+                      <input
+                        type="text"
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value)}
+                        placeholder="z.B. München, Rhein-Main"
+                        className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-colors"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optional – Standard: DACH-Raum
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -304,7 +363,7 @@ export default function OnboardingWizard() {
               </motion.div>
             )}
 
-            {/* ========== Schritt 2: System-Prompt ========== */}
+            {/* ========== Schritt 2: Branchenauswahl ========== */}
             {step === 2 && (
               <motion.div
                 key="step2"
@@ -315,25 +374,45 @@ export default function OnboardingWizard() {
                 transition={{ duration: 0.25 }}
               >
                 <h2 className="text-xl font-semibold text-white mb-1">
-                  KI-Verhalten definieren
+                  Branche wählen
                 </h2>
                 <p className="text-gray-400 text-sm mb-6">
-                  Geben Sie Ihrem Bot Persönlichkeit und Anweisungen
+                  Wählen Sie eine Vorlage – der System-Prompt wird automatisch angepasst
                 </p>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    System-Prompt
-                  </label>
-                  <textarea
-                    value={systemPrompt}
-                    onChange={(e) => setSystemPrompt(e.target.value)}
-                    rows={12}
-                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-colors resize-none text-sm leading-relaxed font-mono"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Tipp: Definieren Sie Ton, Sprache und Gesprächsablauf. Kann jederzeit im Admin-Dashboard angepasst werden.
-                  </p>
+                <div className="space-y-3">
+                  {BRANCHEN_TEMPLATES.map((branche) => (
+                    <button
+                      key={branche.id}
+                      onClick={() => setSelectedBranche(branche.id)}
+                      className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
+                        selectedBranche === branche.id
+                          ? "border-purple-500/50 bg-purple-500/10 shadow-[0_0_20px_rgba(139,92,246,0.15)]"
+                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl mt-0.5">{branche.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className={`text-sm font-semibold ${
+                              selectedBranche === branche.id ? "text-purple-300" : "text-white"
+                            }`}>
+                              {branche.label}
+                            </p>
+                            {selectedBranche === branche.id && (
+                              <svg className="w-4 h-4 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {branche.description}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
 
                 <div className="flex gap-3 mt-8">
@@ -345,6 +424,61 @@ export default function OnboardingWizard() {
                   </button>
                   <button
                     onClick={handleStep2}
+                    disabled={!selectedBranche}
+                    className="flex-1 py-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Weiter
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ========== Schritt 3: System-Prompt ========== */}
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25 }}
+              >
+                <h2 className="text-xl font-semibold text-white mb-1">
+                  KI-Verhalten anpassen
+                </h2>
+                <p className="text-gray-400 text-sm mb-2">
+                  Der Prompt wurde automatisch für{" "}
+                  <span className="text-purple-400 font-medium">
+                    {selectedBranche ? getTemplateById(selectedBranche).label : "Ihre Branche"}
+                  </span>{" "}
+                  generiert. Passen Sie ihn bei Bedarf an.
+                </p>
+                <p className="text-gray-600 text-xs mb-6">
+                  {systemPrompt.length.toLocaleString("de-DE")} / 10.000 Zeichen
+                </p>
+
+                <div>
+                  <textarea
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                    rows={18}
+                    maxLength={10000}
+                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-colors resize-none text-sm leading-relaxed font-mono"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tipp: Definieren Sie Ton, Gesprächsablauf, Einwände und Terminbuchung. Kann jederzeit im Admin-Dashboard angepasst werden.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 mt-8">
+                  <button
+                    onClick={() => { setStep(2); setError(null); }}
+                    className="px-6 py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 font-medium transition-colors"
+                  >
+                    Zurück
+                  </button>
+                  <button
+                    onClick={handleStep3}
                     disabled={loading}
                     className="flex-1 py-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -354,10 +488,10 @@ export default function OnboardingWizard() {
               </motion.div>
             )}
 
-            {/* ========== Schritt 3: Live schalten ========== */}
-            {step === 3 && tenant && (
+            {/* ========== Schritt 4: Live schalten ========== */}
+            {step === 4 && tenant && (
               <motion.div
-                key="step3"
+                key="step4"
                 variants={slideVariants}
                 initial="enter"
                 animate="center"
@@ -380,17 +514,30 @@ export default function OnboardingWizard() {
                         <span className="text-white text-sm font-medium">{tenant.name}</span>
                       </div>
                       <div className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
-                        <span className="text-gray-400 text-sm">Slug</span>
-                        <span className="text-gray-300 text-sm font-mono">{tenant.slug}</span>
+                        <span className="text-gray-400 text-sm">Branche</span>
+                        <span className="text-purple-400 text-sm font-medium">
+                          {selectedBranche ? getTemplateById(selectedBranche).icon + " " + getTemplateById(selectedBranche).label : "–"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
+                        <span className="text-gray-400 text-sm">Bot-Name</span>
+                        <span className="text-gray-300 text-sm">{botName || "Max"}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
+                        <span className="text-gray-400 text-sm">Region</span>
+                        <span className="text-gray-300 text-sm">{region || "DACH-Raum"}</span>
                       </div>
                       <div className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
                         <span className="text-gray-400 text-sm">WhatsApp Phone ID</span>
                         <span className="text-gray-300 text-sm font-mono">{tenant.whatsappPhoneId}</span>
                       </div>
                       <div className="p-3 rounded-lg bg-white/5 border border-white/5">
-                        <span className="text-gray-400 text-sm block mb-2">System-Prompt</span>
+                        <span className="text-gray-400 text-sm block mb-2">
+                          System-Prompt ({(tenant.systemPrompt || systemPrompt).length.toLocaleString("de-DE")} Zeichen)
+                        </span>
                         <p className="text-gray-300 text-xs font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
-                          {tenant.systemPrompt || systemPrompt}
+                          {(tenant.systemPrompt || systemPrompt).slice(0, 500)}
+                          {(tenant.systemPrompt || systemPrompt).length > 500 && "..."}
                         </p>
                       </div>
                     </div>
