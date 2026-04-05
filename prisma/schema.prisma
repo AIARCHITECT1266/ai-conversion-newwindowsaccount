@@ -27,6 +27,12 @@ model Tenant {
   isActive         Boolean        @default(true)
   createdAt        DateTime       @default(now())
 
+  stripeCustomerId     String?    @unique
+  stripeSubscriptionId String?
+  stripePlan           String?
+  stripeStatus         String?    @default("incomplete")
+  billingEmail         String?
+
   conversations    Conversation[]
   leads            Lead[]
 
