@@ -12,6 +12,7 @@ import { generateReply } from "./claude";
 import { scoreLeadFromConversation } from "./gpt";
 import { sendMessage } from "../whatsapp";
 import { auditLog } from "../audit-log";
+import { notifyHighScoreLead } from "../lead-notification";
 import type { MessageRole } from "@/generated/prisma/enums";
 
 // DSGVO: Telefonnummern nie als Klartext speichern
@@ -231,6 +232,17 @@ export async function handleIncomingMessage(
     auditLog("bot.reply_sent", { tenantId: tenant.id, details: { conversationId: conversation.id } });
     if (scoreResult.success) {
       auditLog("bot.lead_scored", { tenantId: tenant.id, details: { conversationId: conversation.id, score: scoreResult.score } });
+
+      // E-Mail-Benachrichtigung bei Hot-Leads (Score > 70)
+      if (scoreResult.score !== undefined && scoreResult.score > 70) {
+        notifyHighScoreLead({
+          tenantName: tenant.name,
+          score: scoreResult.score,
+          qualification: scoreResult.qualification || "UNQUALIFIED",
+          lastMessage: message.text,
+          conversationId: conversation.id,
+        });
+      }
     }
 
     return { success: true, conversationId: conversation.id };
