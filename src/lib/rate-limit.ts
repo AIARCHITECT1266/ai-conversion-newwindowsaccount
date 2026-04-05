@@ -1,30 +1,58 @@
 // ============================================================
-// Einfacher In-Memory Rate-Limiter (Sliding Window)
-// Fuer Serverless: Pro Instanz, kein Cluster-weites Limit
-// Fuer produktives Rate-Limiting: Upstash Redis empfohlen
+// Rate-Limiting via Upstash Redis (cluster-weit)
+// Produktionsreif: Funktioniert über alle Serverless-Instanzen.
+// Fallback: In-Memory für lokale Entwicklung ohne Redis.
 // ============================================================
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-const store = new Map<string, RateLimitEntry>();
+// ---------- Redis-Client (Lazy-Init) ----------
 
-// Alte Eintraege regelmaessig aufraeumen
-const CLEANUP_INTERVAL = 60_000; // 1 Minute
-let lastCleanup = Date.now();
+let _redis: Redis | null = null;
 
-function cleanup() {
-  const now = Date.now();
-  if (now - lastCleanup < CLEANUP_INTERVAL) return;
-  lastCleanup = now;
-  for (const [key, entry] of store) {
-    if (entry.resetAt <= now) {
-      store.delete(key);
-    }
+function getRedis(): Redis | null {
+  if (_redis) return _redis;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    console.warn("[Rate-Limit] Upstash Redis nicht konfiguriert – Fallback auf In-Memory");
+    return null;
   }
+
+  _redis = new Redis({ url, token });
+  return _redis;
 }
+
+// ---------- Rate-Limiter Cache ----------
+
+const limiters = new Map<string, Ratelimit>();
+
+function getLimiter(prefix: string, max: number, windowMs: number): Ratelimit {
+  const key = `${prefix}:${max}:${windowMs}`;
+
+  const cached = limiters.get(key);
+  if (cached) return cached;
+
+  const redis = getRedis();
+  const windowSec = Math.ceil(windowMs / 1000);
+
+  // Upstash Ratelimit mit Sliding-Window
+  // Wenn kein Redis: In-Memory-Fallback mit Ephemeral-Cache
+  const limiter = new Ratelimit({
+    redis: redis ?? new Map() as unknown as Redis,
+    limiter: Ratelimit.slidingWindow(max, `${windowSec} s`),
+    prefix: `rl:${prefix}`,
+    ...(redis ? {} : { ephemeralCache: new Map() }),
+  });
+
+  limiters.set(key, limiter);
+  return limiter;
+}
+
+// ---------- Oeffentliche API ----------
 
 interface RateLimitOptions {
   /** Maximale Anfragen im Zeitfenster */
@@ -40,41 +68,39 @@ interface RateLimitResult {
 }
 
 /**
- * Prueft ob ein Request erlaubt ist.
- * @param key Eindeutiger Schluessel (z.B. IP-Adresse oder Route + IP)
+ * Prueft ob ein Request erlaubt ist (cluster-weit via Upstash Redis).
+ * @param key Eindeutiger Schluessel (z.B. "admin-login:1.2.3.4")
  * @param options Limit-Konfiguration
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   options: RateLimitOptions
-): RateLimitResult {
-  cleanup();
+): Promise<RateLimitResult> {
+  const prefix = key.split(":")[0] || "default";
+  const limiter = getLimiter(prefix, options.max, options.windowMs);
 
-  const now = Date.now();
-  const entry = store.get(key);
+  const result = await limiter.limit(key);
 
-  // Kein Eintrag oder Fenster abgelaufen: neues Fenster starten
-  if (!entry || entry.resetAt <= now) {
-    store.set(key, { count: 1, resetAt: now + options.windowMs });
-    return { allowed: true, remaining: options.max - 1, resetAt: now + options.windowMs };
-  }
-
-  // Innerhalb des Fensters
-  entry.count++;
-  if (entry.count > options.max) {
-    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
-  }
-
-  return { allowed: true, remaining: options.max - entry.count, resetAt: entry.resetAt };
+  return {
+    allowed: result.success,
+    remaining: result.remaining,
+    resetAt: result.reset,
+  };
 }
 
 /**
- * Hilfsfunktion: IP-Adresse aus Request extrahieren
+ * Hilfsfunktion: IP-Adresse aus Request extrahieren.
+ * Auf Vercel wird x-real-ip vom Edge-Netzwerk korrekt gesetzt.
  */
 export function getClientIp(request: Request): string {
+  // Vercel setzt x-real-ip zuverlaessig
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp;
+
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
     return forwarded.split(",")[0].trim();
   }
-  return request.headers.get("x-real-ip") || "unknown";
+
+  return "unknown";
 }

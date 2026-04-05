@@ -75,7 +75,7 @@ export default function OnboardingWizard() {
 
     try {
       const slug = generateSlug(companyName);
-      const res = await fetch("/api/admin/tenants", {
+      const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -112,10 +112,10 @@ export default function OnboardingWizard() {
     setError(null);
 
     try {
-      const res = await fetch(`/api/admin/tenants/${tenant.id}`, {
+      const res = await fetch("/api/onboarding", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ systemPrompt }),
+        body: JSON.stringify({ tenantId: tenant.id, systemPrompt }),
       });
 
       const data = await res.json();
@@ -143,10 +143,10 @@ export default function OnboardingWizard() {
     setError(null);
 
     try {
-      const res = await fetch(`/api/admin/tenants/${tenant.id}`, {
+      const res = await fetch("/api/onboarding", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: true }),
+        body: JSON.stringify({ tenantId: tenant.id, isActive: true }),
       });
 
       const data = await res.json();
@@ -446,7 +446,7 @@ export default function OnboardingWizard() {
 
         {/* Footer-Hinweis */}
         <p className="text-center text-gray-600 text-xs mt-6">
-          Nur für interne Nutzung. Kein Authentifizierungsschutz aktiv.
+          Nur für interne Nutzung. Rate-Limiting aktiv.
         </p>
       </div>
     </div>

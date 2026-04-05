@@ -175,12 +175,24 @@ export default function CalendarSection() {
                 <X className="h-5 w-5" />
               </button>
 
-              {/* Calendly iframe — replace YOUR_CALENDLY_URL */}
-              <iframe
-                src="YOUR_CALENDLY_URL?hide_gdpr_banner=1&background_color=08081a&text_color=e2e8f0&primary_color=8b5cf6"
-                className="h-full w-full border-0"
-                title="Termin buchen"
-              />
+              {/* Calendly iframe – URL wird aus NEXT_PUBLIC_CALENDLY_URL geladen */}
+              {process.env.NEXT_PUBLIC_CALENDLY_URL ? (
+                <iframe
+                  src={`${process.env.NEXT_PUBLIC_CALENDLY_URL}?hide_gdpr_banner=1&background_color=08081a&text_color=e2e8f0&primary_color=8b5cf6`}
+                  className="h-full w-full border-0"
+                  title="Termin buchen"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-slate-400">
+                  <p className="text-center text-sm">
+                    Terminbuchung wird in Kürze verfügbar sein.<br />
+                    Kontaktieren Sie uns unter{" "}
+                    <a href="mailto:hello@ai-conversion.ai" className="text-purple-400 underline">
+                      hello@ai-conversion.ai
+                    </a>
+                  </p>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

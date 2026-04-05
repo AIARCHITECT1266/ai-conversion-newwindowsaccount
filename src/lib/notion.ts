@@ -1,16 +1,23 @@
 // ============================================================
 // Notion-Integration – Session-Notizen erstellen
 // Speichert Zusammenfassungen als neue Einträge in einer Notion-Datenbank.
-// Benötigt NOTION_API_KEY und NOTION_DATABASE_ID.
+// Benötigt NOTION_API_KEY und NOTION_SESSION_DB_ID.
 // ============================================================
 
 import { Client } from "@notionhq/client";
 
-const notion = new Client({
-  auth: process.env.NOTION_API_KEY,
-});
+// ---------- Lazy-Init Client ----------
 
-const DATABASE_ID = process.env.NOTION_DATABASE_ID;
+let _notion: Client | null = null;
+function getClient(): Client | null {
+  if (_notion) return _notion;
+
+  const apiKey = process.env.NOTION_API_KEY;
+  if (!apiKey) return null;
+
+  _notion = new Client({ auth: apiKey });
+  return _notion;
+}
 
 // ---------- Typen ----------
 
@@ -33,8 +40,15 @@ export async function createSessionNote(
   title: string,
   content: string
 ): Promise<SessionNoteResult> {
-  if (!DATABASE_ID) {
-    return { success: false, error: "NOTION_DATABASE_ID ist nicht gesetzt" };
+  const notion = getClient();
+  if (!notion) {
+    return { success: false, error: "NOTION_API_KEY ist nicht gesetzt" };
+  }
+
+  // Korrekter Env-Var-Name laut CLAUDE.md
+  const databaseId = process.env.NOTION_SESSION_DB_ID;
+  if (!databaseId) {
+    return { success: false, error: "NOTION_SESSION_DB_ID ist nicht gesetzt" };
   }
 
   try {
@@ -42,7 +56,7 @@ export async function createSessionNote(
     const contentBlocks = splitIntoBlocks(content);
 
     const response = await notion.pages.create({
-      parent: { database_id: DATABASE_ID },
+      parent: { database_id: databaseId },
       properties: {
         Name: {
           title: [
@@ -85,23 +99,35 @@ function splitIntoBlocks(content: string) {
     const trimmed = paragraph.trim();
     if (!trimmed) return null;
 
-    // Überschriften erkennen
+    // H1-Überschriften erkennen
+    if (trimmed.startsWith("# ") && !trimmed.startsWith("## ")) {
+      return {
+        object: "block" as const,
+        type: "heading_1" as const,
+        heading_1: {
+          rich_text: [{ text: { content: trimmed.slice(2) } }],
+        },
+      };
+    }
+
+    // H2-Überschriften erkennen
+    if (trimmed.startsWith("## ") && !trimmed.startsWith("### ")) {
+      return {
+        object: "block" as const,
+        type: "heading_2" as const,
+        heading_2: {
+          rich_text: [{ text: { content: trimmed.slice(3) } }],
+        },
+      };
+    }
+
+    // H3-Überschriften erkennen
     if (trimmed.startsWith("### ")) {
       return {
         object: "block" as const,
         type: "heading_3" as const,
         heading_3: {
           rich_text: [{ text: { content: trimmed.slice(4) } }],
-        },
-      };
-    }
-
-    if (trimmed.startsWith("## ")) {
-      return {
-        object: "block" as const,
-        type: "heading_2" as const,
-        heading_2: {
-          rich_text: [{ text: { content: trimmed.slice(3) } }],
         },
       };
     }

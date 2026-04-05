@@ -1,11 +1,13 @@
 // ============================================================
 // WhatsApp Cloud API – Nachrichten-Client
-// Schritt 2: Textnachrichten senden über die offizielle API
+// Textnachrichten senden über die offizielle Meta API
 // DSGVO-konform: Telefonnummern werden nur für den API-Aufruf
 // verwendet und nicht geloggt oder gespeichert.
 // ============================================================
 
 const WHATSAPP_API_URL = "https://graph.facebook.com/v21.0";
+const MAX_MESSAGE_LENGTH = 4096; // WhatsApp-Limit für Textnachrichten
+const SEND_TIMEOUT_MS = 15_000; // 15 Sekunden Timeout
 
 // ---------- Typen ----------
 
@@ -24,15 +26,6 @@ interface WhatsAppApiResponse {
   messaging_product: string;
   contacts: Array<{ wa_id: string }>;
   messages: Array<{ id: string }>;
-}
-
-interface WhatsAppApiError {
-  error: {
-    message: string;
-    type: string;
-    code: number;
-    fbtrace_id: string;
-  };
 }
 
 export interface SendMessageResult {
@@ -74,6 +67,15 @@ export async function sendMessage(
   const { token, phoneId: defaultPhoneId } = getConfig();
   const phoneId = phoneNumberId || defaultPhoneId;
 
+  // Nachrichtenlänge validieren
+  if (body.length > MAX_MESSAGE_LENGTH) {
+    console.warn("[WhatsApp] Nachricht zu lang, wird abgeschnitten", {
+      originalLength: body.length,
+      maxLength: MAX_MESSAGE_LENGTH,
+    });
+    body = body.slice(0, MAX_MESSAGE_LENGTH);
+  }
+
   const payload: WhatsAppTextMessage = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -85,6 +87,10 @@ export async function sendMessage(
     },
   };
 
+  // Timeout: 15 Sekunden
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+
   try {
     const response = await fetch(
       `${WHATSAPP_API_URL}/${phoneId}/messages`,
@@ -95,22 +101,32 @@ export async function sendMessage(
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       }
     );
 
     if (!response.ok) {
-      const errorData = (await response.json()) as WhatsAppApiError;
-      console.error("[WhatsApp] API-Fehler", {
-        statusCode: response.status,
-        errorCode: errorData.error.code,
-        errorType: errorData.error.type,
-        // DSGVO: Keine Telefonnummer im Log
-      });
+      // Sichere Fehler-Extraktion mit Optional-Chaining
+      let errorMessage = `API-Fehler ${response.status}`;
+      try {
+        const errorData = await response.json();
+        const apiError = errorData?.error;
+        if (apiError?.message) {
+          errorMessage = `API-Fehler ${response.status}: ${apiError.message}`;
+        }
+        console.error("[WhatsApp] API-Fehler", {
+          statusCode: response.status,
+          errorCode: apiError?.code,
+          errorType: apiError?.type,
+          // DSGVO: Keine Telefonnummer im Log
+        });
+      } catch {
+        console.error("[WhatsApp] API-Fehler (kein JSON)", {
+          statusCode: response.status,
+        });
+      }
 
-      return {
-        success: false,
-        error: `API-Fehler ${response.status}: ${errorData.error.message}`,
-      };
+      return { success: false, error: errorMessage };
     }
 
     const data = (await response.json()) as WhatsAppApiResponse;
@@ -129,5 +145,7 @@ export async function sendMessage(
     console.error("[WhatsApp] Sendefehler", { error: errorMessage });
 
     return { success: false, error: errorMessage };
+  } finally {
+    clearTimeout(timeout);
   }
 }

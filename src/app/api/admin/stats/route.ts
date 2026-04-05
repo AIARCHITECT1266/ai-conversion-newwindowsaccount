@@ -4,11 +4,28 @@
 // Authentifizierung: via Middleware (Bearer-Token / Cookie)
 // ============================================================
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { LeadQualification } from "@/generated/prisma/enums";
 
-export async function GET() {
+// Gueltige Qualifikationsstufen fuer typsichere Indexierung
+const VALID_QUALIFICATIONS: LeadQualification[] = [
+  "UNQUALIFIED",
+  "MARKETING_QUALIFIED",
+  "SALES_QUALIFIED",
+  "OPPORTUNITY",
+  "CUSTOMER",
+];
+
+export async function GET(request: NextRequest) {
   try {
+    // Pagination: Standardmäßig max. 50 Tenants
+    const take = Math.min(
+      parseInt(request.nextUrl.searchParams.get("limit") ?? "50", 10) || 50,
+      100
+    );
+    const skip = parseInt(request.nextUrl.searchParams.get("offset") ?? "0", 10) || 0;
+
     // Globale Lead-Pipeline-Zahlen
     const pipeline = await db.lead.groupBy({
       by: ["qualification"],
@@ -21,31 +38,36 @@ export async function GET() {
       _count: { id: true },
     });
 
-    // Pro Tenant: Letzter Kontakt (neueste Nachricht)
-    const tenants = await db.tenant.findMany({
-      select: {
-        id: true,
-        conversations: {
-          select: {
-            messages: {
-              select: { timestamp: true },
-              orderBy: { timestamp: "desc" },
-              take: 1,
+    // Pro Tenant: Letzter Kontakt (paginiert)
+    const [tenants, totalTenants] = await Promise.all([
+      db.tenant.findMany({
+        take,
+        skip,
+        select: {
+          id: true,
+          conversations: {
+            select: {
+              messages: {
+                select: { timestamp: true },
+                orderBy: { timestamp: "desc" },
+                take: 1,
+              },
             },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
           },
-          orderBy: { updatedAt: "desc" },
-          take: 1,
+          leads: {
+            select: { qualification: true, status: true },
+          },
         },
-        leads: {
-          select: { qualification: true, status: true },
-        },
-      },
-    });
+      }),
+      db.tenant.count(),
+    ]);
 
     // Letzten Kontakt und Lead-Pipeline pro Tenant aufbereiten
     const tenantStats = tenants.map((t) => {
       const lastMessage = t.conversations[0]?.messages[0]?.timestamp ?? null;
-      const leadPipeline = {
+      const leadPipeline: Record<LeadQualification, number> = {
         UNQUALIFIED: 0,
         MARKETING_QUALIFIED: 0,
         SALES_QUALIFIED: 0,
@@ -53,7 +75,10 @@ export async function GET() {
         CUSTOMER: 0,
       };
       for (const lead of t.leads) {
-        leadPipeline[lead.qualification]++;
+        // Typsichere Indexierung: Nur gueltige Qualifikationen zaehlen
+        if (VALID_QUALIFICATIONS.includes(lead.qualification)) {
+          leadPipeline[lead.qualification]++;
+        }
       }
       return {
         tenantId: t.id,
@@ -70,6 +95,11 @@ export async function GET() {
         statusDistribution.map((s) => [s.status, s._count.id])
       ),
       tenantStats,
+      pagination: {
+        total: totalTenants,
+        limit: take,
+        offset: skip,
+      },
     });
   } catch (error) {
     console.error("[Admin] Fehler beim Laden der Statistiken", {

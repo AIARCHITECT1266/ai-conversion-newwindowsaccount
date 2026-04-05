@@ -1,24 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
+import { validateAdminSession } from "@/lib/session";
 
 // Geschuetzte Pfade: /admin und /api/admin/*
 const ADMIN_PATHS = ["/admin", "/api/admin"];
 // Dashboard-Pfade (geschuetzt via Magic-Link Token)
 const DASHBOARD_PATHS = ["/dashboard", "/api/dashboard"];
-// Login-Routen sind oeffentlich
+// Oeffentliche Routen innerhalb geschuetzter Pfade
 const DASHBOARD_LOGIN = "/dashboard/login";
+const DASHBOARD_LOGOUT = "/dashboard/logout";
 const ADMIN_LOGIN = "/api/admin/login";
+// Onboarding-API ist oeffentlich (eigener Endpoint mit Rate-Limiting)
+const ONBOARDING_PATH = "/api/onboarding";
 
 function isAdminPath(pathname: string): boolean {
   // Login-Route nicht schuetzen (POST-basiertes Login)
   if (pathname === ADMIN_LOGIN) return false;
+  // Onboarding-API ist oeffentlich
+  if (pathname === ONBOARDING_PATH || pathname.startsWith(ONBOARDING_PATH + "/")) return false;
   return ADMIN_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 }
 
 function isDashboardPath(pathname: string): boolean {
-  // Login-Route nicht schuetzen
+  // Login- und Logout-Routen nicht schuetzen
   if (pathname === DASHBOARD_LOGIN || pathname.startsWith(DASHBOARD_LOGIN + "/")) {
+    return false;
+  }
+  if (pathname === DASHBOARD_LOGOUT || pathname.startsWith(DASHBOARD_LOGOUT + "/")) {
     return false;
   }
   return DASHBOARD_PATHS.some(
@@ -50,29 +59,21 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) {
-    // Kein Secret konfiguriert → Zugriff verweigern
-    return NextResponse.json(
-      { error: "Server-Konfigurationsfehler" },
-      { status: 500 }
-    );
-  }
-
-  // 1. API-Routen: Bearer-Token, Cookie oder Query-Param pruefen
+  // 1. API-Routen: Bearer-Token oder Cookie pruefen (Session-Token, nicht Secret)
   if (req.nextUrl.pathname.startsWith("/api/admin")) {
     const authHeader = req.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ")
+    const bearerToken = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7)
       : null;
 
-    if (token === secret) {
+    // Session-Token via Bearer-Header pruefen
+    if (bearerToken && validateAdminSession(bearerToken)) {
       return NextResponse.next();
     }
 
-    // Fallback: Cookie (Browser-Aufrufe aus dem Admin-Dashboard)
+    // Fallback: Session-Cookie (Browser-Aufrufe aus dem Admin-Dashboard)
     const adminCookie = req.cookies.get("admin_token")?.value;
-    if (adminCookie === secret) {
+    if (adminCookie && validateAdminSession(adminCookie)) {
       return NextResponse.next();
     }
 
@@ -81,7 +82,7 @@ export function middleware(req: NextRequest) {
 
   // 2. Admin-Seiten (/admin): Cookie-basierte Authentifizierung
   const adminCookie = req.cookies.get("admin_token")?.value;
-  if (adminCookie === secret) {
+  if (adminCookie && validateAdminSession(adminCookie)) {
     return NextResponse.next();
   }
 
@@ -156,5 +157,10 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/dashboard/:path*", "/api/dashboard/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/dashboard/:path*",
+    "/api/dashboard/:path*",
+  ],
 };

@@ -1,13 +1,44 @@
 // ============================================================
 // Admin-API: Einzelnen Tenant lesen und aktualisieren
-// GET: Tenant-Details inkl. systemPrompt
+// GET: Tenant-Details inkl. systemPrompt (ohne dashboardToken)
 // PATCH: Tenant-Einstellungen ändern
+// POST: Dashboard-Token neu generieren
 // Authentifizierung: via Middleware (Bearer-Token / Cookie)
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
+import { z } from "zod";
 import { db } from "@/lib/db";
+
+// Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
+const TENANT_PUBLIC_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  whatsappPhoneId: true,
+  systemPrompt: true,
+  brandName: true,
+  brandColor: true,
+  retentionDays: true,
+  isActive: true,
+  createdAt: true,
+} as const;
+
+// Zod-Schema fuer PATCH-Body
+const updateTenantSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  brandName: z.string().min(1).max(255).optional(),
+  brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  retentionDays: z.number().int().min(1).max(3650).optional(),
+  systemPrompt: z.string().max(10000).optional(),
+  isActive: z.boolean().optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: "Mindestens ein Feld muss angegeben werden",
+});
+
+// ID-Validierung (CUID-Format)
+const idSchema = z.string().min(1);
 
 // ---------- GET: Tenant-Details ----------
 
@@ -17,9 +48,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: "Ungültige Tenant-ID" }, { status: 400 });
+    }
+
     const tenant = await db.tenant.findUnique({
       where: { id },
-      include: {
+      select: {
+        ...TENANT_PUBLIC_SELECT,
         _count: {
           select: {
             conversations: true,
@@ -47,73 +84,32 @@ export async function GET(
 
 // ---------- PATCH: Tenant aktualisieren ----------
 
-interface UpdateTenantBody {
-  name?: string;
-  brandName?: string;
-  brandColor?: string;
-  retentionDays?: number;
-  systemPrompt?: string;
-  isActive?: boolean;
-}
-
-const ALLOWED_FIELDS: (keyof UpdateTenantBody)[] = [
-  "name",
-  "brandName",
-  "brandColor",
-  "retentionDays",
-  "systemPrompt",
-  "isActive",
-];
-
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = (await request.json()) as UpdateTenantBody;
-
-    // Nur erlaubte Felder übernehmen
-    const data: Record<string, unknown> = {};
-    for (const key of ALLOWED_FIELDS) {
-      if (body[key] !== undefined) {
-        data[key] = body[key];
-      }
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: "Ungültige Tenant-ID" }, { status: 400 });
     }
 
-    if (Object.keys(data).length === 0) {
-      return NextResponse.json(
-        { error: "Keine gültigen Felder zum Aktualisieren" },
-        { status: 400 }
-      );
+    const rawBody: unknown = await request.json();
+    const parseResult = updateTenantSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const errors = parseResult.error.issues
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errors }, { status: 400 });
     }
 
-    // Laengenlimits validieren
-    if (typeof data.name === "string" && data.name.length > 255) {
-      return NextResponse.json({ error: "name darf maximal 255 Zeichen lang sein" }, { status: 400 });
-    }
-    if (typeof data.brandName === "string" && data.brandName.length > 255) {
-      return NextResponse.json({ error: "brandName darf maximal 255 Zeichen lang sein" }, { status: 400 });
-    }
-    if (typeof data.systemPrompt === "string" && data.systemPrompt.length > 10000) {
-      return NextResponse.json({ error: "systemPrompt darf maximal 10.000 Zeichen lang sein" }, { status: 400 });
-    }
-
-    // retentionDays validieren
-    if (data.retentionDays !== undefined) {
-      const days = Number(data.retentionDays);
-      if (!Number.isInteger(days) || days < 1 || days > 3650) {
-        return NextResponse.json(
-          { error: "retentionDays muss zwischen 1 und 3650 liegen" },
-          { status: 400 }
-        );
-      }
-      data.retentionDays = days;
-    }
+    const data = parseResult.data;
 
     const tenant = await db.tenant.update({
       where: { id },
       data,
+      select: TENANT_PUBLIC_SELECT,
     });
 
     console.log("[Admin] Tenant aktualisiert", {
@@ -148,6 +144,11 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: "Ungültige Tenant-ID" }, { status: 400 });
+    }
+
     const dashboardToken = randomBytes(32).toString("hex");
 
     const tenant = await db.tenant.update({
@@ -158,9 +159,11 @@ export async function POST(
 
     console.log("[Admin] Dashboard-Token regeneriert", { tenantId: tenant.id });
 
+    // Token-Wert wird NICHT in der Response exponiert – nur der Login-Pfad
+    // Der Admin muss den Link direkt an den Tenant weitergeben
     return NextResponse.json({
       tenantId: tenant.id,
-      dashboardLoginPath: `/dashboard/login?token=${dashboardToken}`,
+      message: "Dashboard-Token wurde regeneriert",
     });
   } catch (error) {
     if (

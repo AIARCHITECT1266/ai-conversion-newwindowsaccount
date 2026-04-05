@@ -34,8 +34,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/logo1.jpg",
-        width: 1024,
-        height: 1024,
+        width: 1200,
+        height: 630,
         alt: "AI Conversion – KI-gestützter WhatsApp-Vertrieb",
       },
     ],

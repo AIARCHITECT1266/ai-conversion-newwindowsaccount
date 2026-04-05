@@ -13,13 +13,19 @@ import { scoreLeadFromConversation } from "./gpt";
 import { sendMessage } from "../whatsapp";
 import { auditLog } from "../audit-log";
 import { notifyHighScoreLead } from "../lead-notification";
-import type { MessageRole } from "@/generated/prisma/enums";
+import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
 
 // DSGVO: Telefonnummern nie als Klartext speichern
 function hashPhoneNumber(phone: string): string {
-  const salt = process.env.ENCRYPTION_KEY || "";
+  const salt = process.env.ENCRYPTION_KEY;
+  if (!salt) {
+    throw new Error("[Handler] ENCRYPTION_KEY fehlt – Telefonnummern können nicht gehasht werden");
+  }
   return createHash("sha256").update(phone + salt).digest("hex");
 }
+
+// Lead-Status-Hierarchie: Höherer Index = weiter fortgeschritten
+const LEAD_STATUS_ORDER = ["NEW", "CONTACTED", "APPOINTMENT_SET", "CONVERTED", "LOST"] as const;
 
 // ---------- Typen ----------
 
@@ -44,6 +50,10 @@ const CONSENT_MESSAGE =
   "gespeichert und nach unserer Aufbewahrungsfrist automatisch gelöscht. " +
   "Mit Ihrer nächsten Nachricht stimmen Sie der Verarbeitung gemäß unserer " +
   'Datenschutzerklärung zu. Antworten Sie "STOP" um die Verarbeitung zu beenden.';
+
+const FALLBACK_MESSAGE =
+  "Entschuldigung, es ist ein technischer Fehler aufgetreten. " +
+  "Bitte versuchen Sie es in wenigen Minuten erneut.";
 
 // ---------- Gesprächsverlauf laden (entschlüsselt) ----------
 
@@ -118,7 +128,7 @@ export async function handleIncomingMessage(
       where: {
         tenantId_externalId: { tenantId: tenant.id, externalId },
       },
-      select: { id: true },
+      select: { id: true, status: true, consentGiven: true },
     });
 
     const conversation = await db.conversation.upsert({
@@ -135,7 +145,13 @@ export async function handleIncomingMessage(
 
     // Neue Konversation: DSGVO-Consent anfordern
     if (!conversationBefore) {
-      await sendMessage(message.from, CONSENT_MESSAGE, message.phoneNumberId);
+      const sendResult = await sendMessage(message.from, CONSENT_MESSAGE, message.phoneNumberId);
+      if (!sendResult.success) {
+        console.error("[Handler] Consent-Nachricht konnte nicht gesendet werden", {
+          conversationId: conversation.id,
+          error: sendResult.error,
+        });
+      }
 
       auditLog("bot.conversation_created", { tenantId: tenant.id, details: { conversationId: conversation.id } });
       auditLog("bot.consent_requested", { tenantId: tenant.id, details: { conversationId: conversation.id } });
@@ -145,18 +161,28 @@ export async function handleIncomingMessage(
 
     // 3. STOP-Befehl prüfen (DSGVO: Verarbeitung beenden)
     if (message.text.trim().toUpperCase() === "STOP") {
+      // Bereits geschlossene Conversations nicht erneut verarbeiten
+      if (conversationBefore.status === "CLOSED") {
+        return { success: true, conversationId: conversation.id };
+      }
+
       await db.conversation.update({
         where: { id: conversation.id },
         data: { status: "CLOSED" },
       });
 
-      await sendMessage(
+      const sendResult = await sendMessage(
         message.from,
         "Ihre Daten werden nicht mehr verarbeitet. " +
           "Bestehende Daten werden nach Ablauf der Aufbewahrungsfrist gelöscht. " +
           "Vielen Dank für Ihr Vertrauen.",
         message.phoneNumberId
       );
+      if (!sendResult.success) {
+        console.error("[Handler] STOP-Bestätigung konnte nicht gesendet werden", {
+          conversationId: conversation.id,
+        });
+      }
 
       auditLog("bot.conversation_stopped", { tenantId: tenant.id, details: { conversationId: conversation.id } });
 
@@ -164,7 +190,7 @@ export async function handleIncomingMessage(
     }
 
     // 4. Consent als erteilt markieren (zweite Nachricht = Zustimmung)
-    if (!conversation.consentGiven) {
+    if (!conversationBefore.consentGiven) {
       await db.conversation.update({
         where: { id: conversation.id },
         data: {
@@ -182,7 +208,7 @@ export async function handleIncomingMessage(
     const claudeResult = await generateReply(
       tenant.systemPrompt,
       tenant.brandName,
-      history.slice(0, -1), // Ohne die gerade gespeicherte Nachricht (die wird als userMessage übergeben)
+      history.slice(0, -1), // Ohne die gerade gespeicherte Nachricht (wird als userMessage übergeben)
       message.text
     );
 
@@ -191,6 +217,10 @@ export async function handleIncomingMessage(
         conversationId: conversation.id,
         error: claudeResult.error,
       });
+
+      // Fallback-Nachricht an den Nutzer senden, damit er nicht ohne Antwort bleibt
+      await sendMessage(message.from, FALLBACK_MESSAGE, message.phoneNumberId);
+
       return {
         success: false,
         conversationId: conversation.id,
@@ -198,52 +228,97 @@ export async function handleIncomingMessage(
       };
     }
 
-    // 7. Claude-Antwort verschlüsselt speichern & senden
-    await saveMessage(conversation.id, "ASSISTANT", claudeResult.reply);
-    await sendMessage(message.from, claudeResult.reply, message.phoneNumberId);
+    // 7. Claude-Antwort verschlüsselt speichern & parallel senden
+    const [, sendResult] = await Promise.all([
+      saveMessage(conversation.id, "ASSISTANT", claudeResult.reply),
+      sendMessage(message.from, claudeResult.reply, message.phoneNumberId),
+    ]);
 
-    // 8. Lead-Score aktualisieren – History wiederverwenden statt erneut laden
+    if (!sendResult.success) {
+      console.error("[Handler] WhatsApp-Nachricht konnte nicht gesendet werden", {
+        conversationId: conversation.id,
+        error: sendResult.error,
+      });
+      auditLog("bot.reply_failed", { tenantId: tenant.id, details: { conversationId: conversation.id } });
+    }
+
+    // 8. Lead-Score aktualisieren (im Hintergrund, blockiert nicht die Antwort)
     const fullHistory = [
       ...history,
       { role: "assistant" as const, content: claudeResult.reply },
     ];
     const scoringText = formatConversationForScoring(fullHistory);
-    const scoreResult = await scoreLeadFromConversation(scoringText);
 
-    if (scoreResult.success && scoreResult.score !== undefined) {
-      await db.lead.upsert({
-        where: { conversationId: conversation.id },
-        create: {
+    // Lead-Scoring asynchron – Fehler werden geloggt, blockieren aber nicht
+    scoreLeadFromConversation(scoringText)
+      .then(async (scoreResult) => {
+        if (!scoreResult.success || scoreResult.score === undefined) return;
+
+        // Bestehenden Lead laden um Status-Downgrade zu verhindern
+        const existingLead = await db.lead.findUnique({
+          where: { conversationId: conversation.id },
+          select: { status: true },
+        });
+
+        // Neuen Status berechnen (nie herabstufen)
+        const proposedStatus: LeadStatus = scoreResult.score >= 76 ? "CONTACTED" : "NEW";
+        let finalStatus: LeadStatus = proposedStatus;
+        if (existingLead) {
+          const currentIdx = LEAD_STATUS_ORDER.indexOf(
+            existingLead.status as typeof LEAD_STATUS_ORDER[number]
+          );
+          const proposedIdx = LEAD_STATUS_ORDER.indexOf(
+            proposedStatus as typeof LEAD_STATUS_ORDER[number]
+          );
+          if (currentIdx > proposedIdx) {
+            finalStatus = existingLead.status as LeadStatus;
+          }
+        }
+
+        await db.lead.upsert({
+          where: { conversationId: conversation.id },
+          create: {
+            tenantId: tenant.id,
+            conversationId: conversation.id,
+            score: scoreResult.score,
+            qualification: scoreResult.qualification || "UNQUALIFIED",
+            status: "NEW",
+          },
+          update: {
+            score: scoreResult.score,
+            qualification: scoreResult.qualification || "UNQUALIFIED",
+            status: finalStatus,
+          },
+        });
+
+        auditLog("bot.lead_scored", {
           tenantId: tenant.id,
+          details: { conversationId: conversation.id, score: scoreResult.score },
+        });
+
+        // E-Mail-Benachrichtigung bei Hot-Leads (Score > 70)
+        if (scoreResult.score > 70) {
+          notifyHighScoreLead({
+            tenantName: tenant.name,
+            score: scoreResult.score,
+            qualification: scoreResult.qualification || "UNQUALIFIED",
+            lastMessage: message.text,
+            conversationId: conversation.id,
+          }).catch((err) => {
+            console.error("[Handler] Lead-Benachrichtigung fehlgeschlagen", {
+              error: err instanceof Error ? err.message : "Unbekannt",
+            });
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("[Handler] Lead-Scoring fehlgeschlagen", {
           conversationId: conversation.id,
-          score: scoreResult.score,
-          qualification: scoreResult.qualification || "UNQUALIFIED",
-          status: "NEW",
-        },
-        update: {
-          score: scoreResult.score,
-          qualification: scoreResult.qualification || "UNQUALIFIED",
-          status:
-            scoreResult.score >= 76 ? "CONTACTED" : "NEW",
-        },
+          error: error instanceof Error ? error.message : "Unbekannt",
+        });
       });
-    }
 
     auditLog("bot.reply_sent", { tenantId: tenant.id, details: { conversationId: conversation.id } });
-    if (scoreResult.success) {
-      auditLog("bot.lead_scored", { tenantId: tenant.id, details: { conversationId: conversation.id, score: scoreResult.score } });
-
-      // E-Mail-Benachrichtigung bei Hot-Leads (Score > 70)
-      if (scoreResult.score !== undefined && scoreResult.score > 70) {
-        notifyHighScoreLead({
-          tenantName: tenant.name,
-          score: scoreResult.score,
-          qualification: scoreResult.qualification || "UNQUALIFIED",
-          lastMessage: message.text,
-          conversationId: conversation.id,
-        });
-      }
-    }
 
     return { success: true, conversationId: conversation.id };
   } catch (error) {

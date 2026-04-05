@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getDashboardTenant } from "@/lib/dashboard-auth";
+import { decryptText } from "@/lib/encryption";
 
 // GET /api/dashboard/stats — Tenant wird aus dem Cookie aufgelöst
 export async function GET() {
@@ -119,15 +120,27 @@ export async function GET() {
     count: pipelineMap.get(q) ?? 0,
   }));
 
-  // Letzte Conversations formatieren
-  const conversations = recentConversations.map((c) => ({
-    id: c.id,
-    externalId: c.externalId,
-    status: c.status,
-    updatedAt: c.updatedAt.toISOString(),
-    lastMessage: c.messages[0]?.contentEncrypted ?? null,
-    lastMessageAt: c.messages[0]?.timestamp.toISOString() ?? null,
-  }));
+  // Letzte Conversations formatieren – verschlüsselte Nachrichten entschlüsseln
+  const conversations = recentConversations.map((c) => {
+    let lastMessage: string | null = null;
+    if (c.messages[0]?.contentEncrypted) {
+      try {
+        lastMessage = decryptText(c.messages[0].contentEncrypted);
+      } catch {
+        // Entschlüsselung fehlgeschlagen – Platzhalter anzeigen
+        lastMessage = "[Nachricht nicht lesbar]";
+      }
+    }
+
+    return {
+      id: c.id,
+      externalId: c.externalId,
+      status: c.status,
+      updatedAt: c.updatedAt.toISOString(),
+      lastMessage,
+      lastMessageAt: c.messages[0]?.timestamp.toISOString() ?? null,
+    };
+  });
 
   return NextResponse.json({
     kpis: {

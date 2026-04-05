@@ -26,12 +26,30 @@ type AuditAction =
   | "cron.cleanup_completed"
   | "rate_limit.exceeded";
 
+// DSGVO: Felder die nie in Details auftauchen duerfen
+const SENSITIVE_FIELDS = new Set([
+  "phone", "telefon", "email", "name", "address", "adresse",
+  "password", "secret", "token", "key", "content", "message", "nachricht",
+]);
+
 interface AuditEntry {
   timestamp: string;
   action: AuditAction;
   tenantId?: string;
   ip?: string;
   details?: Record<string, unknown>;
+}
+
+/**
+ * Filtert potenziell sensible Felder aus Details.
+ */
+function sanitizeDetails(details: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(details)) {
+    if (SENSITIVE_FIELDS.has(key.toLowerCase())) continue;
+    sanitized[key] = value;
+  }
+  return sanitized;
 }
 
 /**
@@ -49,8 +67,11 @@ export function auditLog(
   const entry: AuditEntry = {
     timestamp: new Date().toISOString(),
     action,
-    ...options,
   };
+
+  if (options?.tenantId) entry.tenantId = options.tenantId;
+  if (options?.ip) entry.ip = options.ip;
+  if (options?.details) entry.details = sanitizeDetails(options.details);
 
   // Structured JSON logging – von Vercel Log Drain parsebar
   console.log(JSON.stringify(entry));

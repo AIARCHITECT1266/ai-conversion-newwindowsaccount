@@ -7,16 +7,21 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { safeCompare } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
-  // Absicherung: Nur via Vercel Cron oder mit CRON_SECRET aufrufbar
-  const authHeader = request.headers.get("authorization");
+  // Absicherung: CRON_SECRET muss konfiguriert sein
   const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error("[DSGVO Cleanup] CRON_SECRET nicht konfiguriert – Endpoint gesperrt");
+    return NextResponse.json({ error: "Nicht konfiguriert" }, { status: 503 });
+  }
 
-  if (cronSecret) {
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
-    }
+  // Timing-sicherer Vergleich des Authorization-Headers
+  const authHeader = request.headers.get("authorization");
+  const providedToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!providedToken || !safeCompare(providedToken, cronSecret)) {
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
   try {

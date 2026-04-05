@@ -6,9 +6,19 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// ---------- Lazy-Init Client ----------
+
+let _anthropic: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (!_anthropic) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error("[Claude] ANTHROPIC_API_KEY nicht konfiguriert");
+    }
+    _anthropic = new Anthropic({ apiKey });
+  }
+  return _anthropic;
+}
 
 // ---------- Typen ----------
 
@@ -85,16 +95,24 @@ export async function generateReply(
     { role: "user", content: userMessage },
   ];
 
+  // Timeout: 30 Sekunden
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
   try {
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 512,
-      system: systemPrompt,
-      messages,
-    });
+    const client = getClient();
+    const response = await client.messages.create(
+      {
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages,
+      },
+      { signal: controller.signal }
+    );
 
     const reply =
-      response.content[0]?.type === "text"
+      response.content.length > 0 && response.content[0].type === "text"
         ? response.content[0].text
         : undefined;
 
@@ -118,5 +136,7 @@ export async function generateReply(
     });
 
     return { success: false, error: errorMessage };
+  } finally {
+    clearTimeout(timeout);
   }
 }

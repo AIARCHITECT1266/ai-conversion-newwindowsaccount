@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { auditLog } from "@/lib/audit-log";
+import { createAdminSession, safeCompare } from "@/lib/session";
 
-// POST /api/admin/login – Validiert Admin-Secret und setzt HttpOnly Cookie
+// POST /api/admin/login – Validiert Admin-Secret und setzt HttpOnly Session-Cookie
 export async function POST(request: NextRequest) {
   // Rate-Limiting: 5 Login-Versuche pro Minute pro IP
   const ip = getClientIp(request);
-  const limit = checkRateLimit(`admin-login:${ip}`, { max: 5, windowMs: 60_000 });
+  const limit = await checkRateLimit(`admin-login:${ip}`, { max: 5, windowMs: 60_000 });
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "Zu viele Versuche. Bitte warten." },
@@ -32,7 +33,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!body.secret || body.secret !== secret) {
+  // Timing-sicherer Vergleich des Secrets
+  if (!body.secret || !safeCompare(body.secret, secret)) {
     auditLog("admin.login_failed", { ip });
     return NextResponse.json(
       { error: "Falsches Secret" },
@@ -40,13 +42,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Session-Token generieren (nicht das Secret selbst!)
+  const sessionToken = createAdminSession();
+
   auditLog("admin.login", { ip });
   const response = NextResponse.json({ success: true });
-  response.cookies.set("admin_token", secret, {
+  response.cookies.set("admin_token", sessionToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 60 * 60 * 24, // 24 Stunden
+    maxAge: 60 * 60 * 8, // 8 Stunden
     path: "/",
   });
 

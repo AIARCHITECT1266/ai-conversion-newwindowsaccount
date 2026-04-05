@@ -1,8 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
-// Plattform-Wissensbasis für den Support-Bot
+// ---------- API-Client Singleton (Lazy-Init) ----------
+
+let _anthropic: Anthropic | null = null;
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY nicht konfiguriert");
+    _anthropic = new Anthropic({ apiKey });
+  }
+  return _anthropic;
+}
+
+// ---------- Zod-Schemas ----------
+
+const historyItemSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().max(5000),
+});
+
+const requestSchema = z.object({
+  message: z.string().min(1, "Nachricht fehlt").max(2000, "Nachricht darf maximal 2.000 Zeichen lang sein"),
+  history: z.array(historyItemSchema).max(10).optional().default([]),
+});
+
+// Plattform-Wissensbasis fuer den Support-Bot
 const PLATFORM_KNOWLEDGE = `
 Du bist der AI Conversion Plattform-Assistent. Du hilfst Kunden (Tenants) bei Fragen zur Plattform.
 
@@ -53,64 +78,59 @@ Antworte immer auf Deutsch, freundlich und hilfreich. Halte dich kurz und präzi
 export async function POST(req: NextRequest) {
   // Rate-Limiting: 20 Anfragen pro Minute pro IP
   const ip = getClientIp(req);
-  const limit = checkRateLimit(`platform-bot:${ip}`, { max: 20, windowMs: 60_000 });
+  const limit = await checkRateLimit(`platform-bot:${ip}`, { max: 20, windowMs: 60_000 });
   if (!limit.allowed) {
     return NextResponse.json({ error: "Zu viele Anfragen" }, { status: 429 });
   }
 
   try {
-    const { message, history } = await req.json();
+    const rawBody: unknown = await req.json();
+    const parseResult = requestSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const errors = parseResult.error.issues
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errors }, { status: 400 });
+    }
 
-    if (!message || typeof message !== "string") {
-      return NextResponse.json(
-        { error: "Nachricht fehlt" },
-        { status: 400 }
+    const { message, history } = parseResult.data;
+    const client = getAnthropic();
+
+    // Chat-Verlauf aufbauen (bereits via Zod validiert)
+    const messages: Anthropic.MessageParam[] = [
+      ...history.map((msg) => ({ role: msg.role as "user" | "assistant", content: msg.content })),
+      { role: "user" as const, content: message },
+    ];
+
+    // Timeout: 30 Sekunden
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+
+    try {
+      const response = await client.messages.create(
+        {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1024,
+          system: PLATFORM_KNOWLEDGE,
+          messages,
+        },
+        { signal: controller.signal }
       );
+
+      // Null-sichere Content-Extraktion
+      const text =
+        response.content.length > 0 && response.content[0].type === "text"
+          ? response.content[0].text
+          : "";
+
+      return NextResponse.json({ reply: text });
+    } finally {
+      clearTimeout(timeout);
     }
-
-    if (message.length > 2000) {
-      return NextResponse.json(
-        { error: "Nachricht darf maximal 2.000 Zeichen lang sein" },
-        { status: 400 }
-      );
-    }
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "API nicht konfiguriert" },
-        { status: 500 }
-      );
-    }
-
-    const client = new Anthropic({ apiKey });
-
-    // Chat-Verlauf aufbauen
-    const messages: Anthropic.MessageParam[] = [];
-
-    if (Array.isArray(history)) {
-      for (const msg of history.slice(-10)) {
-        if (msg.role === "user" || msg.role === "assistant") {
-          messages.push({ role: msg.role, content: msg.content });
-        }
-      }
-    }
-
-    messages.push({ role: "user", content: message });
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: PLATFORM_KNOWLEDGE,
-      messages,
-    });
-
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
-    return NextResponse.json({ reply: text });
   } catch (error) {
-    console.error("Platform-Bot Fehler:", error);
+    console.error("[Platform-Bot] Fehler", {
+      error: error instanceof Error ? error.message : "Unbekannt",
+    });
     return NextResponse.json(
       { error: "Interner Fehler beim Plattform-Bot" },
       { status: 500 }

@@ -7,7 +7,33 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
+import { z } from "zod";
 import { db } from "@/lib/db";
+
+// Zod-Schema fuer Tenant-Erstellung
+const createTenantSchema = z.object({
+  name: z.string().min(1).max(255),
+  slug: z.string().min(1).max(64),
+  whatsappPhoneId: z.string().min(1).max(64),
+  brandName: z.string().min(1).max(255),
+  brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional().default("#000000"),
+  retentionDays: z.number().int().min(1).max(3650).optional().default(90),
+  systemPrompt: z.string().max(10000).optional().default(""),
+});
+
+// Felder die in API-Responses zurueckgegeben werden (ohne dashboardToken!)
+const TENANT_PUBLIC_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  whatsappPhoneId: true,
+  systemPrompt: true,
+  brandName: true,
+  brandColor: true,
+  retentionDays: true,
+  isActive: true,
+  createdAt: true,
+} as const;
 
 // ---------- GET: Alle Tenants auflisten ----------
 
@@ -16,16 +42,7 @@ export async function GET() {
     const tenants = await db.tenant.findMany({
       orderBy: { createdAt: "desc" },
       select: {
-        id: true,
-        name: true,
-        slug: true,
-        whatsappPhoneId: true,
-        systemPrompt: true,
-        brandName: true,
-        brandColor: true,
-        retentionDays: true,
-        isActive: true,
-        createdAt: true,
+        ...TENANT_PUBLIC_SELECT,
         _count: {
           select: {
             conversations: true,
@@ -46,68 +63,34 @@ export async function GET() {
 
 // ---------- POST: Neuen Tenant anlegen ----------
 
-interface CreateTenantBody {
-  name: string;
-  slug: string;
-  whatsappPhoneId: string;
-  brandName: string;
-  brandColor?: string;
-  retentionDays?: number;
-  systemPrompt?: string;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as CreateTenantBody;
+    const rawBody: unknown = await request.json();
 
-    // Pflichtfelder prüfen
-    if (!body.name || !body.slug || !body.whatsappPhoneId || !body.brandName) {
-      return NextResponse.json(
-        { error: "Pflichtfelder: name, slug, whatsappPhoneId, brandName" },
-        { status: 400 }
-      );
+    // Zod-Validierung
+    const parseResult = createTenantSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const errors = parseResult.error.issues
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errors }, { status: 400 });
     }
 
-    // Laengenlimits validieren
-    if (body.name.length > 255 || body.brandName.length > 255) {
-      return NextResponse.json(
-        { error: "name und brandName duerfen maximal 255 Zeichen lang sein" },
-        { status: 400 }
-      );
-    }
-    if (body.slug.length > 64) {
-      return NextResponse.json(
-        { error: "slug darf maximal 64 Zeichen lang sein" },
-        { status: 400 }
-      );
-    }
-    if (body.whatsappPhoneId.length > 64) {
-      return NextResponse.json(
-        { error: "whatsappPhoneId darf maximal 64 Zeichen lang sein" },
-        { status: 400 }
-      );
-    }
-    if (body.systemPrompt && body.systemPrompt.length > 10000) {
-      return NextResponse.json(
-        { error: "systemPrompt darf maximal 10.000 Zeichen lang sein" },
-        { status: 400 }
-      );
-    }
-    if (body.retentionDays !== undefined) {
-      const days = Number(body.retentionDays);
-      if (!Number.isInteger(days) || days < 1 || days > 3650) {
-        return NextResponse.json(
-          { error: "retentionDays muss zwischen 1 und 3650 liegen" },
-          { status: 400 }
-        );
-      }
-    }
+    const body = parseResult.data;
 
     // Slug normalisieren (Kleinbuchstaben, keine Sonderzeichen)
     const slug = body.slug
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, "-")
-      .replace(/-+/g, "-");
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    if (!slug) {
+      return NextResponse.json(
+        { error: "Slug darf nach Normalisierung nicht leer sein" },
+        { status: 400 }
+      );
+    }
 
     // Dashboard Magic-Link Token generieren
     const dashboardToken = randomBytes(32).toString("hex");
@@ -118,12 +101,14 @@ export async function POST(request: NextRequest) {
         slug,
         whatsappPhoneId: body.whatsappPhoneId,
         brandName: body.brandName,
-        brandColor: body.brandColor || "#000000",
-        retentionDays: body.retentionDays || 90,
-        systemPrompt: body.systemPrompt || "",
+        brandColor: body.brandColor,
+        retentionDays: body.retentionDays,
+        systemPrompt: body.systemPrompt,
         dashboardToken,
         isActive: true,
       },
+      // Nur oeffentliche Felder zurueckgeben – dashboardToken wird NICHT exponiert
+      select: TENANT_PUBLIC_SELECT,
     });
 
     console.log("[Admin] Tenant erstellt", {
@@ -131,10 +116,7 @@ export async function POST(request: NextRequest) {
       slug: tenant.slug,
     });
 
-    return NextResponse.json({
-      tenant,
-      dashboardLoginPath: `/dashboard/login?token=${dashboardToken}`,
-    }, { status: 201 });
+    return NextResponse.json({ tenant }, { status: 201 });
   } catch (error) {
     // Duplikat-Fehler abfangen (slug oder whatsappPhoneId bereits vergeben)
     if (

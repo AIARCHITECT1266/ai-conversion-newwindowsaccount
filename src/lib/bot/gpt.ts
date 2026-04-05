@@ -7,9 +7,19 @@
 import OpenAI from "openai";
 import type { LeadQualification } from "@/generated/prisma/enums";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// ---------- Lazy-Init Client ----------
+
+let _openai: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_openai) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("[GPT-4o] OPENAI_API_KEY nicht konfiguriert");
+    }
+    _openai = new OpenAI({ apiKey });
+  }
+  return _openai;
+}
 
 // ---------- Typen ----------
 
@@ -42,6 +52,9 @@ QUALIFIKATIONSSTUFEN:
 Antworte AUSSCHLIESSLICH im folgenden JSON-Format:
 {"score": <number>, "qualification": "<string>", "reasoning": "<string>"}`;
 
+// Maximale Konversationslaenge fuer Scoring (Token-Schutz)
+const MAX_CONVERSATION_LENGTH = 10_000;
+
 // ---------- Lead bewerten ----------
 
 /**
@@ -53,17 +66,30 @@ Antworte AUSSCHLIESSLICH im folgenden JSON-Format:
 export async function scoreLeadFromConversation(
   conversationText: string
 ): Promise<LeadScoreResult> {
+  // Konversationstext begrenzen um Token-Kosten zu kontrollieren
+  const truncatedText = conversationText.length > MAX_CONVERSATION_LENGTH
+    ? conversationText.slice(-MAX_CONVERSATION_LENGTH)
+    : conversationText;
+
+  // Timeout: 30 Sekunden
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      temperature: 0.1, // Niedrige Temperatur für konsistente Bewertung
-      max_tokens: 256,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SCORING_SYSTEM_PROMPT },
-        { role: "user", content: conversationText },
-      ],
-    });
+    const client = getClient();
+    const response = await client.chat.completions.create(
+      {
+        model: "gpt-4o",
+        temperature: 0.1, // Niedrige Temperatur für konsistente Bewertung
+        max_tokens: 256,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SCORING_SYSTEM_PROMPT },
+          { role: "user", content: truncatedText },
+        ],
+      },
+      { signal: controller.signal }
+    );
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
@@ -121,5 +147,7 @@ export async function scoreLeadFromConversation(
     console.error("[GPT-4o] Scoring-Fehler", { error: errorMessage });
 
     return { success: false, error: errorMessage };
+  } finally {
+    clearTimeout(timeout);
   }
 }

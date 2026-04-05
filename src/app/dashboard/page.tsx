@@ -186,10 +186,14 @@ export default function TenantDashboard() {
     }
   }, [tenantId]);
 
-  // Daten laden und alle 30s aktualisieren
+  // Daten laden und alle 30s aktualisieren (pausiert wenn Tab nicht sichtbar)
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 30_000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchStats();
+      }
+    }, 30_000);
     return () => clearInterval(interval);
   }, [fetchStats]);
 
@@ -290,9 +294,8 @@ export default function TenantDashboard() {
       className="relative min-h-screen text-white"
       style={{ background: 'var(--bg)', fontFamily: 'var(--sans)' }}
     >
-      {/* Design-Token CSS-Variablen + Schrift-Import */}
+      {/* Design-Token CSS-Variablen (Fonts via next/font im Layout) */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap');
         :root {
           --bg: #07070d;
           --surface: #0e0e1a;
@@ -302,8 +305,8 @@ export default function TenantDashboard() {
           --purple: #8b5cf6;
           --text: #ede8df;
           --text-muted: rgba(237,232,223,0.45);
-          --serif: 'Cormorant Garamond', Georgia, serif;
-          --sans: 'Geist', system-ui, sans-serif;
+          --serif: Georgia, serif;
+          --sans: var(--font-inter), system-ui, sans-serif;
         }
       `}</style>
 

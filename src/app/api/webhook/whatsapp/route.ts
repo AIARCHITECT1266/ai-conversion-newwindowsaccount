@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { handleIncomingMessage } from "@/lib/bot/handler";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { safeCompare } from "@/lib/session";
 
 // ============================================================
 // WhatsApp Cloud API – Webhook Endpoint
@@ -10,8 +11,9 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 // DSGVO-konform: Keine personenbezogenen Daten im Log
 // ============================================================
 
-const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
-const APP_SECRET = process.env.WHATSAPP_APP_SECRET;
+// Korrekte Env-Var-Namen (wie in CLAUDE.md dokumentiert)
+const getVerifyToken = () => process.env.WHATSAPP_VERIFY_TOKEN;
+const getAppSecret = () => process.env.WHATSAPP_APP_SECRET;
 
 // Deduplizierung: Bereits verarbeitete Message-IDs (TTL 10 Minuten)
 const processedMessages = new Map<string, number>();
@@ -32,9 +34,14 @@ function isDuplicate(messageId: string): boolean {
 
 // ---------- Signatur-Validierung (Meta X-Hub-Signature-256) ----------
 function verifySignature(rawBody: string, signature: string | null): boolean {
-  if (!APP_SECRET || !signature) return false;
-  const expected = "sha256=" + createHmac("sha256", APP_SECRET).update(rawBody).digest("hex");
-  return expected === signature;
+  const appSecret = getAppSecret();
+  if (!appSecret || !signature) return false;
+
+  const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
+
+  // Timing-sicherer Vergleich gegen Timing-Attacken
+  if (expected.length !== signature.length) return false;
+  return timingSafeEqual(Buffer.from(expected, "utf8"), Buffer.from(signature, "utf8"));
 }
 
 // ---------- GET: Webhook-Verifizierung für Meta ----------
@@ -45,8 +52,10 @@ export async function GET(request: NextRequest) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
+  const verifyToken = getVerifyToken();
+
   // Meta sendet diese drei Parameter zur Verifizierung
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+  if (mode === "subscribe" && verifyToken && token && safeCompare(token, verifyToken)) {
     console.log("[WhatsApp Webhook] Verifizierung erfolgreich");
     return new NextResponse(challenge, { status: 200 });
   }
@@ -93,7 +102,7 @@ interface WhatsAppWebhookBody {
 export async function POST(request: NextRequest) {
   // Rate-Limiting: 100 Webhook-Calls pro Minute pro IP
   const ip = getClientIp(request);
-  const limit = checkRateLimit(`webhook:${ip}`, { max: 100, windowMs: 60_000 });
+  const limit = await checkRateLimit(`webhook:${ip}`, { max: 100, windowMs: 60_000 });
   if (!limit.allowed) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
@@ -102,7 +111,7 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
 
     // Signatur-Validierung ist Pflicht – ohne APP_SECRET kein Webhook-Betrieb
-    if (!APP_SECRET) {
+    if (!getAppSecret()) {
       console.error("[WhatsApp Webhook] WHATSAPP_APP_SECRET nicht konfiguriert");
       return NextResponse.json({ error: "Webhook nicht konfiguriert" }, { status: 500 });
     }
