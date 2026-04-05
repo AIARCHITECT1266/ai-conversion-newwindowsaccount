@@ -1,1 +1,5 @@
-export { default } from '../page-v2';
+import { redirect } from "next/navigation";
+
+export default function V2Redirect() {
+  redirect("/");
+}
