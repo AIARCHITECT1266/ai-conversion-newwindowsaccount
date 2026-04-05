@@ -136,6 +136,7 @@ export default function Footer() {
               {[
                 { label: "Impressum", href: "/impressum" },
                 { label: "Datenschutz", href: "/datenschutz" },
+                { label: "AGB", href: "/agb" },
               ].map((link) => (
                 <a key={link.label} href={link.href} className="block text-[14px] text-slate-600 transition-colors hover:text-white">
                   {link.label}

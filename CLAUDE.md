@@ -48,8 +48,8 @@
 - Datenbank: PostgreSQL Frankfurt (DSGVO-konform)
 - KI: Anthropic Claude (Verkaufsgespräche), OpenAI GPT-4o (Lead-Scoring)
 - Messaging: WhatsApp Cloud API v21.0
-- Zahlung: Stripe (Checkout Sessions, Subscriptions, Webhooks)
-- E-Mail: Resend (Lead-Benachrichtigungen)
+- Zahlung: Paddle (Merchant of Record, Checkout, Subscriptions, Webhooks)
+- E-Mail: Resend (Lead-Benachrichtigungen, Willkommens-E-Mails)
 - Verschlüsselung: AES-256-GCM für Nachrichteninhalte
 - Hosting: Vercel (Fluid Compute)
 - Domain: ai-conversion.ai
@@ -75,6 +75,13 @@
 - WHATSAPP_APP_SECRET – Webhook Signatur-Secret
 - ADMIN_SECRET – Admin-Dashboard Zugangs-Secret
 - ENCRYPTION_KEY – AES-256-GCM Schlüssel für Nachrichtenverschlüsselung
+- PADDLE_API_KEY – Paddle API Key
+- PADDLE_WEBHOOK_SECRET – Paddle Webhook Signatur-Secret
+- PADDLE_ENVIRONMENT – sandbox oder production
+- PADDLE_PRICE_STARTER_MONTHLY, _YEARLY, _SETUP – Paddle Price IDs Starter
+- PADDLE_PRICE_GROWTH_MONTHLY, _YEARLY, _SETUP – Paddle Price IDs Growth
+- PADDLE_PRICE_PRO_MONTHLY, _YEARLY, _SETUP – Paddle Price IDs Professional
+- RESEND_API_KEY – Resend E-Mail API Key
 - NOTION_API_KEY – Notion Integration Token
 - NOTION_SESSION_DB_ID – Notion Session Notes Datenbank-ID
 - CRON_SECRET – Absicherung des DSGVO-Cleanup-Cron-Jobs

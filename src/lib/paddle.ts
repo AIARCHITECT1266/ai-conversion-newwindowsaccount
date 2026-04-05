@@ -1,5 +1,6 @@
 // ============================================================
-// Stripe Plan-Konfiguration und Hilfsfunktionen
+// Paddle Plan-Konfiguration und Hilfsfunktionen
+// Paddle ist Merchant of Record – kuemmert sich um VAT/Steuern
 // Price IDs werden als Umgebungsvariablen konfiguriert
 // ============================================================
 
@@ -9,18 +10,18 @@ export interface PlanConfig {
   monthlyPriceId: string;
   yearlyPriceId: string;
   setupPriceId: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  setupFee: number;
+  monthlyPrice: number;  // Cent
+  yearlyPrice: number;   // Cent
+  setupFee: number;      // Cent
 }
 
 export const PLANS: Record<string, PlanConfig> = {
   starter: {
     name: "Starter",
     slug: "starter",
-    monthlyPriceId: process.env.STRIPE_PRICE_STARTER_MONTHLY || "",
-    yearlyPriceId: process.env.STRIPE_PRICE_STARTER_YEARLY || "",
-    setupPriceId: process.env.STRIPE_PRICE_STARTER_SETUP || "",
+    monthlyPriceId: process.env.PADDLE_PRICE_STARTER_MONTHLY || "",
+    yearlyPriceId: process.env.PADDLE_PRICE_STARTER_YEARLY || "",
+    setupPriceId: process.env.PADDLE_PRICE_STARTER_SETUP || "",
     monthlyPrice: 49700,
     yearlyPrice: 497000,
     setupFee: 49700,
@@ -28,9 +29,9 @@ export const PLANS: Record<string, PlanConfig> = {
   growth: {
     name: "Growth",
     slug: "growth",
-    monthlyPriceId: process.env.STRIPE_PRICE_GROWTH_MONTHLY || "",
-    yearlyPriceId: process.env.STRIPE_PRICE_GROWTH_YEARLY || "",
-    setupPriceId: process.env.STRIPE_PRICE_GROWTH_SETUP || "",
+    monthlyPriceId: process.env.PADDLE_PRICE_GROWTH_MONTHLY || "",
+    yearlyPriceId: process.env.PADDLE_PRICE_GROWTH_YEARLY || "",
+    setupPriceId: process.env.PADDLE_PRICE_GROWTH_SETUP || "",
     monthlyPrice: 149700,
     yearlyPrice: 1497000,
     setupFee: 99700,
@@ -38,9 +39,9 @@ export const PLANS: Record<string, PlanConfig> = {
   professional: {
     name: "Professional",
     slug: "professional",
-    monthlyPriceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
-    yearlyPriceId: process.env.STRIPE_PRICE_PRO_YEARLY || "",
-    setupPriceId: process.env.STRIPE_PRICE_PRO_SETUP || "",
+    monthlyPriceId: process.env.PADDLE_PRICE_PRO_MONTHLY || "",
+    yearlyPriceId: process.env.PADDLE_PRICE_PRO_YEARLY || "",
+    setupPriceId: process.env.PADDLE_PRICE_PRO_SETUP || "",
     monthlyPrice: 299700,
     yearlyPrice: 2997000,
     setupFee: 199700,
