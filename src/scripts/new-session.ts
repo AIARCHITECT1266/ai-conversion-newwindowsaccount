@@ -11,7 +11,7 @@ const API_KEY = process.env.NOTION_API_KEY;
 const DB_ID = process.env.NOTION_SESSION_DB_ID || "339301ca-b3d0-81d4-9c6a-e88e19d1dbbf";
 const HQ_ID = "337301ca-b3d0-8127-8e7c-cc9fc73f98e7";
 // Summary-Callout Block ID (wird beim ersten Lauf gesucht)
-const SUMMARY_CALLOUT_ID = "339301ca-b3d0-8104-8d21-ebac19a6f0ac";
+const SUMMARY_CALLOUT_ID = "339301ca-b3d0-81ce-a5eb-d7fe1caaf190";
 
 const H = {
   "Authorization": `Bearer ${API_KEY}`,
