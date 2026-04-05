@@ -664,7 +664,7 @@ export default function PageV2() {
                 { value: "3,4", suffix: "×", label: "mehr Conversions" },
                 { value: "24", suffix: " / 7", label: "Verfügbarkeit" },
                 { value: "DSGVO", suffix: "", label: "Vollständig konform" },
-                { value: "497", prefix: "Ab ", suffix: "€/Monat", label: "Einstiegspreis" },
+                { value: "497", prefix: "Ab ", suffix: "€/Mo.", label: "Einstiegspreis", small: true },
               ].map((stat, i) => (
                 <div
                   key={stat.label}
@@ -673,7 +673,7 @@ export default function PageV2() {
                     borderRight: i < 4 ? "1px solid rgba(201,168,76,0.15)" : "none",
                   }}
                 >
-                  <p style={{ fontFamily: "var(--serif)", fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", fontWeight: 700, color: "var(--text)", margin: 0, letterSpacing: "-0.02em" }}>
+                  <p style={{ fontFamily: "var(--serif)", fontSize: ("small" in stat && stat.small) ? "clamp(1.4rem, 2.5vw, 2rem)" : "clamp(1.8rem, 3.5vw, 2.8rem)", fontWeight: 700, color: "var(--text)", margin: 0, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
                     {stat.value === "DSGVO" ? stat.value : (
                       <AnimatedCounter value={stat.value} prefix={stat.prefix || ""} suffix={stat.suffix} />
                     )}

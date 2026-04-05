@@ -605,7 +605,7 @@ export default function PricingPage() {
 
       {/* ROI-Highlight Sektion */}
       <section className="relative z-10 mx-auto max-w-4xl px-6 py-12">
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
           {[
             { value: "24/7", label: "Immer verfuegbar", icon: <Clock className="h-6 w-6" /> },
             { value: "80", label: "Leads automatisch qualifiziert", suffix: "%", icon: <Target className="h-6 w-6" /> },
@@ -615,7 +615,7 @@ export default function PricingPage() {
               key={item.label}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "0px" }}
               transition={{ duration: 0.5, delay: i * 0.12 }}
               className="text-center"
             >
