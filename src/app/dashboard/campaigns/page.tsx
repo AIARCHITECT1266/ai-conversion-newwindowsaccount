@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2, RefreshCw, ArrowLeft, Megaphone, Plus, X, Check,
@@ -357,15 +358,17 @@ function CampaignDetail({ slug, onClose }: { slug: string; onClose: () => void }
 /* ───────────────────────────── Neue Kampagne Modal ──────────────── */
 
 function CreateCampaignModal({
-  onClose, onCreated, userTemplates,
+  onClose, onCreated, userTemplates, initialName, initialDescription,
 }: {
   onClose: () => void;
   onCreated: () => void;
   userTemplates: Campaign[];
+  initialName?: string;
+  initialDescription?: string;
 }) {
-  const [step, setStep] = useState<"choose" | "form">("choose");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [step, setStep] = useState<"choose" | "form">(initialName ? "form" : "choose");
+  const [name, setName] = useState(initialName ?? "");
+  const [description, setDescription] = useState(initialDescription ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedBranche, setSelectedBranche] = useState<string | null>(null);
@@ -942,7 +945,19 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;bac
 
 /* ───────────────────────────── Haupt-Seite ──────────────────────── */
 
-export default function CampaignsPage() {
+// Wrapper mit Suspense fuer useSearchParams
+export default function CampaignsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center" style={{ background: "#07070d" }}><Loader2 className="h-8 w-8 animate-spin text-[#c9a84c]" /></div>}>
+      <CampaignsPage />
+    </Suspense>
+  );
+}
+
+function CampaignsPage() {
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get("templateId");
+
   const { tenantName, loading: authLoading } = useTenantInfo();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -950,8 +965,27 @@ export default function CampaignsPage() {
   const [detailSlug, setDetailSlug] = useState<string | null>(null);
   const [generateCampaign, setGenerateCampaign] = useState<{ slug: string; name: string } | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDesc, setTemplateDesc] = useState("");
 
   const userTemplates = campaigns.filter((c) => c.isTemplate);
+
+  // Template aus URL-Parameter laden und Creator oeffnen
+  useEffect(() => {
+    if (!templateId) return;
+    fetch(`/api/dashboard/campaigns/templates/${templateId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.template) {
+          const t = d.template;
+          setTemplateName(t.name);
+          setTemplateDesc(
+            `Zielgruppe: ${t.briefing.zielgruppe || ""}\nAngebot: ${t.briefing.ziel || ""}\nTon: ${t.briefing.tonalitaet || ""}\nErgebnis: ${t.briefing.ergebnis || ""}`
+          );
+          setShowCreate(true);
+        }
+      });
+  }, [templateId]);
 
   async function toggleTemplate(id: string, slug: string, isTemplate: boolean) {
     // Optimistisch updaten
@@ -1153,7 +1187,13 @@ export default function CampaignsPage() {
       {/* Modals */}
       <AnimatePresence>
         {showCreate && (
-          <CreateCampaignModal onClose={() => setShowCreate(false)} onCreated={fetchCampaigns} userTemplates={userTemplates} />
+          <CreateCampaignModal
+            onClose={() => { setShowCreate(false); setTemplateName(""); setTemplateDesc(""); }}
+            onCreated={fetchCampaigns}
+            userTemplates={userTemplates}
+            initialName={templateName || undefined}
+            initialDescription={templateDesc || undefined}
+          />
         )}
         {qrSlug && (
           <QrCodeModal slug={qrSlug} onClose={() => setQrSlug(null)} />

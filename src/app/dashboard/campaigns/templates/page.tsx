@@ -356,16 +356,9 @@ export default function CampaignTemplatesPage() {
 
   useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
-  // Kampagne aus Vorlage erstellen → zur Kampagnen-Seite mit Daten
+  // Kampagne aus Vorlage erstellen → zur Kampagnen-Seite mit Template-ID
   function useTemplate(t: TemplateData) {
-    // Daten in sessionStorage speichern fuer die Kampagnen-Seite
-    sessionStorage.setItem("campaign_template", JSON.stringify({
-      name: t.name,
-      description: `Zielgruppe: ${t.briefing.zielgruppe}\nAngebot: ${t.briefing.ziel}\nTon: ${t.briefing.tonalitaet}\nErgebnis: ${t.briefing.ergebnis}`,
-      openers: t.openers,
-      abVarianten: t.abVarianten,
-    }));
-    window.location.href = "/dashboard/campaigns?from=template";
+    window.location.href = `/dashboard/campaigns?templateId=${t.id}`;
   }
 
   // Branchen fuer Filter
