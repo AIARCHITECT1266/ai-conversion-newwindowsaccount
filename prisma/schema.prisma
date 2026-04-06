@@ -109,6 +109,8 @@ model Lead {
   pipelineStatus   PipelineStatus    @default(NEU) // CRM-Pipeline Spalte
   dealValue        Float?            // Deal-Wert in EUR
   notes            String?           @db.Text // Notizen zum Lead
+  followUpCount    Int               @default(0) // Anzahl gesendeter Follow-Ups (0-3)
+  lastFollowUpAt   DateTime?         // Zeitpunkt des letzten Follow-Ups
   createdAt        DateTime          @default(now())
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -118,6 +120,16 @@ model Lead {
   @@index([tenantId, qualification])
   @@index([tenantId, pipelineStatus])
   @@map("leads")
+}
+
+// ---------- Deduplizierung: Verarbeitete WhatsApp Message-IDs ----------
+model ProcessedMessage {
+  id        String   @id @default(cuid())
+  messageId String   @unique // WhatsApp Message ID (wamid.xxx)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt]) // Für 24h-Cleanup im DSGVO-Cron
+  @@map("processed_messages")
 }
 
 enum LeadQualification {

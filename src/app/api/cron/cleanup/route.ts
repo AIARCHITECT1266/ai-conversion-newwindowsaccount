@@ -29,6 +29,17 @@ export async function GET(request: NextRequest) {
       select: { id: true, name: true, retentionDays: true },
     });
 
+    // Deduplizierung: Verarbeitete Message-IDs älter als 24h löschen
+    const dedupCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const deletedProcessed = await db.processedMessage.deleteMany({
+      where: { createdAt: { lt: dedupCutoff } },
+    });
+    if (deletedProcessed.count > 0) {
+      console.log("[DSGVO Cleanup] ProcessedMessages geloescht", {
+        count: deletedProcessed.count,
+      });
+    }
+
     let totalMessagesDeleted = 0;
     let totalConversationsDeleted = 0;
 
@@ -85,6 +96,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      processedMessagesDeleted: deletedProcessed.count,
       messagesDeleted: totalMessagesDeleted,
       conversationsDeleted: totalConversationsDeleted,
       tenantsProcessed: tenants.length,

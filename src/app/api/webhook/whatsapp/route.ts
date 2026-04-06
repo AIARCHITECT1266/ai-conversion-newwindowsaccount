@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { handleIncomingMessage } from "@/lib/bot/handler";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { safeCompare } from "@/lib/session";
+import { db } from "@/lib/db";
 
 // ============================================================
 // WhatsApp Cloud API – Webhook Endpoint
@@ -15,21 +16,30 @@ import { safeCompare } from "@/lib/session";
 const getVerifyToken = () => process.env.WHATSAPP_VERIFY_TOKEN;
 const getAppSecret = () => process.env.WHATSAPP_APP_SECRET;
 
-// Deduplizierung: Bereits verarbeitete Message-IDs (TTL 10 Minuten)
-const processedMessages = new Map<string, number>();
-const DEDUP_TTL = 10 * 60 * 1000;
-
-function isDuplicate(messageId: string): boolean {
-  const now = Date.now();
-  // Alte Eintraege aufraeumen
-  if (processedMessages.size > 1000) {
-    for (const [id, ts] of processedMessages) {
-      if (now - ts > DEDUP_TTL) processedMessages.delete(id);
+// Deduplizierung: Verarbeitete Message-IDs in DB speichern
+// Löschung nach 24h via DSGVO-Cron (/api/cron/cleanup)
+async function isDuplicate(messageId: string): Promise<boolean> {
+  try {
+    // Atomar: Erstellen schlägt fehl wenn messageId bereits existiert (unique constraint)
+    await db.processedMessage.create({
+      data: { messageId },
+    });
+    return false;
+  } catch (error) {
+    // Unique constraint violation = Duplikat
+    if (
+      error instanceof Error &&
+      error.message.includes("Unique constraint")
+    ) {
+      return true;
     }
+    // Bei DB-Fehler: Sicherheitshalber durchlassen (lieber doppelt als gar nicht)
+    console.error("[WhatsApp Webhook] Deduplizierung-DB-Fehler", {
+      messageId,
+      error: error instanceof Error ? error.message : "Unbekannt",
+    });
+    return false;
   }
-  if (processedMessages.has(messageId)) return true;
-  processedMessages.set(messageId, now);
-  return false;
 }
 
 // ---------- Signatur-Validierung (Meta X-Hub-Signature-256) ----------
@@ -135,7 +145,7 @@ export async function POST(request: NextRequest) {
         if (change.value.messages) {
           for (const message of change.value.messages) {
             // Duplikate ignorieren (WhatsApp sendet bei Timeout erneut)
-            if (isDuplicate(message.id)) {
+            if (await isDuplicate(message.id)) {
               console.log("[WhatsApp Webhook] Duplikat uebersprungen", { messageId: message.id });
               continue;
             }
