@@ -37,6 +37,7 @@ model Tenant {
 
   conversations    Conversation[]
   leads            Lead[]
+  campaigns        Campaign[]
 
   @@map("tenants")
 }
@@ -49,6 +50,7 @@ model Conversation {
   consentGiven   Boolean            @default(false) // DSGVO: Einwilligung erteilt
   consentAt      DateTime?          // Zeitpunkt der Einwilligung
   language       String             @default("de") // Erkannte Sprache (ISO 639-1)
+  campaignSlug   String?            // Kampagnen-Tracking aus WhatsApp-Link
   status         ConversationStatus @default(ACTIVE)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -117,15 +119,36 @@ model Lead {
   aiSummaryAt      DateTime?         // Zeitpunkt der letzten KI-Analyse
   predictiveScore  String?           @db.Text // KI-Abschlusswahrscheinlichkeit (JSON)
   predictiveScoreAt DateTime?        // Zeitpunkt der letzten Prediction
+  campaignId       String?           // Kampagnen-Zuordnung
   createdAt        DateTime          @default(now())
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   conversation     Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  campaign         Campaign?         @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status])
   @@index([tenantId, qualification])
   @@index([tenantId, pipelineStatus])
+  @@index([campaignId])
   @@map("leads")
+}
+
+// ---------- Kampagne / Tracking ----------
+model Campaign {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String   // Kampagnenname (z.B. "Facebook Ads Q1")
+  slug        String   // URL-Slug für Tracking-Links
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads       Lead[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, isActive])
+  @@map("campaigns")
 }
 
 // ---------- Deduplizierung: Verarbeitete WhatsApp Message-IDs ----------

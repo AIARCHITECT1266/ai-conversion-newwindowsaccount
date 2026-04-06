@@ -25,6 +25,7 @@ import {
   Settings,
   Link2,
   Unlink,
+  Megaphone,
 } from "lucide-react";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
@@ -449,6 +450,13 @@ export default function TenantDashboard() {
             >
               <Kanban className="h-4 w-4" />
               CRM Pipeline
+            </a>
+            <a
+              href="/dashboard/campaigns"
+              className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-500/20"
+            >
+              <Megaphone className="h-4 w-4" />
+              Kampagnen
             </a>
             <button
               onClick={() => setChatOpen(!chatOpen)}

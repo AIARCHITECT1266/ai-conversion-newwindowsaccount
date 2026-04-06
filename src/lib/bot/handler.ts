@@ -133,6 +133,12 @@ export async function handleIncomingMessage(
       select: { id: true, status: true, consentGiven: true },
     });
 
+    // Campaign-Slug aus erster Nachricht parsen (wa.me/...?text=campaign:slug)
+    const campaignMatch = !conversationBefore
+      ? message.text.match(/^campaign:([a-z0-9-]+)$/i)
+      : null;
+    const campaignSlug = campaignMatch ? campaignMatch[1].toLowerCase() : null;
+
     const conversation = await db.conversation.upsert({
       where: {
         tenantId_externalId: { tenantId: tenant.id, externalId },
@@ -141,6 +147,7 @@ export async function handleIncomingMessage(
         tenantId: tenant.id,
         externalId,
         status: "ACTIVE",
+        ...(campaignSlug ? { campaignSlug } : {}),
       },
       update: {}, // Keine Aenderung wenn bereits vorhanden
     });
@@ -285,6 +292,20 @@ export async function handleIncomingMessage(
           }
         }
 
+        // Campaign-Zuordnung über Conversation-Slug auflösen
+        let campaignId: string | undefined;
+        const conv = await db.conversation.findUnique({
+          where: { id: conversation.id },
+          select: { campaignSlug: true },
+        });
+        if (conv?.campaignSlug) {
+          const campaign = await db.campaign.findUnique({
+            where: { tenantId_slug: { tenantId: tenant.id, slug: conv.campaignSlug } },
+            select: { id: true },
+          });
+          if (campaign) campaignId = campaign.id;
+        }
+
         await db.lead.upsert({
           where: { conversationId: conversation.id },
           create: {
@@ -293,6 +314,7 @@ export async function handleIncomingMessage(
             score: scoreResult.score,
             qualification: scoreResult.qualification || "UNQUALIFIED",
             status: "NEW",
+            ...(campaignId ? { campaignId } : {}),
           },
           update: {
             score: scoreResult.score,
