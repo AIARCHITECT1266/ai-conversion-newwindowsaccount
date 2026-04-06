@@ -160,61 +160,134 @@ export default function LandingPage() {
       </div>
 
       {/* ═══════ 1. HERO ═══════ */}
-      <section className="relative z-10 pt-36 pb-20 sm:pt-40">
-        <div className="mx-auto max-w-5xl px-6 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#c9a84c]/15 bg-[#c9a84c]/[0.05] px-4 py-1.5">
-              <Shield className="h-3.5 w-3.5 text-[#c9a84c]" />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#c9a84c]/80">DSGVO-konform &bull; Frankfurt &bull; Made in Germany</span>
+      <section className="relative z-10 pt-36 pb-28 sm:pt-40">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+            {/* Links: Copy */}
+            <div>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#c9a84c]/15 bg-[#c9a84c]/[0.05] px-4 py-1.5">
+                  <Shield className="h-3.5 w-3.5 text-[#c9a84c]" />
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#c9a84c]/80">DSGVO &bull; Frankfurt &bull; Made in Germany</span>
+                </div>
+              </motion.div>
+
+              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-4xl font-bold leading-tight sm:text-5xl" style={{ fontFamily: "Georgia, serif" }}>
+                <span className="bg-gradient-to-r from-[#c9a84c] via-[#e8d5a0] to-[#c9a84c] bg-clip-text text-transparent">Das Revenue Operating System</span>
+                <br /><span className="text-white">fuer DACH-Unternehmen</span>
+              </motion.h1>
+
+              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
+                className="mt-4 text-xl text-slate-300 leading-relaxed" style={{ fontFamily: "Georgia, serif" }}>
+                Ihr Vertrieb arbeitet 24/7 &ndash; auch wenn Sie schlafen.
+              </motion.p>
+
+              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
+                className="mt-3 max-w-lg text-sm text-slate-400 leading-relaxed">
+                Von der ersten WhatsApp-Nachricht bis zum gewonnenen Kunden &ndash; vollautomatisch.
+                Sales Agent, CRM Pipeline, Marketing Suite und Client Portal in einer Plattform.
+              </motion.p>
+
+              {/* Garantie-Box */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }}
+                className="mt-6 inline-flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] px-5 py-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15">
+                  <Shield className="h-4 w-4 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-400">100 qualifizierte Leads in 30 Tagen</p>
+                  <p className="text-[11px] text-emerald-400/60">oder Geld zurueck &ndash; garantiert</p>
+                </div>
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
+                className="mt-8 flex flex-wrap gap-4">
+                <a href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
+                  className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-600/25 transition-all hover:bg-purple-500">
+                  Demo ansehen <ArrowRight className="h-4 w-4" />
+                </a>
+                <a href="#roi" className="flex items-center gap-2 rounded-xl border border-[#c9a84c]/30 bg-[#c9a84c]/[0.05] px-6 py-3 text-sm font-semibold text-[#c9a84c] transition-all hover:bg-[#c9a84c]/[0.1]">
+                  ROI berechnen <Euro className="h-4 w-4" />
+                </a>
+              </motion.div>
             </div>
-          </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl" style={{ fontFamily: "Georgia, serif" }}>
-            <span className="bg-gradient-to-r from-[#c9a84c] via-[#e8d5a0] to-[#c9a84c] bg-clip-text text-transparent">Das Revenue Operating System</span>
-            <br /><span className="text-white">fur DACH-Unternehmen</span>
-          </motion.h1>
-
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-slate-400 leading-relaxed">
-            Von der ersten WhatsApp-Nachricht bis zum gewonnenen Kunden &ndash; vollautomatisch.
-            Sales Agent, CRM Pipeline, Marketing Suite und Client Portal in einer Plattform.
-          </motion.p>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <a href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
-              className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-600/25 transition-all hover:bg-purple-500 hover:shadow-purple-500/30">
-              Demo ansehen <ArrowRight className="h-4 w-4" />
-            </a>
-            <a href="#roi" className="flex items-center gap-2 rounded-xl border border-[#c9a84c]/30 bg-[#c9a84c]/[0.05] px-6 py-3 text-sm font-semibold text-[#c9a84c] transition-all hover:bg-[#c9a84c]/[0.1]">
-              ROI berechnen <Euro className="h-4 w-4" />
-            </a>
-          </motion.div>
-
-          {/* Animierte Zahlen */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }}
-            className="mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
-            {[
-              { value: 43, suffix: "", label: "API-Routes", sub: "Vollautomatisiert" },
-              { value: 7, suffix: "", label: "Dashboard-Module", sub: "Alles in einer Plattform" },
-              { value: 24, suffix: "/7", label: "Automatisiert", sub: "Rund um die Uhr" },
-              { value: 100, suffix: "%", label: "DSGVO-konform", sub: "Frankfurt, AES-256" },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4 text-center">
-                <p className="text-2xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
-                  <AnimatedNumber target={stat.value} suffix={stat.suffix} />
-                </p>
-                <p className="mt-1 text-xs font-medium text-[#c9a84c]">{stat.label}</p>
-                <p className="text-[10px] text-slate-600">{stat.sub}</p>
+            {/* Rechts: Animierte Metriken-Card */}
+            <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
+              className="rounded-2xl border border-[rgba(201,168,76,0.15)] bg-[#0e0e1a] p-6 shadow-2xl shadow-black/40">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                  <span className="text-xs font-medium text-slate-400">Live Dashboard</span>
+                </div>
+                <span className="text-[10px] text-slate-600">AI Conversion</span>
               </div>
-            ))}
-          </motion.div>
+
+              {/* KPI-Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="text-[10px] text-slate-500">Neue Leads heute</p>
+                  <p className="text-2xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}><AnimatedNumber target={12} /></p>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="text-[10px] text-slate-500">Ø Lead-Score</p>
+                  <p className="text-2xl font-bold text-emerald-400" style={{ fontFamily: "Georgia, serif" }}><AnimatedNumber target={78} /></p>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="text-[10px] text-slate-500">Pipeline-Wert</p>
+                  <p className="text-2xl font-bold text-[#c9a84c]" style={{ fontFamily: "Georgia, serif" }}><AnimatedNumber target={47} suffix="k" /></p>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="text-[10px] text-slate-500">Conversion-Rate</p>
+                  <p className="text-2xl font-bold text-purple-400" style={{ fontFamily: "Georgia, serif" }}><AnimatedNumber target={34} suffix="%" /></p>
+                </div>
+              </div>
+
+              {/* Mini-Pipeline */}
+              <div className="space-y-2">
+                {[
+                  { name: "M. Schneider", score: 94, status: "Termin", color: "bg-purple-500" },
+                  { name: "A. Fischer", score: 87, status: "Qualifiziert", color: "bg-blue-500" },
+                  { name: "T. Krueger", score: 72, status: "Angebot", color: "bg-[#c9a84c]" },
+                ].map((lead) => (
+                  <div key={lead.name} className="flex items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06] text-[10px] font-bold text-slate-400">
+                      {lead.name.split(" ").map(n => n[0]).join("")}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-300 truncate">{lead.name}</p>
+                      <div className="mt-0.5 h-1 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className={`h-full rounded-full ${lead.color}`} style={{ width: `${lead.score}%` }} />
+                      </div>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-slate-500">{lead.status}</span>
+                    <span className="shrink-0 text-xs font-semibold text-emerald-400">{lead.score}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Stats-Footer */}
+              <div className="mt-4 grid grid-cols-4 gap-2">
+                {[
+                  { value: "43", label: "Routes" },
+                  { value: "7", label: "Module" },
+                  { value: "24/7", label: "Online" },
+                  { value: "AES", label: "256-bit" },
+                ].map((s) => (
+                  <div key={s.label} className="text-center">
+                    <p className="text-xs font-bold text-white">{s.value}</p>
+                    <p className="text-[9px] text-slate-600">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ═══════ 2. PRODUKT-MODULE ═══════ */}
-      <section className="relative z-10 mx-auto max-w-6xl px-6 py-20">
+      <section className="relative z-10 mx-auto max-w-6xl px-6 py-28">
         <div className="text-center mb-12">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Plattform</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
@@ -247,8 +320,44 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════ 3. FEATURE DEEP-DIVE ═══════ */}
+      {/* ═══════ SOCIAL PROOF ═══════ */}
       <section className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+        <div className="text-center mb-12">
+          <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Ergebnisse</p>
+          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
+            Das erreichen unsere <span className="text-[#c9a84c]">Kunden</span>
+          </h2>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-3">
+          {[
+            { icon: Building2, color: "text-[#c9a84c]", border: "border-[rgba(201,168,76,0.15)]", bg: "bg-[rgba(201,168,76,0.03)]",
+              metric: "+47", unit: "Leads/Monat", branche: "Immobilienmakler", desc: "Von 12 auf 59 qualifizierte Anfragen pro Monat. Besichtigungstermine werden automatisch gebucht." },
+            { icon: Hammer, color: "text-purple-400", border: "border-purple-500/15", bg: "bg-purple-500/[0.03]",
+              metric: "3,4x", unit: "Conversion", branche: "Handwerksbetrieb", desc: "Conversion-Rate von 4% auf 13,6% gesteigert. Kein verpasster Auftrag mehr durch 24/7 Erreichbarkeit." },
+            { icon: GraduationCap, color: "text-emerald-400", border: "border-emerald-500/15", bg: "bg-emerald-500/[0.03]",
+              metric: "-80%", unit: "Qualifizierungszeit", branche: "Business Coach", desc: "Erstgespraeche nur noch mit vorqualifizierten Interessenten. 4 Stunden pro Woche eingespart." },
+          ].map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <motion.div key={item.branche} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={`rounded-2xl border ${item.border} ${item.bg} p-6`}>
+                <Icon className={`h-8 w-8 ${item.color} mb-4`} />
+                <div className="flex items-end gap-2 mb-1">
+                  <span className="text-4xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>{item.metric}</span>
+                  <span className="text-sm text-slate-400 mb-1">{item.unit}</span>
+                </div>
+                <p className={`text-xs font-semibold ${item.color} mb-2`}>{item.branche}</p>
+                <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ═══════ 3. FEATURE DEEP-DIVE ═══════ */}
+      <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
         <div className="text-center mb-14">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Features</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
@@ -338,11 +447,72 @@ export default function LandingPage() {
         })}
       </section>
 
+      {/* ═══════ DIFFERENZIERUNG ═══════ */}
+      <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.6 }}
+          className="text-center mb-12">
+          <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Vergleich</p>
+          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
+            Warum <span className="text-[#c9a84c]">AI Conversion</span>?
+          </h2>
+          <p className="mt-3 text-sm text-slate-400">Nicht nur ein Chatbot &ndash; ein komplettes Revenue Operating System.</p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}
+          className="overflow-x-auto rounded-2xl border border-white/[0.06]" style={{ background: "#0e0e1a" }}>
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-white/[0.06]">
+                <th className="py-4 pl-5 pr-3 text-slate-500 font-medium w-[200px]">Feature</th>
+                <th className="py-4 px-3 text-center font-semibold text-[#c9a84c]">AI Conversion</th>
+                <th className="py-4 px-3 text-center font-medium text-slate-500">Chatarmin</th>
+                <th className="py-4 px-3 text-center font-medium text-slate-500">Respond.io</th>
+                <th className="py-4 px-3 text-center font-medium text-slate-500 pr-5">moin.ai</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { feature: "WhatsApp KI-Bot", ai: true, chatarmin: true, respond: true, moin: true },
+                { feature: "Lead-Scoring (0-100)", ai: true, chatarmin: false, respond: false, moin: false },
+                { feature: "CRM Pipeline (Kanban)", ai: true, chatarmin: false, respond: true, moin: false },
+                { feature: "Predictive Close Score", ai: true, chatarmin: false, respond: false, moin: false },
+                { feature: "AI Lead-Analyse", ai: true, chatarmin: false, respond: false, moin: false },
+                { feature: "AI Proposal Generator", ai: true, chatarmin: false, respond: false, moin: false },
+                { feature: "Kampagnen-Attribution", ai: true, chatarmin: true, respond: true, moin: false },
+                { feature: "A/B Testing Opener", ai: true, chatarmin: true, respond: false, moin: false },
+                { feature: "AI Content Creator", ai: true, chatarmin: false, respond: false, moin: false },
+                { feature: "Client Onboarding Portal", ai: true, chatarmin: false, respond: false, moin: false },
+                { feature: "QR-Code Tracking", ai: true, chatarmin: true, respond: true, moin: false },
+                { feature: "Broadcast Manager", ai: true, chatarmin: true, respond: true, moin: false },
+                { feature: "HubSpot Auto-Sync", ai: true, chatarmin: false, respond: true, moin: false },
+                { feature: "DSGVO + AES-256", ai: true, chatarmin: true, respond: false, moin: true },
+              ].map((row, i) => (
+                <tr key={row.feature} className={i % 2 === 0 ? "bg-white/[0.01]" : ""}>
+                  <td className="py-2.5 pl-5 pr-3 text-slate-300 font-medium">{row.feature}</td>
+                  {[row.ai, row.chatarmin, row.respond, row.moin].map((val, j) => (
+                    <td key={j} className={`py-2.5 px-3 text-center ${j === 3 ? "pr-5" : ""}`}>
+                      {val
+                        ? <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${j === 0 ? "bg-[#c9a84c]/15" : "bg-white/[0.04]"}`}>
+                            <Check className={`h-3 w-3 ${j === 0 ? "text-[#c9a84c]" : "text-slate-500"}`} />
+                          </span>
+                        : <span className="text-slate-700">&ndash;</span>
+                      }
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </motion.div>
+      </section>
+
       {/* ═══════ 4. ROI-RECHNER ═══════ */}
       <RoiCalculator />
 
       {/* ═══════ 5. BRANCHEN ═══════ */}
-      <section className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+      <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
         <div className="text-center mb-12">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Branchen</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
@@ -373,7 +543,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ 6. INTEGRATIONEN ═══════ */}
-      <section className="relative z-10 mx-auto max-w-4xl px-6 py-16">
+      <section className="relative z-10 mx-auto max-w-4xl px-6 py-24">
         <div className="text-center mb-10">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Integrationen</p>
           <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl" style={{ fontFamily: "Georgia, serif" }}>
@@ -400,7 +570,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ 7. PRICING ═══════ */}
-      <section id="pricing" className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+      <section id="pricing" className="relative z-10 mx-auto max-w-5xl px-6 py-28">
         <div className="text-center mb-12">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Investition</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
