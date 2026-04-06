@@ -464,6 +464,12 @@ export default function TenantDashboard() {
             >
               Broadcasts
             </a>
+            <a
+              href="/dashboard/clients"
+              className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+            >
+              Clients
+            </a>
             <button
               onClick={() => setChatOpen(!chatOpen)}
               className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-500/20"

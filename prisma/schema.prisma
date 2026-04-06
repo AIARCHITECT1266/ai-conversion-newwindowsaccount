@@ -38,6 +38,7 @@ model Tenant {
   conversations    Conversation[]
   leads            Lead[]
   campaigns        Campaign[]
+  clients          Client[]
 
   @@map("tenants")
 }
@@ -126,12 +127,40 @@ model Lead {
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   conversation     Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   campaign         Campaign?         @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  client           Client?
 
   @@index([tenantId, status])
   @@index([tenantId, qualification])
   @@index([tenantId, pipelineStatus])
   @@index([campaignId])
   @@map("leads")
+}
+
+// ---------- Client / Gewonnener Kunde ----------
+model Client {
+  id              String       @id @default(cuid())
+  tenantId        String
+  leadId          String       @unique // 1:1 Verknüpfung zum Lead
+  companyName     String       // Firmenname des Kunden
+  contactName     String?      // Ansprechpartner
+  status          ClientStatus @default(ONBOARDING)
+  onboardingStep  Int          @default(0) // 0-5, aktueller Schritt
+  milestones      String?      @db.Text // JSON Array der Meilensteine
+  notes           String?      @db.Text // Freitext-Notizen
+  docsGenerated   String?      @db.Text // KI-generierte Onboarding-Dokumente (JSON)
+  createdAt       DateTime     @default(now())
+
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead            Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@map("clients")
+}
+
+enum ClientStatus {
+  ONBOARDING
+  ACTIVE
+  PAUSED
 }
 
 // ---------- Kampagne / Tracking ----------

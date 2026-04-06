@@ -154,5 +154,22 @@ export async function PATCH(
     },
   });
 
+  // Auto-Client erstellen wenn Pipeline auf GEWONNEN gesetzt wird
+  if (updateData.pipelineStatus === "GEWONNEN" && lead.pipelineStatus !== "GEWONNEN") {
+    const existingClient = await db.client.findUnique({ where: { leadId: id } });
+    if (!existingClient) {
+      await db.client.create({
+        data: {
+          tenantId: tenant.id,
+          leadId: id,
+          companyName: `Kunde #${id.slice(0, 6)}`,
+          status: "ONBOARDING",
+          onboardingStep: 0,
+          milestones: JSON.stringify([]),
+        },
+      });
+    }
+  }
+
   return NextResponse.json({ lead: updated });
 }
