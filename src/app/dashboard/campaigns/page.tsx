@@ -982,6 +982,10 @@ export default function CampaignsPage() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <a href="/dashboard/campaigns/templates"
+              className="flex items-center gap-1.5 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition-colors">
+              <Sparkles className="h-4 w-4" /> Vorlagen
+            </a>
             <button
               onClick={() => setShowCreate(true)}
               className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-3 py-1.5 text-sm font-medium text-black hover:opacity-90 transition-opacity"

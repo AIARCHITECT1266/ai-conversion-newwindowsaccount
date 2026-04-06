@@ -163,6 +163,25 @@ enum ClientStatus {
   PAUSED
 }
 
+// ---------- Kampagnen-Vorlage ----------
+model CampaignTemplate {
+  id            String   @id @default(cuid())
+  tenantId      String?  // null = System-Template, gesetzt = benutzerdefiniert
+  branche       String   // Immobilien, Handwerk, Coaching, Agentur, E-Commerce, Custom
+  name          String   // Vorlagenname
+  beschreibung  String?  @db.Text
+  briefing      String   @db.Text // JSON: { ziel, zielgruppe, tonalitaet, ergebnis }
+  openers       String   @db.Text // JSON: string[] (3 WhatsApp-Opener A/B/C)
+  abVarianten   String?  @db.Text // JSON: { variantA, variantB } Vorschlag
+  ziele         String   @db.Text // JSON: string[] (Terminbuchung, Angebot, etc.)
+  isSystem      Boolean  @default(false) // System-Template vs. benutzerdefiniert
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([branche])
+  @@map("campaign_templates")
+}
+
 // ---------- Kampagne / Tracking ----------
 model Campaign {
   id          String   @id @default(cuid())
