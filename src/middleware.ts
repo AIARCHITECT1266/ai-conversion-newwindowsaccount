@@ -35,22 +35,8 @@ function isDashboardPath(pathname: string): boolean {
   );
 }
 
-// Coming-Soon: Öffentliche Routen umleiten (außer Ausnahmen)
-const COMING_SOON_BYPASS = ["/admin", "/api/", "/coming-soon", "/dashboard", "/_next", "/favicon"];
-
-function shouldRedirectToComingSoon(pathname: string): boolean {
-  return !COMING_SOON_BYPASS.some(
-    (p) => pathname === p || pathname.startsWith(p)
-  );
-}
-
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  // Coming-Soon Weiterleitung für alle öffentlichen Seiten
-  if (shouldRedirectToComingSoon(pathname)) {
-    return NextResponse.redirect(new URL("/coming-soon", req.url));
-  }
 
   // Dashboard-Schutz via Magic-Link Cookie
   if (isDashboardPath(pathname)) {
@@ -172,7 +158,9 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Coming-Soon: Alle Seiten-Routen abfangen
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/dashboard/:path*",
+    "/api/dashboard/:path*",
   ],
 };
