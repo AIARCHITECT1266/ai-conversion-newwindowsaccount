@@ -38,6 +38,12 @@ import {
 
 type PipelineStatus = "NEU" | "QUALIFIZIERT" | "TERMIN" | "ANGEBOT" | "GEWONNEN";
 
+interface PredictiveData {
+  probability: number;
+  reasoning: string;
+  nextBestAction: string;
+}
+
 interface CrmLead {
   id: string;
   score: number;
@@ -48,6 +54,8 @@ interface CrmLead {
   notes: string | null;
   appointmentAt: string | null;
   createdAt: string;
+  predictiveScore: string | null;
+  predictiveScoreAt: string | null;
   conversation: {
     externalId: string;
     status: string;
@@ -82,6 +90,8 @@ interface LeadDetail {
   notes: string | null;
   followUpCount: number;
   lastFollowUpAt: string | null;
+  predictiveScore: string | null;
+  predictiveScoreAt: string | null;
   appointmentAt: string | null;
   createdAt: string;
   conversation: {
@@ -375,9 +385,26 @@ function LeadCard({
         </span>
       </div>
 
-      {/* Score-Balken */}
-      <div className="mb-3">
-        <ScoreBar score={lead.score} />
+      {/* Score-Balken + Prediction */}
+      <div className="mb-3 flex items-center gap-2">
+        <div className="flex-1">
+          <ScoreBar score={lead.score} />
+        </div>
+        {(() => {
+          if (!lead.predictiveScore) return null;
+          try {
+            const pred: PredictiveData = JSON.parse(lead.predictiveScore);
+            if (pred.probability <= 60) return null;
+            return (
+              <span
+                className="shrink-0 rounded-full bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-purple-400"
+                title={pred.reasoning}
+              >
+                {pred.probability}%
+              </span>
+            );
+          } catch { return null; }
+        })()}
       </div>
 
       {/* Deal-Wert */}
@@ -432,6 +459,9 @@ function DetailModal({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiCachedAt, setAiCachedAt] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<PredictiveData | null>(null);
+  const [predLoading, setPredLoading] = useState(false);
+  const [predCachedAt, setPredCachedAt] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/dashboard/leads/${leadId}`)
@@ -441,6 +471,13 @@ function DetailModal({
           setDetail(data.lead);
           setDealValue(data.lead.dealValue?.toString() ?? "");
           setNotes(data.lead.notes ?? "");
+          // Gecachte Prediction laden
+          if (data.lead.predictiveScore) {
+            try {
+              setPrediction(JSON.parse(data.lead.predictiveScore));
+              setPredCachedAt(data.lead.predictiveScoreAt);
+            } catch { /* ignorieren */ }
+          }
         }
       })
       .finally(() => setLoading(false));
@@ -601,6 +638,81 @@ function DetailModal({
               {/* KI-Analyse */}
               {activeTab === "ai" && (
                 <div className="p-6">
+                  {/* Predictive Score */}
+                  <div className="mb-5 rounded-xl border border-purple-500/15 bg-purple-500/[0.03] p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-purple-400" />
+                        <span className="text-sm font-semibold text-slate-200">Abschlusswahrscheinlichkeit</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {predCachedAt && (
+                          <span className="text-[10px] text-slate-600">{timeAgo(predCachedAt)}</span>
+                        )}
+                        <button
+                          onClick={async () => {
+                            setPredLoading(true);
+                            try {
+                              const res = await fetch(`/api/dashboard/leads/${leadId}/predict`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ force: !!prediction }),
+                              });
+                              const data = await res.json();
+                              if (res.ok) { setPrediction(data.prediction); setPredCachedAt(data.cachedAt); }
+                            } catch { /* ignorieren */ }
+                            finally { setPredLoading(false); }
+                          }}
+                          disabled={predLoading}
+                          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                            prediction
+                              ? "border border-white/[0.06] text-slate-400 hover:text-purple-400"
+                              : "bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:opacity-90"
+                          }`}
+                        >
+                          {predLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                          {prediction ? "Neu berechnen" : "Berechnen"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {predLoading && !prediction && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-purple-400 mr-2" />
+                        <span className="text-xs text-slate-500">Claude berechnet Wahrscheinlichkeit…</span>
+                      </div>
+                    )}
+
+                    {prediction && (
+                      <div>
+                        <div className="flex items-end gap-3 mb-2">
+                          <span className={`text-3xl font-bold ${
+                            prediction.probability >= 70 ? "text-emerald-400" :
+                            prediction.probability >= 40 ? "text-[#c9a84c]" : "text-slate-400"
+                          }`} style={{ fontFamily: "Georgia, serif" }}>
+                            {prediction.probability}%
+                          </span>
+                          <div className="mb-1 h-2 flex-1 rounded-full bg-white/[0.06] overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${prediction.probability}%` }}
+                              transition={{ duration: 1, ease: "easeOut" }}
+                              className={`h-full rounded-full ${
+                                prediction.probability >= 70 ? "bg-emerald-500" :
+                                prediction.probability >= 40 ? "bg-[#c9a84c]" : "bg-slate-500"
+                              }`}
+                            />
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-400 mb-2">{prediction.reasoning}</p>
+                        <div className="flex items-start gap-1.5 rounded-lg border border-purple-500/10 bg-purple-500/[0.03] px-3 py-2">
+                          <ArrowRight className="mt-0.5 h-3 w-3 shrink-0 text-purple-400" />
+                          <p className="text-xs text-purple-300">{prediction.nextBestAction}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Analyse generieren Button */}
                   {!aiSummary && !aiLoading && (
                     <div className="flex flex-col items-center justify-center py-10">

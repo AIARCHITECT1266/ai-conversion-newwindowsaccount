@@ -24,6 +24,8 @@ export async function GET() {
       notes: true,
       appointmentAt: true,
       createdAt: true,
+      predictiveScore: true,
+      predictiveScoreAt: true,
       conversation: {
         select: {
           externalId: true,

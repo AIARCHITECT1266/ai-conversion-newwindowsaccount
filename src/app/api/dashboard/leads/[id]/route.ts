@@ -75,6 +75,8 @@ export async function GET(
       notes: lead.notes,
       followUpCount: lead.followUpCount,
       lastFollowUpAt: lead.lastFollowUpAt,
+      predictiveScore: lead.predictiveScore,
+      predictiveScoreAt: lead.predictiveScoreAt,
       appointmentAt: lead.appointmentAt,
       createdAt: lead.createdAt,
       conversation: {
