@@ -97,6 +97,19 @@ interface LeadDetail {
   messages: LeadMessage[];
 }
 
+interface CrmStats {
+  totalLeads: number;
+  conversionRates: {
+    neuToQualifiziert: number;
+    qualifiziertToTermin: number;
+    terminToAngebot: number;
+    angebotToGewonnen: number;
+  };
+  avgTimeToQualify: { hours: number; minutes: number };
+  totalPipelineValue: number;
+  gewonnenValue: number;
+}
+
 type FilterQualification = "ALL" | "UNQUALIFIED" | "MARKETING_QUALIFIED" | "SALES_QUALIFIED" | "OPPORTUNITY" | "CUSTOMER";
 type FilterScore = "ALL" | "HIGH" | "MEDIUM" | "LOW";
 type FilterDate = "ALL" | "TODAY" | "WEEK" | "MONTH";
@@ -197,6 +210,75 @@ function ScoreBar({ score, size = "sm" }: { score: number; size?: "sm" | "lg" })
         />
       </div>
       <span className={`shrink-0 text-xs font-semibold ${colors.text}`}>{score}</span>
+    </div>
+  );
+}
+
+/* ───────────────────────────── Filter-Leiste ────────────────────── */
+
+/* ───────────────────────────── Metriken-Leiste ──────────────────── */
+
+function MetricsBar({ stats }: { stats: CrmStats | null }) {
+  if (!stats) return null;
+
+  const convSteps = [
+    { label: "Neu → Qual.", rate: stats.conversionRates.neuToQualifiziert },
+    { label: "Qual. → Termin", rate: stats.conversionRates.qualifiziertToTermin },
+    { label: "Termin → Angeb.", rate: stats.conversionRates.terminToAngebot },
+    { label: "Angeb. → Gew.", rate: stats.conversionRates.angebotToGewonnen },
+  ];
+
+  return (
+    <div className="mb-4 grid grid-cols-6 gap-3">
+      {/* Durchschnittszeit bis Qualifiziert */}
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-3">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Clock className="h-3.5 w-3.5 text-purple-400" />
+          <span className="text-[10px] text-slate-500">Ø bis Qualifiziert</span>
+        </div>
+        <p className="text-lg font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
+          {stats.avgTimeToQualify.hours > 0 ? `${stats.avgTimeToQualify.hours}h ` : ""}
+          {stats.avgTimeToQualify.minutes}m
+        </p>
+      </div>
+
+      {/* Conversion-Rates */}
+      {convSteps.map((step) => (
+        <div key={step.label} className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-3">
+          <span className="text-[10px] text-slate-500">{step.label}</span>
+          <div className="mt-1.5 flex items-end gap-1.5">
+            <span className={`text-lg font-bold ${
+              step.rate >= 50 ? "text-emerald-400" : step.rate >= 25 ? "text-[#c9a84c]" : "text-slate-300"
+            }`} style={{ fontFamily: "Georgia, serif" }}>
+              {step.rate}%
+            </span>
+            <div className="mb-1 h-1 flex-1 rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  step.rate >= 50 ? "bg-emerald-500" : step.rate >= 25 ? "bg-[#c9a84c]" : "bg-slate-500"
+                }`}
+                style={{ width: `${step.rate}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Pipeline-Gesamtwert */}
+      <div className="rounded-xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.03)] p-3">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Euro className="h-3.5 w-3.5 text-[#c9a84c]" />
+          <span className="text-[10px] text-[#c9a84c]/60">Pipeline-Wert</span>
+        </div>
+        <p className="text-lg font-bold text-[#c9a84c]" style={{ fontFamily: "Georgia, serif" }}>
+          {formatCurrency(stats.totalPipelineValue)}
+        </p>
+        {stats.gewonnenValue > 0 && (
+          <p className="mt-0.5 text-[10px] text-emerald-400">
+            {formatCurrency(stats.gewonnenValue)} gewonnen
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -867,6 +949,9 @@ export default function CrmPipelinePage() {
   const [dateFilter, setDateFilter] = useState<FilterDate>("ALL");
   const [qualFilter, setQualFilter] = useState<FilterQualification>("ALL");
 
+  // CRM-Metriken
+  const [crmStats, setCrmStats] = useState<CrmStats | null>(null);
+
   const fetchLeads = useCallback(async () => {
     try {
       setError(null);
@@ -881,7 +966,14 @@ export default function CrmPipelinePage() {
     }
   }, []);
 
-  useEffect(() => { fetchLeads(); }, [fetchLeads]);
+  const fetchCrmStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard/crm/stats");
+      if (res.ok) setCrmStats(await res.json());
+    } catch { /* Metriken sind optional */ }
+  }, []);
+
+  useEffect(() => { fetchLeads(); fetchCrmStats(); }, [fetchLeads, fetchCrmStats]);
 
   // Filter anwenden
   const filteredLeads = leads.filter((lead) => {
@@ -910,6 +1002,7 @@ export default function CrmPipelinePage() {
     });
     if (!res.ok) throw new Error("Fehler beim Aktualisieren");
     await fetchLeads();
+    fetchCrmStats();
   }
 
   function handleDragStart(e: React.DragEvent, leadId: string) {
@@ -1019,6 +1112,9 @@ export default function CrmPipelinePage() {
 
       {/* Pipeline-Board */}
       <main className="relative z-10 mx-auto max-w-[1600px] px-6 py-6" onDragLeave={() => setDragOverColumn(null)}>
+        {/* Erfolgsmetriken */}
+        <MetricsBar stats={crmStats} />
+
         {/* Filter-Leiste */}
         <FilterBar
           scoreFilter={scoreFilter} setScoreFilter={setScoreFilter}
