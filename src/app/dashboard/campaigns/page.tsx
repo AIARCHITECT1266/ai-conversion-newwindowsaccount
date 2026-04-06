@@ -807,8 +807,12 @@ function GenerateContentModal({ slug, campaignName, onClose }: { slug: string; c
 /* ───────────────────────────── QR-Code Modal ─────────────────────── */
 
 function QrCodeModal({ slug, onClose }: { slug: string; onClose: () => void }) {
-  const [qrData, setQrData] = useState<{ qrDataUrl: string; trackingLink: string; campaignName: string; brandName: string } | null>(null);
+  const [qrData, setQrData] = useState<{
+    qrDataUrl: string; qrSvg: string; trackingLink: string;
+    linkTrackingUrl: string; campaignName: string; brandName: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     fetch(`/api/dashboard/campaigns/${slug}/qrcode`)
@@ -825,27 +829,50 @@ function QrCodeModal({ slug, onClose }: { slug: string; onClose: () => void }) {
     a.click();
   }
 
-  function downloadHtml() {
+  function downloadSvg() {
     if (!qrData) return;
-    const html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>QR-Code – ${qrData.campaignName}</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#07070d;font-family:Georgia,serif}
-.card{background:#0e0e1a;border:2px solid rgba(201,168,76,0.2);border-radius:24px;padding:48px;text-align:center;max-width:420px}
-.brand{color:#c9a84c;font-size:28px;font-weight:700;margin-bottom:4px}.campaign{color:#ede8df;font-size:16px;margin-bottom:32px}
-img{width:280px;height:280px;border-radius:16px;border:1px solid rgba(201,168,76,0.1)}
-.cta{margin-top:24px;background:linear-gradient(135deg,#c9a84c,#8b5cf6);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:600}
-.link{margin-top:16px;color:rgba(237,232,223,0.4);font-size:11px}
-</style></head><body><div class="card">
-<div class="brand">${qrData.brandName}</div>
-<div class="campaign">${qrData.campaignName}</div>
-<img src="${qrData.qrDataUrl}" alt="QR-Code" />
-<div><button class="cta">Jetzt scannen & chatten</button></div>
-<div class="link">${qrData.trackingLink}</div>
-</div></body></html>`;
-    const blob = new Blob([html], { type: "text/html" });
+    const blob = new Blob([qrData.qrSvg], { type: "image/svg+xml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url;
-    a.download = `qr-print-${slug}.html`; a.click();
+    a.download = `qr-${slug}.svg`; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function downloadPrintPdf() {
+    if (!qrData) return;
+    // PDF-optimierte HTML-Druckvorlage mit @media print
+    const html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>QR-Code – ${qrData.campaignName}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff;font-family:Georgia,serif}
+.card{border:3px solid #c9a84c;border-radius:24px;padding:48px;text-align:center;max-width:420px;page-break-inside:avoid}
+.brand{color:#c9a84c;font-size:32px;font-weight:700;margin-bottom:4px}
+.campaign{color:#333;font-size:18px;margin-bottom:28px}
+.qr-wrap{display:inline-block;border:2px solid #c9a84c;border-radius:16px;padding:12px;margin-bottom:20px}
+.qr-wrap svg,.qr-wrap img{width:240px;height:240px}
+.cta{margin-top:16px;background:linear-gradient(135deg,#c9a84c,#8b5cf6);color:#fff;border:none;border-radius:12px;padding:14px 36px;font-size:16px;font-weight:600;display:inline-block}
+.link{margin-top:16px;color:#888;font-size:10px;word-break:break-all}
+.source{margin-top:8px;color:#aaa;font-size:9px}
+@media print{
+  body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card{border-width:2px;box-shadow:none}
+  .cta{background:#c9a84c!important;-webkit-print-color-adjust:exact}
+}
+</style></head><body>
+<div class="card">
+<div class="brand">${qrData.brandName}</div>
+<div class="campaign">${qrData.campaignName}</div>
+<div class="qr-wrap">${qrData.qrSvg}</div>
+<div><span class="cta">Scannen &amp; chatten</span></div>
+<div class="link">${qrData.trackingLink}</div>
+<div class="source">Source: QR-Code &bull; Kampagne: ${slug}</div>
+</div>
+<script>window.onload=function(){window.print()}</script>
+</body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
   return (
@@ -870,21 +897,36 @@ img{width:280px;height:280px;border-radius:16px;border:1px solid rgba(201,168,76
             <p className="text-sm text-slate-300 mb-5">{qrData.campaignName}</p>
 
             {/* QR-Code */}
-            <div className="mx-auto mb-5 inline-block rounded-2xl border border-[rgba(201,168,76,0.1)] bg-white p-3">
-              <img src={qrData.qrDataUrl} alt="QR-Code" className="h-56 w-56" />
+            <div className="mx-auto mb-4 inline-block rounded-2xl border border-[rgba(201,168,76,0.1)] bg-white p-3">
+              <img src={qrData.qrDataUrl} alt="QR-Code" className="h-52 w-52" />
             </div>
 
-            <p className="mb-5 text-xs text-slate-600 break-all">{qrData.trackingLink}</p>
+            {/* Tracking-Links mit Source-Info */}
+            <div className="mb-4 space-y-1.5">
+              <div className="flex items-center justify-center gap-2">
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-400">QR Source</span>
+                <span className="text-[10px] text-slate-600 truncate max-w-[200px]">{qrData.trackingLink}</span>
+                <button onClick={() => { navigator.clipboard.writeText(qrData.trackingLink); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 1500); }}
+                  className="text-slate-600 hover:text-[#c9a84c] transition-colors">
+                  {copiedLink ? <ClipboardCheck className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                </button>
+              </div>
+              <p className="text-[9px] text-slate-700">Leads werden automatisch mit Source "QR" getrackt</p>
+            </div>
 
-            {/* Download-Buttons */}
-            <div className="flex gap-2">
+            {/* Download-Buttons: 3 Optionen */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
               <button onClick={downloadPng}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.04] transition-colors">
+                className="flex flex-col items-center gap-1 rounded-lg border border-white/[0.08] px-2 py-2.5 text-[10px] font-medium text-slate-300 hover:bg-white/[0.04] transition-colors">
                 <Download className="h-3.5 w-3.5" /> PNG
               </button>
-              <button onClick={downloadHtml}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-purple-500 px-3 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity">
-                <Download className="h-3.5 w-3.5" /> Druckvorlage
+              <button onClick={downloadSvg}
+                className="flex flex-col items-center gap-1 rounded-lg border border-purple-500/20 bg-purple-500/[0.05] px-2 py-2.5 text-[10px] font-medium text-purple-300 hover:bg-purple-500/[0.1] transition-colors">
+                <Download className="h-3.5 w-3.5" /> SVG
+              </button>
+              <button onClick={downloadPrintPdf}
+                className="flex flex-col items-center gap-1 rounded-lg bg-gradient-to-r from-[#c9a84c] to-purple-500 px-2 py-2.5 text-[10px] font-medium text-white hover:opacity-90 transition-opacity">
+                <Download className="h-3.5 w-3.5" /> Drucken
               </button>
             </div>
 

@@ -1,6 +1,7 @@
 // ============================================================
 // GET /api/dashboard/campaigns/[slug]/qrcode – QR-Code generieren
-// Gibt QR-Code als Data-URL (PNG base64) zurück
+// Gibt PNG (Data-URL), SVG und QR-Tracking-Link zurueck
+// QR-Link nutzt "qr:" Prefix fuer Source-Tracking
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -28,15 +29,16 @@ export async function GET(
     return NextResponse.json({ error: "Kampagne nicht gefunden" }, { status: 404 });
   }
 
-  // WhatsApp Phone-ID des Tenants für den Tracking-Link
   const tenantFull = await db.tenant.findUnique({
     where: { id: tenant.id },
-    select: { whatsappPhoneId: true, brandName: true },
+    select: { brandName: true },
   });
 
-  const trackingLink = `https://wa.me/?text=campaign:${campaign.slug}`;
+  // QR-Link mit "qr:" Prefix fuer Source-Tracking (unterscheidet von "campaign:" Link)
+  const trackingLink = `https://wa.me/?text=qr:${campaign.slug}`;
+  const linkTrackingUrl = `https://wa.me/?text=campaign:${campaign.slug}`;
 
-  // QR-Code als Data-URL generieren
+  // PNG als Data-URL (512px, hohe Fehlerkorrektur)
   const qrDataUrl = await QRCode.toDataURL(trackingLink, {
     width: 512,
     margin: 2,
@@ -44,9 +46,19 @@ export async function GET(
     errorCorrectionLevel: "H",
   });
 
+  // SVG als String
+  const qrSvg = await QRCode.toString(trackingLink, {
+    type: "svg",
+    margin: 2,
+    color: { dark: "#1a1a2e", light: "#ffffff" },
+    errorCorrectionLevel: "H",
+  });
+
   return NextResponse.json({
     qrDataUrl,
+    qrSvg,
     trackingLink,
+    linkTrackingUrl,
     campaignName: campaign.name,
     brandName: tenantFull?.brandName ?? tenant.name,
   });

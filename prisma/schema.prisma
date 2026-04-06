@@ -52,6 +52,7 @@ model Conversation {
   consentAt      DateTime?          // Zeitpunkt der Einwilligung
   language       String             @default("de") // Erkannte Sprache (ISO 639-1)
   campaignSlug   String?            // Kampagnen-Tracking aus WhatsApp-Link
+  leadSource     String?            // "qr", "link", "organic"
   status         ConversationStatus @default(ACTIVE)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -122,6 +123,7 @@ model Lead {
   predictiveScoreAt DateTime?        // Zeitpunkt der letzten Prediction
   campaignId       String?           // Kampagnen-Zuordnung
   abTestVariant    String?           // "A" oder "B" – welche Variante wurde gesendet
+  source           String?           // Lead-Quelle: "qr", "link", "organic", "broadcast"
   createdAt        DateTime          @default(now())
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)

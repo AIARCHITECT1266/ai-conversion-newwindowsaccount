@@ -133,11 +133,23 @@ export async function handleIncomingMessage(
       select: { id: true, status: true, consentGiven: true },
     });
 
-    // Campaign-Slug aus erster Nachricht parsen (wa.me/...?text=campaign:slug)
-    const campaignMatch = !conversationBefore
-      ? message.text.match(/^campaign:([a-z0-9-]+)$/i)
-      : null;
-    const campaignSlug = campaignMatch ? campaignMatch[1].toLowerCase() : null;
+    // Campaign + Source aus erster Nachricht parsen
+    // Format: "campaign:slug" (Link) oder "qr:slug" (QR-Code)
+    let campaignSlug: string | null = null;
+    let leadSource: string | null = null;
+
+    if (!conversationBefore) {
+      const qrMatch = message.text.match(/^qr:([a-z0-9-]+)$/i);
+      const campaignMatch = message.text.match(/^campaign:([a-z0-9-]+)$/i);
+
+      if (qrMatch) {
+        campaignSlug = qrMatch[1].toLowerCase();
+        leadSource = "qr";
+      } else if (campaignMatch) {
+        campaignSlug = campaignMatch[1].toLowerCase();
+        leadSource = "link";
+      }
+    }
 
     const conversation = await db.conversation.upsert({
       where: {
@@ -148,8 +160,9 @@ export async function handleIncomingMessage(
         externalId,
         status: "ACTIVE",
         ...(campaignSlug ? { campaignSlug } : {}),
+        ...(leadSource ? { leadSource } : {}),
       },
-      update: {}, // Keine Aenderung wenn bereits vorhanden
+      update: {},
     });
 
     // Neue Konversation: DSGVO-Consent anfordern
@@ -295,10 +308,12 @@ export async function handleIncomingMessage(
         // Campaign-Zuordnung über Conversation-Slug auflösen
         let campaignId: string | undefined;
         let abTestVariant: string | undefined;
+        let leadSourceResolved: string | undefined;
         const conv = await db.conversation.findUnique({
           where: { id: conversation.id },
-          select: { campaignSlug: true },
+          select: { campaignSlug: true, leadSource: true },
         });
+        if (conv?.leadSource) leadSourceResolved = conv.leadSource;
         if (conv?.campaignSlug) {
           const campaign = await db.campaign.findUnique({
             where: { tenantId_slug: { tenantId: tenant.id, slug: conv.campaignSlug } },
@@ -330,6 +345,7 @@ export async function handleIncomingMessage(
             status: "NEW",
             ...(campaignId ? { campaignId } : {}),
             ...(abTestVariant ? { abTestVariant } : {}),
+            ...(leadSourceResolved ? { source: leadSourceResolved } : {}),
           },
           update: {
             score: scoreResult.score,
