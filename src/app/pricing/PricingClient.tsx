@@ -66,7 +66,7 @@ const plans: Plan[] = [
     icon: <Zap className="h-5 w-5" />,
     monthlyPrice: 497,
     yearlyPrice: 4970,
-    setupFee: "497",
+    setupFee: "697",
     tagline: "Dein erster KI-Vertriebsmitarbeiter",
     description: "Perfekt fuer den Einstieg in automatisierten KI-Vertrieb",
     bots: "1 KI-Bot",
@@ -88,9 +88,9 @@ const plans: Plan[] = [
   {
     name: "Growth",
     icon: <Rocket className="h-5 w-5" />,
-    monthlyPrice: 1497,
-    yearlyPrice: 14970,
-    setupFee: "997",
+    monthlyPrice: 1297,
+    yearlyPrice: 12970,
+    setupFee: "1.297",
     tagline: "Ersetzt 1\u20132 Vertriebsmitarbeiter",
     description: "Spart 5.000\u20138.000\u20ac/Monat bei 24/7 Verfuegbarkeit",
     bots: "3 KI-Bots",
@@ -114,8 +114,8 @@ const plans: Plan[] = [
   {
     name: "Professional",
     icon: <Building2 className="h-5 w-5" />,
-    monthlyPrice: 2997,
-    yearlyPrice: 29970,
+    monthlyPrice: 2497,
+    yearlyPrice: 24970,
     setupFee: "1.997",
     tagline: "Dein komplettes KI-Vertriebsteam",
     description: "Maximale Power fuer grosse Vertriebsorganisationen",
@@ -140,7 +140,7 @@ const plans: Plan[] = [
 
 const enterprise = {
   name: "Enterprise",
-  monthlyPrice: "ab 5.000",
+  monthlyPrice: "ab 6.000",
   features: [
     "Unbegrenzt Bots & Mandanten",
     "White-Label Loesung",
@@ -158,10 +158,10 @@ interface AddOn {
 }
 
 const addons: AddOn[] = [
-  { name: "Voice Agent (Telnyx)", price: "500", icon: <Mic className="h-5 w-5" />, description: "Telefonische KI-Gespraeche fuer Inbound & Outbound" },
-  { name: "Instagram DMs", price: "400", icon: <Instagram className="h-5 w-5" />, description: "Automatisierte Instagram Direct Messages" },
-  { name: "E-Mail Agent", price: "300", icon: <Mail className="h-5 w-5" />, description: "KI-gestuetzte E-Mail-Follow-ups & Nurturing" },
-  { name: "Multi-AI Dashboard", price: "200", icon: <BarChart3 className="h-5 w-5" />, description: "Claude + GPT-4o + Gemini parallel vergleichen" },
+  { name: "Marketing Booster", price: "299", icon: <Megaphone className="h-5 w-5" />, description: "KI-Kampagnen-Generator, A/B Testing, QR-Codes & Broadcast Manager" },
+  { name: "HubSpot Sync", price: "199", icon: <Link2 className="h-5 w-5" />, description: "Automatischer Lead-Push bei Score >70 mit Lifecycle-Stage Mapping" },
+  { name: "Weekly Report", price: "99", icon: <BarChart3 className="h-5 w-5" />, description: "Woechentlicher KI-Report: Trends, Top-Leads, Pipeline-Analyse per E-Mail" },
+  { name: "White-Label", price: "500", icon: <Palette className="h-5 w-5" />, description: "Eigenes Branding, eigene Domain, kein AI Conversion Logo" },
 ];
 
 // Vergleichstabelle
@@ -502,6 +502,167 @@ function ComparisonCell({ value }: { value: boolean | string }) {
 // SEITE
 // ═══════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════
+// ROI-RECHNER
+// ═══════════════════════════════════════════════════════
+
+function RoiCalculator() {
+  const [avgDeal, setAvgDeal] = useState(2500);
+  const [leadsPerMonth, setLeadsPerMonth] = useState(50);
+  const [currentRate, setCurrentRate] = useState(5);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  const CONVERSION_BOOST = 1.4; // +40% Conversion-Verbesserung
+  const boostedRate = Math.min(currentRate * CONVERSION_BOOST, 100);
+
+  const currentRevenue = leadsPerMonth * (currentRate / 100) * avgDeal;
+  const boostedRevenue = leadsPerMonth * (boostedRate / 100) * avgDeal;
+  const monthlyGain = boostedRevenue - currentRevenue;
+
+  const planCosts = [
+    { name: "Starter", monthly: 497, setup: 697 },
+    { name: "Growth", monthly: 1297, setup: 1297 },
+    { name: "Professional", monthly: 2497, setup: 1997 },
+  ];
+
+  function SliderInput({ label, value, onChange, min, max, step, unit, format }: {
+    label: string; value: number; onChange: (v: number) => void;
+    min: number; max: number; step: number; unit: string; format?: (v: number) => string;
+  }) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-slate-400">{label}</span>
+          <span className="text-sm font-semibold text-white">
+            {format ? format(value) : value.toLocaleString("de-DE")}{unit}
+          </span>
+        </div>
+        <input
+          type="range" min={min} max={max} step={step} value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #c9a84c 0%, #8b5cf6 ${((value - min) / (max - min)) * 100}%, rgba(255,255,255,0.06) ${((value - min) / (max - min)) * 100}%, rgba(255,255,255,0.06) 100%)`,
+          }}
+        />
+        <style>{`
+          input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+            background: linear-gradient(135deg, #c9a84c, #8b5cf6); border: 2px solid #0e0e1a;
+            cursor: pointer; box-shadow: 0 0 12px rgba(201,168,76,0.3);
+          }
+          input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: linear-gradient(135deg, #c9a84c, #8b5cf6); border: 2px solid #0e0e1a;
+            cursor: pointer;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  return (
+    <section ref={ref} className="relative z-10 mx-auto max-w-5xl px-6 py-16">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6 }}
+        className="text-center mb-10"
+      >
+        <p className="text-[13px] font-medium uppercase tracking-[0.12em]" style={{ color: "#C9A84C" }}>
+          Return on Investment
+        </p>
+        <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
+          Berechnen Sie Ihren <span className="text-[#C9A84C]">ROI</span>
+        </h2>
+        <p className="mt-3 text-sm text-slate-400 max-w-lg mx-auto">
+          Sehen Sie live, wie AI Conversion Ihre Conversion-Rate um bis zu 40% steigern kann
+        </p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="grid gap-6 lg:grid-cols-2"
+      >
+        {/* Eingabe-Slider */}
+        <div className="rounded-2xl border border-white/[0.06] p-6 space-y-6" style={{ background: "#0e0e1a" }}>
+          <div className="flex items-center gap-2 mb-2">
+            <SlidersHorizontal className="h-4 w-4 text-[#C9A84C]" />
+            <span className="text-sm font-semibold text-slate-200">Ihre Kennzahlen</span>
+          </div>
+          <SliderInput label="Ø Auftragswert" value={avgDeal} onChange={setAvgDeal}
+            min={500} max={50000} step={500} unit=" €" format={v => v.toLocaleString("de-DE")} />
+          <SliderInput label="Leads pro Monat" value={leadsPerMonth} onChange={setLeadsPerMonth}
+            min={10} max={500} step={10} unit="" />
+          <SliderInput label="Aktuelle Conversion-Rate" value={currentRate} onChange={setCurrentRate}
+            min={1} max={30} step={1} unit="%" />
+        </div>
+
+        {/* Ergebnis */}
+        <div className="rounded-2xl border border-[rgba(201,168,76,0.15)] p-6" style={{ background: "rgba(201,168,76,0.02)" }}>
+          <div className="flex items-center gap-2 mb-5">
+            <TrendingUp className="h-4 w-4 text-[#C9A84C]" />
+            <span className="text-sm font-semibold text-slate-200">Ihr Potenzial mit AI Conversion</span>
+          </div>
+
+          {/* Vorher / Nachher */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+              <p className="text-[10px] text-slate-500 mb-1">Aktuell ({currentRate}%)</p>
+              <p className="text-xl font-bold text-slate-400" style={{ fontFamily: "Georgia, serif" }}>
+                {currentRevenue.toLocaleString("de-DE", { maximumFractionDigits: 0 })} €
+              </p>
+              <p className="text-[10px] text-slate-600">Umsatz/Monat</p>
+            </div>
+            <div className="rounded-xl border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.03)] p-4 text-center">
+              <p className="text-[10px] text-[#c9a84c]/60 mb-1">Mit AI Conversion ({boostedRate.toFixed(1)}%)</p>
+              <p className="text-xl font-bold text-[#C9A84C]" style={{ fontFamily: "Georgia, serif" }}>
+                {boostedRevenue.toLocaleString("de-DE", { maximumFractionDigits: 0 })} €
+              </p>
+              <p className="text-[10px] text-[#c9a84c]/60">Umsatz/Monat</p>
+            </div>
+          </div>
+
+          {/* Mehreinnahmen */}
+          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-4 text-center mb-5">
+            <p className="text-[10px] text-emerald-400/60 mb-1">Mehreinnahmen pro Monat</p>
+            <p className="text-3xl font-bold text-emerald-400" style={{ fontFamily: "Georgia, serif" }}>
+              +{monthlyGain.toLocaleString("de-DE", { maximumFractionDigits: 0 })} €
+            </p>
+          </div>
+
+          {/* Amortisierung pro Plan */}
+          <p className="text-[10px] text-slate-500 mb-2">Amortisierung (Setup + 1. Monat):</p>
+          <div className="space-y-2">
+            {planCosts.map((plan) => {
+              const totalFirstMonth = plan.monthly + plan.setup;
+              const daysToRoi = monthlyGain > 0 ? Math.ceil((totalFirstMonth / monthlyGain) * 30) : 999;
+              return (
+                <div key={plan.name} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2">
+                  <span className="text-xs text-slate-300">{plan.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">{totalFirstMonth.toLocaleString("de-DE")} €</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      daysToRoi <= 30 ? "bg-emerald-500/10 text-emerald-400" :
+                      daysToRoi <= 90 ? "bg-[#c9a84c]/10 text-[#c9a84c]" :
+                      "bg-slate-500/10 text-slate-400"
+                    }`}>
+                      {daysToRoi > 365 ? ">365" : daysToRoi} Tage
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false);
 
@@ -765,6 +926,10 @@ export default function PricingPage() {
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#C9A84C]/15 to-transparent" />
         </div>
       </div>
+
+      {/* ═══════ ADD-ONS ═══════ */}
+      {/* ═══════ ROI-RECHNER ═══════ */}
+      <RoiCalculator />
 
       {/* ═══════ ADD-ONS ═══════ */}
       <section className="relative z-10 mx-auto max-w-6xl px-6 py-12">
