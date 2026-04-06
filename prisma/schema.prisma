@@ -120,6 +120,7 @@ model Lead {
   predictiveScore  String?           @db.Text // KI-Abschlusswahrscheinlichkeit (JSON)
   predictiveScoreAt DateTime?        // Zeitpunkt der letzten Prediction
   campaignId       String?           // Kampagnen-Zuordnung
+  abTestVariant    String?           // "A" oder "B" – welche Variante wurde gesendet
   createdAt        DateTime          @default(now())
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -147,10 +148,74 @@ model Campaign {
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   leads       Lead[]
+  abTests     AbTest[]
+  broadcasts  Broadcast[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, isActive])
   @@map("campaigns")
+}
+
+// ---------- A/B Test ----------
+model AbTest {
+  id           String    @id @default(cuid())
+  campaignId   String
+  variantA     String    @db.Text // WhatsApp-Opener Variante A
+  variantB     String    @db.Text // WhatsApp-Opener Variante B
+  sendsA       Int       @default(0) // Anzahl gesendeter Variante A
+  sendsB       Int       @default(0) // Anzahl gesendeter Variante B
+  responsesA   Int       @default(0) // Antworten auf Variante A
+  responsesB   Int       @default(0) // Antworten auf Variante B
+  winnerId     String?   // "A" oder "B" oder null
+  isActive     Boolean   @default(true)
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime? // Automatisch nach 14 Tagen
+
+  campaign     Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, isActive])
+  @@map("ab_tests")
+}
+
+// ---------- Broadcast ----------
+model Broadcast {
+  id           String              @id @default(cuid())
+  tenantId     String
+  campaignId   String?
+  message      String              @db.Text // WhatsApp-Nachricht
+  segment      String              // Segment-Filter als JSON
+  totalSent    Int                 @default(0)
+  totalFailed  Int                 @default(0)
+  status       BroadcastStatus     @default(PENDING)
+  createdAt    DateTime            @default(now())
+  sentAt       DateTime?
+
+  campaign     Campaign?           @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  recipients   BroadcastRecipient[]
+
+  @@index([tenantId, status])
+  @@map("broadcasts")
+}
+
+model BroadcastRecipient {
+  id           String   @id @default(cuid())
+  broadcastId  String
+  leadId       String
+  status       String   @default("pending") // pending, sent, failed
+  error        String?
+  sentAt       DateTime?
+
+  broadcast    Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId, status])
+  @@map("broadcast_recipients")
+}
+
+enum BroadcastStatus {
+  PENDING
+  SENDING
+  COMPLETED
+  FAILED
 }
 
 // ---------- Deduplizierung: Verarbeitete WhatsApp Message-IDs ----------

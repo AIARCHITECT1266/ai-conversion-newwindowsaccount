@@ -160,16 +160,47 @@ function FunnelChart({ pipeline, total }: { pipeline: Record<string, number>; to
 
 /* ───────────────────────────── Kampagnen-Detail Modal ──────────── */
 
+interface AbTestResult {
+  id: string; variantA: string; variantB: string;
+  sendsA: number; sendsB: number; responsesA: number; responsesB: number;
+  rateA: number; rateB: number; winnerId: string | null;
+  isActive: boolean; daysSinceStart: number; suggestedWinner: string | null;
+  startedAt: string; endedAt: string | null;
+}
+
 function CampaignDetail({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [stats, setStats] = useState<CampaignStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [abTests, setAbTests] = useState<AbTestResult[]>([]);
+  const [showAbCreate, setShowAbCreate] = useState(false);
+  const [abA, setAbA] = useState("");
+  const [abB, setAbB] = useState("");
+  const [abSaving, setAbSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/dashboard/campaigns/${slug}/stats`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) setStats(d); })
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/dashboard/campaigns/${slug}/stats`).then(r => r.ok ? r.json() : null),
+      fetch(`/api/dashboard/campaigns/${slug}/abtest`).then(r => r.ok ? r.json() : null),
+    ]).then(([s, a]) => {
+      if (s) setStats(s);
+      if (a?.abTests) setAbTests(a.abTests);
+    }).finally(() => setLoading(false));
   }, [slug]);
+
+  async function createAbTest() {
+    setAbSaving(true);
+    try {
+      const res = await fetch(`/api/dashboard/campaigns/${slug}/abtest`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variantA: abA, variantB: abB }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAbTests(prev => [{ ...data.abTest, rateA: 0, rateB: 0, daysSinceStart: 0, suggestedWinner: null }, ...prev]);
+        setShowAbCreate(false); setAbA(""); setAbB("");
+      }
+    } finally { setAbSaving(false); }
+  }
 
   return (
     <motion.div
@@ -243,6 +274,78 @@ function CampaignDetail({ slug, onClose }: { slug: string; onClose: () => void }
                 <span className="text-sm font-semibold text-slate-200">Pipeline-Funnel</span>
               </div>
               <FunnelChart pipeline={stats.metrics.pipeline} total={stats.metrics.totalLeads} />
+            </div>
+
+            {/* A/B Tests */}
+            <div className="px-6 pb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-purple-400" />
+                  <span className="text-sm font-semibold text-slate-200">A/B Tests</span>
+                </div>
+                <button onClick={() => setShowAbCreate(!showAbCreate)}
+                  className="text-xs text-[#c9a84c] hover:text-[#d4b85c] transition-colors">
+                  {showAbCreate ? "Abbrechen" : "+ Neuer Test"}
+                </button>
+              </div>
+
+              {showAbCreate && (
+                <div className="mb-4 rounded-lg border border-purple-500/15 bg-purple-500/[0.03] p-3 space-y-2">
+                  <input value={abA} onChange={e => setAbA(e.target.value)} placeholder="Variante A – WhatsApp Opener"
+                    className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none" />
+                  <input value={abB} onChange={e => setAbB(e.target.value)} placeholder="Variante B – WhatsApp Opener"
+                    className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none" />
+                  <button onClick={createAbTest} disabled={abSaving || !abA.trim() || !abB.trim()}
+                    className="flex items-center gap-1.5 rounded-lg bg-purple-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-600 disabled:opacity-40 transition-all">
+                    {abSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} Test starten
+                  </button>
+                </div>
+              )}
+
+              {abTests.length === 0 && !showAbCreate && (
+                <p className="text-xs text-slate-600">Noch keine A/B Tests</p>
+              )}
+
+              {abTests.map(test => (
+                <div key={test.id} className="mb-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      test.isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                    }`}>{test.isActive ? "Aktiv" : "Beendet"}{test.winnerId ? ` – Gewinner: ${test.winnerId}` : ""}</span>
+                    <span className="text-[10px] text-slate-600">Tag {test.daysSinceStart}/14</span>
+                  </div>
+
+                  {/* Variante A */}
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-medium text-[#c9a84c]">A: {test.rateA}% Antwortrate</span>
+                      <span className="text-[10px] text-slate-500">{test.responsesA}/{test.sendsA}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 truncate">{test.variantA}</p>
+                    <div className="mt-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className="h-full rounded-full bg-[#c9a84c]" style={{ width: `${Math.min(test.rateA, 100)}%` }} />
+                    </div>
+                  </div>
+
+                  {/* Variante B */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-medium text-purple-400">B: {test.rateB}% Antwortrate</span>
+                      <span className="text-[10px] text-slate-500">{test.responsesB}/{test.sendsB}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 truncate">{test.variantB}</p>
+                    <div className="mt-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className="h-full rounded-full bg-purple-500" style={{ width: `${Math.min(test.rateB, 100)}%` }} />
+                    </div>
+                  </div>
+
+                  {test.suggestedWinner && (
+                    <div className="mt-2 rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-400">
+                      Empfehlung: Variante {test.suggestedWinner} gewinnt
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </>
         )}

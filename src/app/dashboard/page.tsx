@@ -458,6 +458,12 @@ export default function TenantDashboard() {
               <Megaphone className="h-4 w-4" />
               Kampagnen
             </a>
+            <a
+              href="/dashboard/broadcasts"
+              className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-3 py-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-[#c9a84c] hover:border-[rgba(201,168,76,0.2)]"
+            >
+              Broadcasts
+            </a>
             <button
               onClick={() => setChatOpen(!chatOpen)}
               className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-500/20"

@@ -294,6 +294,7 @@ export async function handleIncomingMessage(
 
         // Campaign-Zuordnung über Conversation-Slug auflösen
         let campaignId: string | undefined;
+        let abTestVariant: string | undefined;
         const conv = await db.conversation.findUnique({
           where: { id: conversation.id },
           select: { campaignSlug: true },
@@ -303,7 +304,20 @@ export async function handleIncomingMessage(
             where: { tenantId_slug: { tenantId: tenant.id, slug: conv.campaignSlug } },
             select: { id: true },
           });
-          if (campaign) campaignId = campaign.id;
+          if (campaign) {
+            campaignId = campaign.id;
+            // A/B Test: Variante alternierend zuweisen
+            const activeTest = await db.abTest.findFirst({
+              where: { campaignId: campaign.id, isActive: true },
+            });
+            if (activeTest) {
+              abTestVariant = activeTest.sendsA <= activeTest.sendsB ? "A" : "B";
+              await db.abTest.update({
+                where: { id: activeTest.id },
+                data: abTestVariant === "A" ? { sendsA: { increment: 1 } } : { sendsB: { increment: 1 } },
+              });
+            }
+          }
         }
 
         await db.lead.upsert({
@@ -315,6 +329,7 @@ export async function handleIncomingMessage(
             qualification: scoreResult.qualification || "UNQUALIFIED",
             status: "NEW",
             ...(campaignId ? { campaignId } : {}),
+            ...(abTestVariant ? { abTestVariant } : {}),
           },
           update: {
             score: scoreResult.score,
