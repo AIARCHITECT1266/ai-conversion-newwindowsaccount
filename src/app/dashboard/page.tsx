@@ -22,6 +22,9 @@ import {
   Phone,
   RefreshCw,
   Kanban,
+  Settings,
+  Link2,
+  Unlink,
 } from "lucide-react";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
@@ -119,6 +122,103 @@ function ScoreBar({ score }: { score: number }) {
       </div>
       <span className="text-xs text-slate-400">{score}</span>
     </div>
+  );
+}
+
+/* ───────────────────────────── HubSpot-Einstellungen ──────────────── */
+
+function HubSpotSettings() {
+  const [connected, setConnected] = useState<boolean | null>(null);
+  const [apiKey, setApiKey] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/dashboard/settings")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setConnected(data.hubspotConnected); })
+      .catch(() => {});
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/dashboard/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hubspotApiKey: apiKey || null }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error ?? "Fehler beim Speichern" });
+      } else {
+        setConnected(!!apiKey);
+        setApiKey("");
+        setMessage({ type: "success", text: apiKey ? "HubSpot verbunden" : "HubSpot getrennt" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Verbindungsfehler" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const spring = { type: "spring" as const, stiffness: 80, damping: 20 };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...spring, delay: 0.65 }}
+      className="mt-6 rounded-xl p-6"
+      style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-[#c9a84c]" />
+          <h2 className="text-sm font-semibold">HubSpot-Integration</h2>
+        </div>
+        {connected !== null && (
+          <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
+            connected ? "bg-emerald-500/10" : "bg-slate-500/10"
+          }`}>
+            {connected ? <Link2 className="h-3 w-3 text-emerald-400" /> : <Unlink className="h-3 w-3 text-slate-400" />}
+            <span className={`text-[11px] font-medium ${connected ? "text-emerald-400" : "text-slate-400"}`}>
+              {connected ? "Verbunden" : "Nicht verbunden"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <p className="mb-4 text-xs text-slate-500">
+        Leads mit Score &gt;70 werden automatisch als Kontakte in HubSpot angelegt.
+      </p>
+
+      <div className="flex gap-2">
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder={connected ? "Neuen API-Key eingeben oder leer lassen zum Trennen" : "HubSpot Private App Token (pat-...)"}
+          className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none"
+        />
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+          {apiKey ? "Speichern" : "Trennen"}
+        </button>
+      </div>
+
+      {message && (
+        <p className={`mt-2 text-xs ${message.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
+          {message.text}
+        </p>
+      )}
+    </motion.div>
   );
 }
 
@@ -541,6 +641,9 @@ export default function TenantDashboard() {
                 })}
               </div>
             </motion.div>
+
+            {/* HubSpot-Integration */}
+            <HubSpotSettings />
           </>
         ) : null}
       </main>

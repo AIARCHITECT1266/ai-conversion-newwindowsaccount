@@ -23,6 +23,7 @@ type AuditAction =
   | "bot.reply_sent"
   | "bot.reply_failed"
   | "bot.lead_scored"
+  | "bot.hubspot_pushed"
   | "cron.cleanup_completed"
   | "rate_limit.exceeded";
 

@@ -33,6 +33,8 @@ model Tenant {
   paddleStatus         String?    @default("inactive")
   billingEmail         String?
 
+  hubspotApiKey        String?    @db.Text // AES-256-GCM verschlüsselt
+
   conversations    Conversation[]
   leads            Lead[]
 

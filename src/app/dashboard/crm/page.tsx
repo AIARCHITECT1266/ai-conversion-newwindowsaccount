@@ -303,7 +303,7 @@ function LeadCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between text-[11px] text-slate-600">
-        <span>{formatDate(lead.createdAt)}</span>
+        <span>{timeAgo(lead.createdAt)}</span>
         {lead.appointmentAt && (
           <span className="flex items-center gap-1 text-purple-400">
             <CalendarClock className="h-3 w-3" />
@@ -636,9 +636,7 @@ function PipelineColumn({
             {leads.length}
           </span>
         </div>
-        {totalValue > 0 && (
-          <p className="mt-1.5 text-xs text-[#c9a84c]">{formatCurrency(totalValue)}</p>
-        )}
+        <p className="mt-1.5 text-xs text-[#c9a84c]">{formatCurrency(totalValue)}</p>
       </div>
 
       <div className="flex-1 space-y-2.5 overflow-y-auto p-3">
@@ -648,8 +646,9 @@ function PipelineColumn({
           ))}
         </AnimatePresence>
         {leads.length === 0 && (
-          <div className="flex h-full min-h-[200px] items-center justify-center">
-            <p className="text-xs text-slate-600">Keine Leads</p>
+          <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.06] m-1">
+            <GripVertical className="h-5 w-5 text-slate-700" />
+            <p className="text-xs text-slate-600">Leads hierher ziehen</p>
           </div>
         )}
       </div>

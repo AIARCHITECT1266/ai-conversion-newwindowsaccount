@@ -13,6 +13,7 @@ import { scoreLeadFromConversation } from "./gpt";
 import { sendMessage } from "../whatsapp";
 import { auditLog } from "../audit-log";
 import { notifyHighScoreLead } from "../lead-notification";
+import { pushLeadToHubSpot } from "../hubspot";
 import { loadSystemPrompt } from "./system-prompts";
 import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
 
@@ -318,6 +319,36 @@ export async function handleIncomingMessage(
               error: err instanceof Error ? err.message : "Unbekannt",
             });
           });
+
+          // HubSpot Auto-Push bei Score > 70 (wenn API-Key konfiguriert)
+          const tenantFull = await db.tenant.findUnique({
+            where: { id: tenant.id },
+            select: { hubspotApiKey: true },
+          });
+          if (tenantFull?.hubspotApiKey) {
+            const hubspotKey = decryptText(tenantFull.hubspotApiKey);
+            const currentLead = await db.lead.findUnique({
+              where: { conversationId: conversation.id },
+              select: { pipelineStatus: true, dealValue: true, notes: true },
+            });
+            pushLeadToHubSpot(hubspotKey, {
+              leadScore: scoreResult.score,
+              qualification: scoreResult.qualification || "UNQUALIFIED",
+              pipelineStatus: currentLead?.pipelineStatus ?? "NEU",
+              conversationId: conversation.id,
+              tenantName: tenant.name,
+              dealValue: currentLead?.dealValue,
+              notes: currentLead?.notes,
+            }).then((result) => {
+              if (result.success) {
+                auditLog("bot.hubspot_pushed", { tenantId: tenant.id, details: { conversationId: conversation.id, contactId: result.contactId } });
+              }
+            }).catch((err) => {
+              console.error("[Handler] HubSpot-Push fehlgeschlagen", {
+                error: err instanceof Error ? err.message : "Unbekannt",
+              });
+            });
+          }
         }
       })
       .catch((error) => {
