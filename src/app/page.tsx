@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import LandingPage from "./page-v2";
 
 export const metadata: Metadata = {
-  title: "AI Conversion | KI-gestützter WhatsApp-Vertrieb – Ihr 24/7 Sales-Assistent",
+  title: "AI Conversion | Das Revenue Operating System für DACH-Unternehmen",
   description:
-    "AI Conversion verwandelt WhatsApp in Ihren leistungsstärksten Vertriebskanal. Unser Premium KI-Chatbot generiert, qualifiziert und konvertiert Leads automatisch – rund um die Uhr.",
+    "Von der ersten WhatsApp-Nachricht bis zum gewonnenen Kunden – vollautomatisch. Sales Agent, CRM Pipeline, Marketing Suite und Client Portal in einer Plattform.",
   alternates: {
     canonical: "https://ai-conversion.ai",
   },
