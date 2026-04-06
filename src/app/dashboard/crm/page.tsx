@@ -32,6 +32,11 @@ import {
   Target,
   DollarSign,
   ArrowRight,
+  FileSignature,
+  Download,
+  Copy,
+  ClipboardCheck,
+  Mail,
 } from "lucide-react";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
@@ -69,6 +74,24 @@ interface LeadMessage {
   content: string;
   messageType: string;
   timestamp: string;
+}
+
+interface ProposalData {
+  proposal: {
+    title: string;
+    einleitung: string;
+    leistungen: { name: string; beschreibung: string; preis: number }[];
+    gesamtpreis: number;
+    preismodell: string;
+    laufzeit: string;
+    zahlungsbedingungen: string;
+    naechsteSchritte: string[];
+    gueltigBis: string;
+    besondereKonditionen: string | null;
+  };
+  email: { betreff: string; text: string };
+  brandName: string;
+  tenantName: string;
 }
 
 interface AiSummary {
@@ -450,7 +473,7 @@ function DetailModal({
 }) {
   const [detail, setDetail] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"chat" | "details" | "timeline" | "ai">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "details" | "timeline" | "ai" | "proposal">("chat");
   const [dealValue, setDealValue] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -462,6 +485,10 @@ function DetailModal({
   const [prediction, setPrediction] = useState<PredictiveData | null>(null);
   const [predLoading, setPredLoading] = useState(false);
   const [predCachedAt, setPredCachedAt] = useState<string | null>(null);
+  const [proposal, setProposal] = useState<ProposalData | null>(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/dashboard/leads/${leadId}`)
@@ -579,6 +606,9 @@ function DetailModal({
                   { key: "ai" as const, label: "KI-Analyse", icon: Brain },
                   { key: "details" as const, label: "Details & Notizen", icon: FileText },
                   { key: "timeline" as const, label: "Aktivität", icon: Activity },
+                  ...((["TERMIN", "ANGEBOT", "GEWONNEN"] as string[]).includes(detail.pipelineStatus)
+                    ? [{ key: "proposal" as const, label: "Angebot", icon: FileSignature }]
+                    : []),
                 ]).map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -979,6 +1009,208 @@ function DetailModal({
                       </p>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Angebot generieren */}
+              {activeTab === "proposal" && (
+                <div className="p-6">
+                  {/* Generator-Button */}
+                  {!proposal && !proposalLoading && (
+                    <div className="flex flex-col items-center justify-center py-10">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#c9a84c]/20 to-purple-500/20 mb-4">
+                        <FileSignature className="h-8 w-8 text-[#c9a84c]" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-slate-200 mb-1">Angebot generieren</h4>
+                      <p className="text-xs text-slate-500 mb-5 text-center max-w-xs">
+                        Claude erstellt ein maßgeschneidertes Angebot basierend auf dem Gesprächsverlauf, Score und erkanntem Budget.
+                      </p>
+                      <button
+                        onClick={async () => {
+                          setProposalLoading(true); setProposalError(null);
+                          try {
+                            const res = await fetch(`/api/dashboard/leads/${leadId}/proposal`, {
+                              method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error ?? "Fehler");
+                            setProposal(data);
+                          } catch (e) { setProposalError(e instanceof Error ? e.message : "Fehler"); }
+                          finally { setProposalLoading(false); }
+                        }}
+                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#c9a84c] to-purple-500 px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                      >
+                        <FileSignature className="h-4 w-4" />
+                        Angebot erstellen
+                      </button>
+                      {proposalError && <p className="mt-3 text-xs text-red-400">{proposalError}</p>}
+                    </div>
+                  )}
+
+                  {/* Ladeanimation */}
+                  {proposalLoading && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="relative mb-4">
+                        <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#c9a84c]/20 to-purple-500/20 animate-pulse" />
+                        <FileSignature className="absolute inset-0 m-auto h-8 w-8 text-[#c9a84c] animate-pulse" />
+                      </div>
+                      <p className="text-sm text-slate-300">Claude erstellt das Angebot…</p>
+                      <p className="mt-1 text-xs text-slate-600">Dies kann 10-15 Sekunden dauern</p>
+                    </div>
+                  )}
+
+                  {/* Ergebnis */}
+                  {proposal && !proposalLoading && (() => {
+                    const p = proposal.proposal;
+                    const copyText = (field: string, text: string) => {
+                      navigator.clipboard.writeText(text);
+                      setCopiedField(field); setTimeout(() => setCopiedField(null), 1500);
+                    };
+
+                    // HTML für Download generieren
+                    const proposalHtml = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>${p.title}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Georgia,serif;color:#1a1a2e;background:#fff;padding:60px}
+.header{border-bottom:2px solid #c9a84c;padding-bottom:20px;margin-bottom:30px}
+.brand{font-size:24px;color:#c9a84c;font-weight:700}.title{font-size:18px;margin-top:8px}
+.intro{font-size:14px;color:#555;margin-bottom:30px;line-height:1.6}
+table{width:100%;border-collapse:collapse;margin:20px 0}th,td{padding:12px;text-align:left;border-bottom:1px solid #eee}
+th{background:#f8f7f4;font-size:12px;text-transform:uppercase;color:#888}
+.total{font-size:18px;font-weight:700;color:#c9a84c;text-align:right;padding:20px 0;border-top:2px solid #c9a84c}
+.section{margin:24px 0}.section h3{font-size:14px;color:#8b5cf6;margin-bottom:8px}
+.steps{list-style:none;counter-reset:step}.steps li{counter-increment:step;padding:8px 0;font-size:13px;border-bottom:1px solid #f0f0f0}
+.steps li::before{content:counter(step);background:#8b5cf6;color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;margin-right:10px}
+.footer{margin-top:40px;padding-top:20px;border-top:1px solid #eee;font-size:11px;color:#999}
+</style></head><body>
+<div class="header"><div class="brand">${proposal.brandName}</div><div class="title">${p.title}</div></div>
+<div class="intro">${p.einleitung}</div>
+<table><thead><tr><th>Leistung</th><th>Beschreibung</th><th style="text-align:right">Preis</th></tr></thead><tbody>
+${p.leistungen.map(l => `<tr><td><strong>${l.name}</strong></td><td>${l.beschreibung}</td><td style="text-align:right">${l.preis.toLocaleString("de-DE")} €</td></tr>`).join("")}
+</tbody></table>
+<div class="total">Gesamt: ${p.gesamtpreis.toLocaleString("de-DE")} € (${p.preismodell})</div>
+<div class="section"><h3>Laufzeit & Zahlung</h3><p style="font-size:13px">${p.laufzeit} • ${p.zahlungsbedingungen}</p></div>
+${p.besondereKonditionen ? `<div class="section"><h3>Besondere Konditionen</h3><p style="font-size:13px">${p.besondereKonditionen}</p></div>` : ""}
+<div class="section"><h3>Nächste Schritte</h3><ol class="steps">${p.naechsteSchritte.map(s => `<li>${s}</li>`).join("")}</ol></div>
+<div class="footer">Angebot gültig bis ${p.gueltigBis} • ${proposal.tenantName} • Erstellt mit AI Conversion</div>
+</body></html>`;
+
+                    return (
+                      <div className="space-y-5">
+                        {/* Aktionen */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileSignature className="h-4 w-4 text-[#c9a84c]" />
+                            <span className="text-sm font-semibold text-slate-200">Angebot erstellt</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setProposal(null)}
+                              className="rounded-lg border border-white/[0.06] px-2.5 py-1 text-xs text-slate-500 hover:text-[#c9a84c] transition-colors"
+                            >
+                              Neu generieren
+                            </button>
+                            <button
+                              onClick={() => {
+                                const blob = new Blob([proposalHtml], { type: "text/html" });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a"); a.href = url;
+                                a.download = `angebot-${detail.id.slice(0, 8)}.html`; a.click();
+                                URL.revokeObjectURL(url);
+                              }}
+                              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-3 py-1.5 text-xs font-medium text-black hover:opacity-90 transition-opacity"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              Download HTML
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Angebots-Vorschau */}
+                        <div className="rounded-xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.02)] p-5">
+                          <div className="mb-4 border-b border-[rgba(201,168,76,0.15)] pb-3">
+                            <p className="text-lg font-bold text-[#c9a84c]" style={{ fontFamily: "Georgia, serif" }}>{proposal.brandName}</p>
+                            <p className="mt-1 text-sm text-slate-200">{p.title}</p>
+                          </div>
+                          <p className="mb-4 text-xs leading-relaxed text-slate-400">{p.einleitung}</p>
+
+                          {/* Leistungen */}
+                          <div className="mb-4 space-y-2">
+                            {p.leistungen.map((l, i) => (
+                              <div key={i} className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2.5">
+                                <div>
+                                  <p className="text-sm font-medium text-slate-200">{l.name}</p>
+                                  <p className="text-[11px] text-slate-500">{l.beschreibung}</p>
+                                </div>
+                                <span className="shrink-0 text-sm font-semibold text-[#c9a84c]">{l.preis.toLocaleString("de-DE")} €</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Gesamtpreis */}
+                          <div className="flex items-center justify-between border-t border-[rgba(201,168,76,0.15)] pt-3 mb-4">
+                            <span className="text-sm text-slate-400">Gesamt ({p.preismodell})</span>
+                            <span className="text-xl font-bold text-[#c9a84c]" style={{ fontFamily: "Georgia, serif" }}>
+                              {p.gesamtpreis.toLocaleString("de-DE")} €
+                            </span>
+                          </div>
+
+                          {/* Details */}
+                          <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                              <p className="text-[10px] text-slate-600">Laufzeit</p>
+                              <p className="text-xs font-medium text-slate-300">{p.laufzeit}</p>
+                            </div>
+                            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                              <p className="text-[10px] text-slate-600">Gültig bis</p>
+                              <p className="text-xs font-medium text-slate-300">{p.gueltigBis}</p>
+                            </div>
+                          </div>
+
+                          {p.besondereKonditionen && (
+                            <div className="mb-4 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.03] px-3 py-2">
+                              <p className="text-[10px] text-emerald-400 mb-0.5">Besondere Konditionen</p>
+                              <p className="text-xs text-slate-300">{p.besondereKonditionen}</p>
+                            </div>
+                          )}
+
+                          {/* Nächste Schritte */}
+                          <div>
+                            <p className="text-[10px] text-purple-400 mb-2">Nächste Schritte</p>
+                            {p.naechsteSchritte.map((s, i) => (
+                              <div key={i} className="flex items-start gap-2 mb-1.5">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-500/15 text-[10px] font-bold text-purple-400">{i + 1}</span>
+                                <p className="text-xs text-slate-300 pt-0.5">{s}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Begleit-E-Mail */}
+                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-[#c9a84c]" />
+                              <span className="text-xs font-semibold text-slate-300">Begleit-E-Mail</span>
+                            </div>
+                            <button
+                              onClick={() => copyText("email", `Betreff: ${proposal.email.betreff}\n\n${proposal.email.text}`)}
+                              className="rounded-md p-1 text-slate-600 hover:text-[#c9a84c] transition-colors"
+                            >
+                              {copiedField === "email" ? <ClipboardCheck className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                            </button>
+                          </div>
+                          <div className="p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[10px] text-slate-500">Betreff:</span>
+                              <span className="text-sm font-semibold text-white">{proposal.email.betreff}</span>
+                            </div>
+                            <div className="rounded-lg bg-white/[0.03] px-4 py-3">
+                              <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-line">{proposal.email.text}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
