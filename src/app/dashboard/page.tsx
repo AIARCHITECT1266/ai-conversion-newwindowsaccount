@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Phone,
   RefreshCw,
+  Kanban,
 } from "lucide-react";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
@@ -342,6 +343,13 @@ export default function TenantDashboard() {
               <div className="h-2 w-2 animate-pulse rounded-full bg-purple-400" />
               <span className="text-xs font-medium text-purple-400">Bot aktiv</span>
             </div>
+            <a
+              href="/dashboard/crm"
+              className="flex items-center gap-2 rounded-lg border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.05)] px-3 py-1.5 text-sm font-medium text-[#c9a84c] transition-colors hover:bg-[rgba(201,168,76,0.1)]"
+            >
+              <Kanban className="h-4 w-4" />
+              CRM Pipeline
+            </a>
             <button
               onClick={() => setChatOpen(!chatOpen)}
               className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-500/20"

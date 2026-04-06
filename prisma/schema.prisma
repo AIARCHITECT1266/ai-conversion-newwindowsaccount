@@ -106,6 +106,9 @@ model Lead {
   qualification    LeadQualification @default(UNQUALIFIED)
   appointmentAt    DateTime?         // Vereinbarter Termin
   status           LeadStatus        @default(NEW)
+  pipelineStatus   PipelineStatus    @default(NEU) // CRM-Pipeline Spalte
+  dealValue        Float?            // Deal-Wert in EUR
+  notes            String?           @db.Text // Notizen zum Lead
   createdAt        DateTime          @default(now())
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -113,6 +116,7 @@ model Lead {
 
   @@index([tenantId, status])
   @@index([tenantId, qualification])
+  @@index([tenantId, pipelineStatus])
   @@map("leads")
 }
 
@@ -130,4 +134,12 @@ enum LeadStatus {
   APPOINTMENT_SET
   CONVERTED
   LOST
+}
+
+enum PipelineStatus {
+  NEU
+  QUALIFIZIERT
+  TERMIN
+  ANGEBOT
+  GEWONNEN
 }
