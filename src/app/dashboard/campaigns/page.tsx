@@ -6,7 +6,8 @@ import {
   Loader2, RefreshCw, ArrowLeft, Megaphone, Plus, X, Check,
   Users, Target, CalendarClock, Euro, TrendingUp, BarChart3,
   Link2, Copy, CheckCircle2, Sparkles, MessageSquare, Mail,
-  Share2, Send, ClipboardCheck,
+  Share2, Send, ClipboardCheck, QrCode, Download, Building2,
+  Hammer, GraduationCap, Briefcase, ShoppingCart, Bookmark,
 } from "lucide-react";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
@@ -17,9 +18,66 @@ interface Campaign {
   slug: string;
   description: string | null;
   isActive: boolean;
+  isTemplate: boolean;
+  templateData: string | null;
   createdAt: string;
   _count: { leads: number };
 }
+
+interface TemplatePreset {
+  branche: string;
+  icon: typeof Building2;
+  tonlagen: {
+    name: string;
+    kampagnenName: string;
+    audience: string;
+    offer: string;
+    tone: string;
+  }[];
+}
+
+const BRANCHEN_TEMPLATES: TemplatePreset[] = [
+  {
+    branche: "Immobilien", icon: Building2,
+    tonlagen: [
+      { name: "Seriös", kampagnenName: "Immobilien – Premium Akquise", audience: "Immobilieneigentümer 45-65, DACH-Raum, Bestandsimmobilien", offer: "Kostenlose Immobilienbewertung + persönliche Beratung zum Verkaufsprozess", tone: "Seriös, vertrauensvoll, diskret" },
+      { name: "Freundlich", kampagnenName: "Immobilien – Nachbarschafts-Kampagne", audience: "Eigenheimbesitzer 35-55, Familien, Umzugspläne", offer: "Unverbindliche Marktanalyse + Nachbarschafts-Report für Ihre Immobilie", tone: "Freundlich, nahbar, hilfsbereit" },
+      { name: "Verkaufsstark", kampagnenName: "Immobilien – Schnellverkauf", audience: "Verkaufswillige Eigentümer, zeitkritisch, DACH-Markt", offer: "Immobilie in 30 Tagen verkauft – garantiert zum besten Marktpreis", tone: "Direkt, ergebnisorientiert, dringend" },
+    ],
+  },
+  {
+    branche: "Handwerk", icon: Hammer,
+    tonlagen: [
+      { name: "Seriös", kampagnenName: "Handwerk – Qualitäts-Anfragen", audience: "Hausbesitzer 40-65, Renovierungsbedarf, gehobenes Segment", offer: "Meisterbetrieb: Kostenloser Vor-Ort-Termin + unverbindliches Festpreisangebot", tone: "Professionell, qualitätsbewusst, zuverlässig" },
+      { name: "Freundlich", kampagnenName: "Handwerk – Regionaler Helfer", audience: "Privatpersonen 30-60, kleinere Reparaturen und Umbauten", offer: "Ihr Handwerker aus der Region – schnell, fair, persönlich. Jetzt Termin sichern!", tone: "Locker, regional, persönlich" },
+      { name: "Verkaufsstark", kampagnenName: "Handwerk – Saison-Aktion", audience: "Hausbesitzer mit akutem Bedarf, saisonale Projekte (Heizung, Dach, Bad)", offer: "Saisonrabatt 15%: Jetzt Projekt starten und bis zu 3.000€ sparen", tone: "Aktionsorientiert, limitiert, handlungsstark" },
+    ],
+  },
+  {
+    branche: "Coaching", icon: GraduationCap,
+    tonlagen: [
+      { name: "Seriös", kampagnenName: "Coaching – Executive Program", audience: "Führungskräfte und C-Level 35-55, Karriereentwicklung, DACH", offer: "Executive Coaching: Strategiegespräch für Ihre nächste Karrierestufe", tone: "Seriös, kompetent, auf Augenhöhe" },
+      { name: "Freundlich", kampagnenName: "Coaching – Persönliches Wachstum", audience: "Berufstätige 25-45, Veränderungswunsch, Selbstentwicklung", offer: "Kostenloses Kennenlerngespräch – gemeinsam Klarheit für Ihren nächsten Schritt", tone: "Empathisch, motivierend, warm" },
+      { name: "Verkaufsstark", kampagnenName: "Coaching – Transformation Challenge", audience: "Ambitionierte Professionals, schnelle Ergebnisse gewünscht", offer: "90-Tage Transformation: Messbare Ergebnisse oder Geld zurück", tone: "Energisch, ergebnisorientiert, challengend" },
+    ],
+  },
+  {
+    branche: "Agentur", icon: Briefcase,
+    tonlagen: [
+      { name: "Seriös", kampagnenName: "Agentur – Enterprise Lead-Gen", audience: "Marketing-Leiter und Geschäftsführer KMU, 5-50 Mitarbeiter, DACH", offer: "Strategische Marketing-Beratung: Mehr qualifizierte Leads bei gleichem Budget", tone: "Strategisch, datengetrieben, professionell" },
+      { name: "Freundlich", kampagnenName: "Agentur – Partner auf Augenhöhe", audience: "Kleine Unternehmen und Startups, 1-20 Mitarbeiter", offer: "Kostenloser Marketing-Check: Wir zeigen Ihnen 3 Quick-Wins für mehr Sichtbarkeit", tone: "Partnerschaftlich, unkompliziert, lösungsorientiert" },
+      { name: "Verkaufsstark", kampagnenName: "Agentur – Performance Garantie", audience: "Wachstumsorientierte Unternehmen, klare ROI-Erwartung", offer: "Performance Marketing mit Ergebnis-Garantie: Mehr Leads oder keine Rechnung", tone: "Selbstbewusst, performance-orientiert, direkt" },
+    ],
+  },
+  {
+    branche: "E-Commerce", icon: ShoppingCart,
+    tonlagen: [
+      { name: "Seriös", kampagnenName: "E-Commerce – Premium Beratung", audience: "Online-Shop Betreiber, Umsatz 100k-5M€/Jahr, Skalierungswunsch", offer: "E-Commerce Audit: Umsatzpotenzial Ihres Shops analysieren lassen", tone: "Analytisch, fundiert, strategisch" },
+      { name: "Freundlich", kampagnenName: "E-Commerce – Shop-Booster", audience: "Kleine Online-Shops, Shopify/WooCommerce, Einsteiger bis Fortgeschrittene", offer: "Gratis Shop-Review + 5 sofort umsetzbare Tipps für mehr Verkäufe", tone: "Hilfreich, praxisnah, ermutigend" },
+      { name: "Verkaufsstark", kampagnenName: "E-Commerce – Black Friday Prep", audience: "Online-Händler die auf Sales-Events optimieren wollen", offer: "Verdoppeln Sie Ihren Umsatz am Black Friday – bewährte Strategie in 3 Schritten", tone: "Dringend, FOMO, conversion-optimiert" },
+    ],
+  },
+];
 
 interface CampaignStats {
   campaign: { id: string; name: string; slug: string; isActive: boolean; createdAt: string };
@@ -196,19 +254,40 @@ function CampaignDetail({ slug, onClose }: { slug: string; onClose: () => void }
 /* ───────────────────────────── Neue Kampagne Modal ──────────────── */
 
 function CreateCampaignModal({
-  onClose, onCreated,
+  onClose, onCreated, userTemplates,
 }: {
   onClose: () => void;
   onCreated: () => void;
+  userTemplates: Campaign[];
 }) {
+  const [step, setStep] = useState<"choose" | "form">("choose");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedBranche, setSelectedBranche] = useState<string | null>(null);
+
+  function applyTemplate(t: { kampagnenName: string; audience: string; offer: string; tone: string }) {
+    setName(t.kampagnenName);
+    setDescription(`Zielgruppe: ${t.audience}\nAngebot: ${t.offer}\nTon: ${t.tone}`);
+    setStep("form");
+  }
+
+  function applyUserTemplate(c: Campaign) {
+    setName(c.name + " (Kopie)");
+    if (c.templateData) {
+      try {
+        const d = JSON.parse(c.templateData);
+        setDescription(`Zielgruppe: ${d.audience || ""}\nAngebot: ${d.offer || ""}\nTon: ${d.tone || ""}`);
+      } catch { setDescription(c.description ?? ""); }
+    } else {
+      setDescription(c.description ?? "");
+    }
+    setStep("form");
+  }
 
   async function handleCreate() {
-    setSaving(true);
-    setError(null);
+    setSaving(true); setError(null);
     try {
       const res = await fetch("/api/dashboard/campaigns", {
         method: "POST",
@@ -217,14 +296,12 @@ function CreateCampaignModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Fehler");
-      onCreated();
-      onClose();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Fehler");
-    } finally {
-      setSaving(false);
-    }
+      onCreated(); onClose();
+    } catch (e) { setError(e instanceof Error ? e.message : "Fehler"); }
+    finally { setSaving(false); }
   }
+
+  const activeBranche = BRANCHEN_TEMPLATES.find(b => b.branche === selectedBranche);
 
   return (
     <motion.div
@@ -235,44 +312,150 @@ function CreateCampaignModal({
       <motion.div
         initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl border border-[rgba(201,168,76,0.15)] p-6"
+        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.15)]"
         style={{ background: "#0e0e1a" }}
       >
-        <h3 className="text-lg font-semibold text-white mb-4" style={{ fontFamily: "Georgia, serif" }}>
-          Neue Kampagne
-        </h3>
-
-        <div className="mb-4">
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Name</label>
-          <input
-            value={name} onChange={(e) => setName(e.target.value)}
-            placeholder="z.B. Facebook Ads Q1"
-            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none"
-          />
+        {/* Header */}
+        <div className="shrink-0 border-b border-white/[0.06] px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white" style={{ fontFamily: "Georgia, serif" }}>
+              {step === "choose" ? "Neue Kampagne" : "Kampagne erstellen"}
+            </h3>
+            <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-white transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="mb-5">
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Beschreibung (optional)</label>
-          <textarea
-            value={description} onChange={(e) => setDescription(e.target.value)}
-            rows={3} placeholder="Kurze Beschreibung der Kampagne…"
-            className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none"
-          />
-        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Template-Picker */}
+          {step === "choose" && (
+            <div className="space-y-5">
+              {/* Leer starten */}
+              <button
+                onClick={() => setStep("form")}
+                className="flex w-full items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-colors hover:border-[rgba(201,168,76,0.2)]"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06]">
+                  <Plus className="h-5 w-5 text-slate-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-200">Leere Kampagne</p>
+                  <p className="text-xs text-slate-500">Ohne Vorlage starten</p>
+                </div>
+              </button>
 
-        {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
+              {/* Branchen-Templates */}
+              <div>
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-600">Branchen-Templates</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {BRANCHEN_TEMPLATES.map((b) => {
+                    const Icon = b.icon;
+                    const active = selectedBranche === b.branche;
+                    return (
+                      <button
+                        key={b.branche}
+                        onClick={() => setSelectedBranche(active ? null : b.branche)}
+                        className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-all ${
+                          active
+                            ? "border-[rgba(201,168,76,0.3)] bg-[rgba(201,168,76,0.05)]"
+                            : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
+                        }`}
+                      >
+                        <Icon className={`h-5 w-5 ${active ? "text-[#c9a84c]" : "text-slate-400"}`} />
+                        <span className={`text-[10px] font-medium ${active ? "text-[#c9a84c]" : "text-slate-500"}`}>{b.branche}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-lg border border-white/[0.08] px-4 py-2 text-sm text-slate-400 hover:bg-white/[0.04] transition-colors">
-            Abbrechen
-          </button>
-          <button
-            onClick={handleCreate} disabled={saving || name.trim().length < 2}
-            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-4 py-2 text-sm font-medium text-black hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Erstellen
-          </button>
+              {/* Tonlagen für ausgewählte Branche */}
+              <AnimatePresence>
+                {activeBranche && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                    className="space-y-2 overflow-hidden"
+                  >
+                    <p className="text-xs text-slate-400">Tonlage wählen:</p>
+                    {activeBranche.tonlagen.map((t) => (
+                      <button
+                        key={t.name}
+                        onClick={() => applyTemplate(t)}
+                        className="flex w-full items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-left transition-colors hover:border-purple-500/20 hover:bg-purple-500/[0.03]"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-slate-200">{t.name}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">{t.kampagnenName}</p>
+                        </div>
+                        <ArrowLeft className="h-3.5 w-3.5 rotate-180 text-slate-600" />
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Eigene Templates */}
+              {userTemplates.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-600">Eigene Templates</p>
+                  <div className="space-y-2">
+                    {userTemplates.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => applyUserTemplate(c)}
+                        className="flex w-full items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-left transition-colors hover:border-[rgba(201,168,76,0.2)]"
+                      >
+                        <Bookmark className="h-4 w-4 shrink-0 text-[#c9a84c]" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-slate-200 truncate">{c.name}</p>
+                          <p className="text-xs text-slate-500">{c._count.leads} Leads</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Formular */}
+          {step === "form" && (
+            <div className="space-y-4">
+              {selectedBranche && (
+                <button onClick={() => { setStep("choose"); setName(""); setDescription(""); }}
+                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-[#c9a84c] transition-colors mb-2">
+                  <ArrowLeft className="h-3 w-3" /> Zurück zu Templates
+                </button>
+              )}
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-400">Name</label>
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="z.B. Facebook Ads Q1"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none" />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-400">Beschreibung / Briefing</label>
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4}
+                  placeholder="Zielgruppe, Angebot, Tonalität…"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none" />
+              </div>
+
+              {error && <p className="text-xs text-red-400">{error}</p>}
+
+              <div className="flex justify-end gap-2">
+                <button onClick={onClose} className="rounded-lg border border-white/[0.08] px-4 py-2 text-sm text-slate-400 hover:bg-white/[0.04] transition-colors">
+                  Abbrechen
+                </button>
+                <button onClick={handleCreate} disabled={saving || name.trim().length < 2}
+                  className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-4 py-2 text-sm font-medium text-black hover:opacity-90 disabled:opacity-50 transition-opacity">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  Erstellen
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -518,6 +701,100 @@ function GenerateContentModal({ slug, campaignName, onClose }: { slug: string; c
   );
 }
 
+/* ───────────────────────────── QR-Code Modal ─────────────────────── */
+
+function QrCodeModal({ slug, onClose }: { slug: string; onClose: () => void }) {
+  const [qrData, setQrData] = useState<{ qrDataUrl: string; trackingLink: string; campaignName: string; brandName: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/dashboard/campaigns/${slug}/qrcode`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setQrData(d); })
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  function downloadPng() {
+    if (!qrData) return;
+    const a = document.createElement("a");
+    a.href = qrData.qrDataUrl;
+    a.download = `qr-${slug}.png`;
+    a.click();
+  }
+
+  function downloadHtml() {
+    if (!qrData) return;
+    const html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>QR-Code – ${qrData.campaignName}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#07070d;font-family:Georgia,serif}
+.card{background:#0e0e1a;border:2px solid rgba(201,168,76,0.2);border-radius:24px;padding:48px;text-align:center;max-width:420px}
+.brand{color:#c9a84c;font-size:28px;font-weight:700;margin-bottom:4px}.campaign{color:#ede8df;font-size:16px;margin-bottom:32px}
+img{width:280px;height:280px;border-radius:16px;border:1px solid rgba(201,168,76,0.1)}
+.cta{margin-top:24px;background:linear-gradient(135deg,#c9a84c,#8b5cf6);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:600}
+.link{margin-top:16px;color:rgba(237,232,223,0.4);font-size:11px}
+</style></head><body><div class="card">
+<div class="brand">${qrData.brandName}</div>
+<div class="campaign">${qrData.campaignName}</div>
+<img src="${qrData.qrDataUrl}" alt="QR-Code" />
+<div><button class="cta">Jetzt scannen & chatten</button></div>
+<div class="link">${qrData.trackingLink}</div>
+</div></body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url;
+    a.download = `qr-print-${slug}.html`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-2xl border border-[rgba(201,168,76,0.15)] p-6"
+        style={{ background: "#0e0e1a" }}
+      >
+        {loading || !qrData ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-[#c9a84c]" />
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="text-lg font-bold text-[#c9a84c] mb-1" style={{ fontFamily: "Georgia, serif" }}>{qrData.brandName}</p>
+            <p className="text-sm text-slate-300 mb-5">{qrData.campaignName}</p>
+
+            {/* QR-Code */}
+            <div className="mx-auto mb-5 inline-block rounded-2xl border border-[rgba(201,168,76,0.1)] bg-white p-3">
+              <img src={qrData.qrDataUrl} alt="QR-Code" className="h-56 w-56" />
+            </div>
+
+            <p className="mb-5 text-xs text-slate-600 break-all">{qrData.trackingLink}</p>
+
+            {/* Download-Buttons */}
+            <div className="flex gap-2">
+              <button onClick={downloadPng}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.04] transition-colors">
+                <Download className="h-3.5 w-3.5" /> PNG
+              </button>
+              <button onClick={downloadHtml}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-purple-500 px-3 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity">
+                <Download className="h-3.5 w-3.5" /> Druckvorlage
+              </button>
+            </div>
+
+            <button onClick={onClose} className="mt-4 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              Schließen
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* ───────────────────────────── Haupt-Seite ──────────────────────── */
 
 export default function CampaignsPage() {
@@ -527,6 +804,24 @@ export default function CampaignsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [detailSlug, setDetailSlug] = useState<string | null>(null);
   const [generateCampaign, setGenerateCampaign] = useState<{ slug: string; name: string } | null>(null);
+  const [qrSlug, setQrSlug] = useState<string | null>(null);
+
+  const userTemplates = campaigns.filter((c) => c.isTemplate);
+
+  async function toggleTemplate(id: string, slug: string, isTemplate: boolean) {
+    // Optimistisch updaten
+    setCampaigns((prev) => prev.map((c) => c.id === id ? { ...c, isTemplate: !isTemplate } : c));
+    try {
+      const res = await fetch(`/api/dashboard/campaigns/${slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isTemplate: !isTemplate }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setCampaigns((prev) => prev.map((c) => c.id === id ? { ...c, isTemplate } : c));
+    }
+  }
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   const fetchCampaigns = useCallback(async () => {
@@ -661,6 +956,26 @@ export default function CampaignsPage() {
                       {copiedSlug === c.slug ? "Kopiert" : "Link"}
                     </button>
 
+                    {/* Template-Toggle */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleTemplate(c.id, c.slug, c.isTemplate); }}
+                      className={`rounded-lg border p-1.5 transition-colors ${
+                        c.isTemplate ? "border-[rgba(201,168,76,0.3)] bg-[rgba(201,168,76,0.1)] text-[#c9a84c]" : "border-white/[0.06] text-slate-500 hover:text-[#c9a84c]"
+                      }`}
+                      title={c.isTemplate ? "Template entfernen" : "Als Template speichern"}
+                    >
+                      <Bookmark className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* QR-Code */}
+                    <button
+                      onClick={() => setQrSlug(c.slug)}
+                      className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-xs text-slate-400 hover:text-purple-400 hover:border-purple-500/20 transition-colors"
+                    >
+                      <QrCode className="h-3.5 w-3.5" />
+                      QR
+                    </button>
+
                     {/* KI-Content */}
                     <button
                       onClick={() => setGenerateCampaign({ slug: c.slug, name: c.name })}
@@ -689,7 +1004,10 @@ export default function CampaignsPage() {
       {/* Modals */}
       <AnimatePresence>
         {showCreate && (
-          <CreateCampaignModal onClose={() => setShowCreate(false)} onCreated={fetchCampaigns} />
+          <CreateCampaignModal onClose={() => setShowCreate(false)} onCreated={fetchCampaigns} userTemplates={userTemplates} />
+        )}
+        {qrSlug && (
+          <QrCodeModal slug={qrSlug} onClose={() => setQrSlug(null)} />
         )}
         {detailSlug && (
           <CampaignDetail slug={detailSlug} onClose={() => setDetailSlug(null)} />

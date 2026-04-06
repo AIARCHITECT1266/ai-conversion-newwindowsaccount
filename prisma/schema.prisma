@@ -141,6 +141,8 @@ model Campaign {
   slug        String   // URL-Slug für Tracking-Links
   description String?  @db.Text
   isActive    Boolean  @default(true)
+  isTemplate  Boolean  @default(false) // Als wiederverwendbares Template markiert
+  templateData String? @db.Text // Briefing-Daten als JSON (audience, offer, tone)
   createdAt   DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)

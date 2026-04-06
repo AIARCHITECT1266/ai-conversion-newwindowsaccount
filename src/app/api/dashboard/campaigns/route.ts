@@ -22,6 +22,8 @@ export async function GET() {
       slug: true,
       description: true,
       isActive: true,
+      isTemplate: true,
+      templateData: true,
       createdAt: true,
       _count: { select: { leads: true } },
     },
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name, description } = body;
+  const { name, description, isTemplate, templateData } = body;
 
   if (!name || typeof name !== "string" || name.trim().length < 2) {
     return NextResponse.json({ error: "Name ist erforderlich (min. 2 Zeichen)" }, { status: 400 });
@@ -69,6 +71,8 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       slug,
       description: description?.trim() || null,
+      isTemplate: isTemplate === true,
+      templateData: templateData ? JSON.stringify(templateData) : null,
     },
     select: {
       id: true,
