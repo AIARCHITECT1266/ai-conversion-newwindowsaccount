@@ -113,6 +113,8 @@ model Lead {
   notes            String?           @db.Text // Notizen zum Lead
   followUpCount    Int               @default(0) // Anzahl gesendeter Follow-Ups (0-3)
   lastFollowUpAt   DateTime?         // Zeitpunkt des letzten Follow-Ups
+  aiSummary        String?           @db.Text // KI-generierte Lead-Zusammenfassung (JSON)
+  aiSummaryAt      DateTime?         // Zeitpunkt der letzten KI-Analyse
   createdAt        DateTime          @default(now())
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)

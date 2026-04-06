@@ -26,6 +26,12 @@ import {
   ChevronDown,
   Activity,
   Send,
+  Brain,
+  TrendingUp,
+  AlertTriangle,
+  Target,
+  DollarSign,
+  ArrowRight,
 } from "lucide-react";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
@@ -55,6 +61,15 @@ interface LeadMessage {
   content: string;
   messageType: string;
   timestamp: string;
+}
+
+interface AiSummary {
+  interesse: string;
+  budgetSignal: { erkannt: boolean; betrag: number | null; details: string };
+  naechsterSchritt: string;
+  zusammenfassung: string;
+  kaufbereitschaft: "hoch" | "mittel" | "niedrig";
+  einwaende: string[];
 }
 
 interface LeadDetail {
@@ -326,11 +341,15 @@ function DetailModal({
 }) {
   const [detail, setDetail] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"chat" | "details" | "timeline">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "details" | "timeline" | "ai">("chat");
   const [dealValue, setDealValue] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [aiSummary, setAiSummary] = useState<AiSummary | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiCachedAt, setAiCachedAt] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/dashboard/leads/${leadId}`)
@@ -438,6 +457,7 @@ function DetailModal({
               <div className="mt-4 flex gap-1">
                 {([
                   { key: "chat" as const, label: "Chat-Verlauf", icon: MessageSquare },
+                  { key: "ai" as const, label: "KI-Analyse", icon: Brain },
                   { key: "details" as const, label: "Details & Notizen", icon: FileText },
                   { key: "timeline" as const, label: "Aktivität", icon: Activity },
                 ]).map((tab) => {
@@ -493,6 +513,181 @@ function DetailModal({
                     ))
                   )}
                   <div ref={chatEndRef} />
+                </div>
+              )}
+
+              {/* KI-Analyse */}
+              {activeTab === "ai" && (
+                <div className="p-6">
+                  {/* Analyse generieren Button */}
+                  {!aiSummary && !aiLoading && (
+                    <div className="flex flex-col items-center justify-center py-10">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#c9a84c]/20 to-purple-500/20 mb-4">
+                        <Brain className="h-8 w-8 text-[#c9a84c]" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-slate-200 mb-1">KI-Lead-Analyse</h4>
+                      <p className="text-xs text-slate-500 mb-5 text-center max-w-xs">
+                        Claude analysiert den Chat-Verlauf und erstellt eine strukturierte Vertriebsanalyse.
+                      </p>
+                      <button
+                        onClick={async () => {
+                          setAiLoading(true);
+                          setAiError(null);
+                          try {
+                            const res = await fetch(`/api/dashboard/leads/${leadId}/summary`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({}),
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error ?? "Analyse fehlgeschlagen");
+                            setAiSummary(data.summary);
+                            setAiCachedAt(data.cachedAt);
+                          } catch (e) {
+                            setAiError(e instanceof Error ? e.message : "Fehler");
+                          } finally {
+                            setAiLoading(false);
+                          }
+                        }}
+                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#c9a84c] to-purple-500 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Analyse generieren
+                      </button>
+                      {aiError && <p className="mt-3 text-xs text-red-400">{aiError}</p>}
+                    </div>
+                  )}
+
+                  {/* Ladeanimation */}
+                  {aiLoading && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="relative mb-4">
+                        <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#c9a84c]/20 to-purple-500/20 animate-pulse" />
+                        <Brain className="absolute inset-0 m-auto h-8 w-8 text-[#c9a84c] animate-pulse" />
+                      </div>
+                      <p className="text-sm text-slate-300">Claude analysiert den Chat-Verlauf…</p>
+                      <p className="mt-1 text-xs text-slate-600">Dies kann einige Sekunden dauern</p>
+                    </div>
+                  )}
+
+                  {/* Ergebnis-Anzeige */}
+                  {aiSummary && !aiLoading && (
+                    <div className="space-y-4">
+                      {/* Header mit Refresh */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Brain className="h-4 w-4 text-[#c9a84c]" />
+                          <span className="text-sm font-semibold text-slate-200">KI-Analyse</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {aiCachedAt && (
+                            <span className="text-[10px] text-slate-600">{timeAgo(aiCachedAt)}</span>
+                          )}
+                          <button
+                            onClick={async () => {
+                              setAiLoading(true);
+                              setAiError(null);
+                              try {
+                                const res = await fetch(`/api/dashboard/leads/${leadId}/summary`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ force: true }),
+                                });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.error ?? "Analyse fehlgeschlagen");
+                                setAiSummary(data.summary);
+                                setAiCachedAt(data.cachedAt);
+                              } catch (e) {
+                                setAiError(e instanceof Error ? e.message : "Fehler");
+                              } finally {
+                                setAiLoading(false);
+                              }
+                            }}
+                            className="rounded-lg border border-white/[0.06] p-1 text-slate-500 hover:text-[#c9a84c] transition-colors"
+                            title="Neu generieren"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Zusammenfassung */}
+                      <div className="rounded-xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.03)] p-4">
+                        <p className="text-sm leading-relaxed text-slate-200">{aiSummary.zusammenfassung}</p>
+                      </div>
+
+                      {/* Kaufbereitschaft */}
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TrendingUp className="h-4 w-4 text-purple-400" />
+                          <span className="text-xs font-medium text-slate-400">Kaufbereitschaft</span>
+                        </div>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${
+                          aiSummary.kaufbereitschaft === "hoch" ? "bg-emerald-500/10 text-emerald-400" :
+                          aiSummary.kaufbereitschaft === "mittel" ? "bg-[#c9a84c]/10 text-[#c9a84c]" :
+                          "bg-red-500/10 text-red-400"
+                        }`}>
+                          {aiSummary.kaufbereitschaft === "hoch" ? "🔥" : aiSummary.kaufbereitschaft === "mittel" ? "⚡" : "❄️"}
+                          {aiSummary.kaufbereitschaft.charAt(0).toUpperCase() + aiSummary.kaufbereitschaft.slice(1)}
+                        </span>
+                      </div>
+
+                      {/* Interesse */}
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="h-4 w-4 text-[#c9a84c]" />
+                          <span className="text-xs font-medium text-slate-400">Hauptinteresse</span>
+                        </div>
+                        <p className="text-sm text-slate-200">{aiSummary.interesse}</p>
+                      </div>
+
+                      {/* Budget-Signal */}
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign className="h-4 w-4 text-[#c9a84c]" />
+                          <span className="text-xs font-medium text-slate-400">Budget-Signal</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            aiSummary.budgetSignal.erkannt ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"
+                          }`}>
+                            {aiSummary.budgetSignal.erkannt ? "Erkannt" : "Nicht erkannt"}
+                          </span>
+                          {aiSummary.budgetSignal.betrag && (
+                            <span className="text-sm font-semibold text-[#c9a84c]">{formatCurrency(aiSummary.budgetSignal.betrag)}</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">{aiSummary.budgetSignal.details}</p>
+                      </div>
+
+                      {/* Einwände */}
+                      {aiSummary.einwaende.length > 0 && (
+                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="h-4 w-4 text-red-400" />
+                            <span className="text-xs font-medium text-slate-400">Einwände / Bedenken</span>
+                          </div>
+                          <ul className="space-y-1.5">
+                            {aiSummary.einwaende.map((e, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-red-400/60" />
+                                {e}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Nächster Schritt */}
+                      <div className="rounded-xl border border-purple-500/15 bg-purple-500/[0.03] p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ArrowRight className="h-4 w-4 text-purple-400" />
+                          <span className="text-xs font-medium text-purple-400">Empfohlener nächster Schritt</span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-200">{aiSummary.naechsterSchritt}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
