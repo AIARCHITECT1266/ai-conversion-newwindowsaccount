@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2, RefreshCw, ArrowLeft, Megaphone, Plus, X, Check,
@@ -357,18 +357,45 @@ function CampaignDetail({ slug, onClose }: { slug: string; onClose: () => void }
 
 /* ───────────────────────────── Neue Kampagne Modal ──────────────── */
 
+interface TemplateData {
+  name: string;
+  description: string;
+  briefing?: { ziel?: string; zielgruppe?: string; tonalitaet?: string; ergebnis?: string };
+  openers?: string[];
+  abVarianten?: { variantA?: string; variantB?: string } | null;
+}
+
 function CreateCampaignModal({
-  onClose, onCreated, userTemplates, initialName, initialDescription,
+  onClose, onCreated, userTemplates, initialTemplate,
+  initialName, initialDescription,
 }: {
   onClose: () => void;
   onCreated: () => void;
   userTemplates: Campaign[];
+  initialTemplate?: TemplateData | null;
   initialName?: string;
   initialDescription?: string;
 }) {
-  const [step, setStep] = useState<"choose" | "form">(initialName ? "form" : "choose");
-  const [name, setName] = useState(initialName ?? "");
-  const [description, setDescription] = useState(initialDescription ?? "");
+  const hasInitial = !!(initialTemplate || initialName);
+  const [step, setStep] = useState<"choose" | "form">(hasInitial ? "form" : "choose");
+  const [name, setName] = useState(initialTemplate?.name ?? initialName ?? "");
+  const [description, setDescription] = useState(() => {
+    if (initialTemplate) {
+      const b = initialTemplate.briefing;
+      const parts: string[] = [];
+      if (b?.zielgruppe) parts.push(`Zielgruppe: ${b.zielgruppe}`);
+      if (b?.ziel) parts.push(`Ziel: ${b.ziel}`);
+      if (b?.tonalitaet) parts.push(`Ton: ${b.tonalitaet}`);
+      if (b?.ergebnis) parts.push(`Ergebnis: ${b.ergebnis}`);
+      if (initialTemplate.openers?.length) parts.push(`\nOpener:\n${initialTemplate.openers.map((o, i) => `${i + 1}. ${o}`).join("\n")}`);
+      if (initialTemplate.abVarianten) {
+        if (initialTemplate.abVarianten.variantA) parts.push(`\nA/B Variante A: ${initialTemplate.abVarianten.variantA}`);
+        if (initialTemplate.abVarianten.variantB) parts.push(`A/B Variante B: ${initialTemplate.abVarianten.variantB}`);
+      }
+      return parts.join("\n");
+    }
+    return initialDescription ?? "";
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedBranche, setSelectedBranche] = useState<string | null>(null);
@@ -956,6 +983,8 @@ export default function CampaignsPageWrapper() {
 
 function CampaignsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const templateId = searchParams.get("templateId");
 
   const { tenantName, loading: authLoading } = useTenantInfo();
@@ -965,27 +994,47 @@ function CampaignsPage() {
   const [detailSlug, setDetailSlug] = useState<string | null>(null);
   const [generateCampaign, setGenerateCampaign] = useState<{ slug: string; name: string } | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
-  const [templateName, setTemplateName] = useState("");
-  const [templateDesc, setTemplateDesc] = useState("");
+  const [loadedTemplate, setLoadedTemplate] = useState<TemplateData | null>(null);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
   const userTemplates = campaigns.filter((c) => c.isTemplate);
 
   // Template aus URL-Parameter laden und Creator oeffnen
   useEffect(() => {
     if (!templateId) return;
+    setTemplateLoading(true);
+    setTemplateError(null);
     fetch(`/api/dashboard/campaigns/templates/${templateId}`)
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (!r.ok) throw new Error("Template nicht gefunden");
+        return r.json();
+      })
       .then((d) => {
         if (d?.template) {
           const t = d.template;
-          setTemplateName(t.name);
-          setTemplateDesc(
-            `Zielgruppe: ${t.briefing.zielgruppe || ""}\nAngebot: ${t.briefing.ziel || ""}\nTon: ${t.briefing.tonalitaet || ""}\nErgebnis: ${t.briefing.ergebnis || ""}`
-          );
+          setLoadedTemplate({
+            name: t.name,
+            description: t.beschreibung ?? "",
+            briefing: t.briefing,
+            openers: t.openers,
+            abVarianten: t.abVarianten,
+          });
           setShowCreate(true);
         }
-      });
+      })
+      .catch((e) => setTemplateError(e instanceof Error ? e.message : "Template-Fehler"))
+      .finally(() => setTemplateLoading(false));
   }, [templateId]);
+
+  // templateId aus URL entfernen nach Nutzung
+  function clearTemplateParam() {
+    if (!templateId) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("templateId");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  }
 
   async function toggleTemplate(id: string, slug: string, isTemplate: boolean) {
     // Optimistisch updaten
@@ -1080,6 +1129,19 @@ function CampaignsPage() {
       </header>
 
       <main className="relative z-10 mx-auto max-w-5xl px-6 py-6">
+        {/* Template-Lade-Hinweise */}
+        {templateLoading && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.05)] px-4 py-3 text-sm text-[#c9a84c]">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Template wird geladen…
+          </div>
+        )}
+        {templateError && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+            <span>{templateError}</span>
+            <button onClick={() => { setTemplateError(null); clearTemplateParam(); }} className="ml-3 text-xs underline hover:text-red-300">Schließen</button>
+          </div>
+        )}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-[#c9a84c]" />
@@ -1188,11 +1250,10 @@ function CampaignsPage() {
       <AnimatePresence>
         {showCreate && (
           <CreateCampaignModal
-            onClose={() => { setShowCreate(false); setTemplateName(""); setTemplateDesc(""); }}
-            onCreated={fetchCampaigns}
+            onClose={() => { setShowCreate(false); setLoadedTemplate(null); clearTemplateParam(); }}
+            onCreated={() => { fetchCampaigns(); clearTemplateParam(); }}
             userTemplates={userTemplates}
-            initialName={templateName || undefined}
-            initialDescription={templateDesc || undefined}
+            initialTemplate={loadedTemplate}
           />
         )}
         {qrSlug && (
