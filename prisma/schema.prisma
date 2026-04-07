@@ -39,6 +39,9 @@ model Tenant {
   leads            Lead[]
   campaigns        Campaign[]
   clients          Client[]
+  assets           Asset[]
+  assetCredit      AssetCredit?
+  assetModels      TenantAssetModel[]
 
   @@map("tenants")
 }
@@ -300,4 +303,82 @@ enum PipelineStatus {
   TERMIN
   ANGEBOT
   GEWONNEN
+}
+
+// ---------- AI Asset Studio ----------
+
+// Generiertes oder bearbeitetes Asset (Bild, Grafik etc.)
+model Asset {
+  id              String      @id @default(cuid())
+  tenantId        String
+  originalPrompt  String      @db.Text // Ursprünglicher Generierungs-Prompt
+  modelUsed       AssetModel  // Welches KI-Modell wurde verwendet
+  status          AssetStatus @default(PENDING)
+  imageUrl        String?     @db.Text // URL zum generierten Bild (Vercel Blob o.ä.)
+  thumbnailUrl    String?     @db.Text // Vorschau-URL
+  exportedFormats String?     @db.Text // JSON: ["png", "webp", "svg"]
+  versionHistory  String?     @db.Text // JSON: Array max 10 Einträge [{prompt, modelUsed, imageUrl, createdAt}]
+  creditsUsed     Int         @default(1) // Credits für diese Generierung
+  width           Int?        // Bildbreite in px
+  height          Int?        // Bildhöhe in px
+  fileSize        Int?        // Dateigröße in Bytes
+  editParams      String?     @db.Text // JSON: Bearbeitungs-Parameter (sharpen, roundCorners, brandKit)
+  brandKit        String?     // Verwendetes Brand-Kit (z.B. "premium-gold")
+  tags            String?     @db.Text // JSON: string[] für Suche/Filter
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, modelUsed])
+  @@index([tenantId, createdAt])
+  @@map("assets")
+}
+
+// Credit-Kontingent pro Tenant für Asset Studio
+model AssetCredit {
+  id              String   @id @default(cuid())
+  tenantId        String   @unique // 1:1 pro Tenant
+  monthlyIncluded Int      @default(50) // Inklusive Generierungen pro Monat
+  used            Int      @default(0) // Verbrauchte Credits im aktuellen Monat
+  bonusCredits    Int      @default(0) // Zusätzlich gekaufte Credits
+  resetAt         DateTime // Nächster Monatswechsel-Reset
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("asset_credits")
+}
+
+// Aktivierte Modelle pro Tenant (1 bis 4 Modelle aktivierbar)
+model TenantAssetModel {
+  id        String     @id @default(cuid())
+  tenantId  String
+  model     AssetModel
+  isActive  Boolean    @default(true)
+  apiKeyRef String?    // Referenz auf env-Variable (z.B. "REPLICATE_API_KEY"), NICHT der Key selbst
+  createdAt DateTime   @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, model])
+  @@index([tenantId, isActive])
+  @@map("tenant_asset_models")
+}
+
+enum AssetModel {
+  GROK
+  CLAUDE
+  GEMINI
+  FLUX
+}
+
+enum AssetStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+  EDITED
 }

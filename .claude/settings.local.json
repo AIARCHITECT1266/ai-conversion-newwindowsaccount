@@ -30,7 +30,13 @@
       "Bash(sed 's/[^A-Z_].*//')",
       "Bash(curl:*)",
       "Bash(mkdir -p \"C:\\\\Users\\\\accou\\\\AI-Conversion-New\\\\src\\\\app\\\\api\\\\dashboard\\\\stats\")",
-      "Bash(mkdir -p \"C:\\\\Users\\\\accou\\\\AI-Conversion-New\\\\src\\\\app\\\\api\\\\dashboard\\\\conversations\")"
+      "Bash(mkdir -p \"C:\\\\Users\\\\accou\\\\AI-Conversion-New\\\\src\\\\app\\\\api\\\\dashboard\\\\conversations\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(sed -i 's|Demo starten|Demo anfragen|g' src/app/page-v2.tsx)",
+      "Bash(sed -i 's|Kostenlose Demo anfragen|Kostenlose Demo anfragen|g' src/app/page-v2.tsx)",
+      "Bash(npx prisma:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

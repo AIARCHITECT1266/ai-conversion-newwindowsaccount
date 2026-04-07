@@ -365,6 +365,19 @@ interface TemplateData {
   abVarianten?: { variantA?: string; variantB?: string } | null;
 }
 
+function buildTemplateDescription(t: TemplateData): string {
+  const parts: string[] = [];
+  const b = t.briefing;
+  if (b?.zielgruppe) parts.push(`Zielgruppe: ${b.zielgruppe}`);
+  if (b?.ziel) parts.push(`Ziel: ${b.ziel}`);
+  if (b?.tonalitaet) parts.push(`Ton: ${b.tonalitaet}`);
+  if (b?.ergebnis) parts.push(`Ergebnis: ${b.ergebnis}`);
+  if (t.openers?.length) parts.push(`\nOpener:\n${t.openers.map((o, i) => `${i + 1}. ${o}`).join("\n")}`);
+  if (t.abVarianten?.variantA) parts.push(`\nA/B Variante A: ${t.abVarianten.variantA}`);
+  if (t.abVarianten?.variantB) parts.push(`A/B Variante B: ${t.abVarianten.variantB}`);
+  return parts.join("\n");
+}
+
 function CreateCampaignModal({
   onClose, onCreated, userTemplates, initialTemplate,
   initialName, initialDescription,
@@ -379,23 +392,9 @@ function CreateCampaignModal({
   const hasInitial = !!(initialTemplate || initialName);
   const [step, setStep] = useState<"choose" | "form">(hasInitial ? "form" : "choose");
   const [name, setName] = useState(initialTemplate?.name ?? initialName ?? "");
-  const [description, setDescription] = useState(() => {
-    if (initialTemplate) {
-      const b = initialTemplate.briefing;
-      const parts: string[] = [];
-      if (b?.zielgruppe) parts.push(`Zielgruppe: ${b.zielgruppe}`);
-      if (b?.ziel) parts.push(`Ziel: ${b.ziel}`);
-      if (b?.tonalitaet) parts.push(`Ton: ${b.tonalitaet}`);
-      if (b?.ergebnis) parts.push(`Ergebnis: ${b.ergebnis}`);
-      if (initialTemplate.openers?.length) parts.push(`\nOpener:\n${initialTemplate.openers.map((o, i) => `${i + 1}. ${o}`).join("\n")}`);
-      if (initialTemplate.abVarianten) {
-        if (initialTemplate.abVarianten.variantA) parts.push(`\nA/B Variante A: ${initialTemplate.abVarianten.variantA}`);
-        if (initialTemplate.abVarianten.variantB) parts.push(`A/B Variante B: ${initialTemplate.abVarianten.variantB}`);
-      }
-      return parts.join("\n");
-    }
-    return initialDescription ?? "";
-  });
+  const [description, setDescription] = useState(
+    initialTemplate ? buildTemplateDescription(initialTemplate) : (initialDescription ?? "")
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedBranche, setSelectedBranche] = useState<string | null>(null);
@@ -1023,7 +1022,10 @@ function CampaignsPage() {
           setShowCreate(true);
         }
       })
-      .catch((e) => setTemplateError(e instanceof Error ? e.message : "Template-Fehler"))
+      .catch((e) => {
+        setTemplateError(e instanceof Error ? e.message : "Template-Fehler");
+        setLoadedTemplate(null);
+      })
       .finally(() => setTemplateLoading(false));
   }, [templateId]);
 
@@ -1113,10 +1115,11 @@ function CampaignsPage() {
             </a>
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-3 py-1.5 text-sm font-medium text-black hover:opacity-90 transition-opacity"
+              disabled={templateLoading}
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-3 py-1.5 text-sm font-medium text-black hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
-              <Plus className="h-4 w-4" />
-              Neue Kampagne
+              {templateLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {templateLoading ? "Template lädt…" : "Neue Kampagne"}
             </button>
             <button
               onClick={() => { setLoading(true); fetchCampaigns(); }}
@@ -1250,7 +1253,7 @@ function CampaignsPage() {
       <AnimatePresence>
         {showCreate && (
           <CreateCampaignModal
-            onClose={() => { setShowCreate(false); setLoadedTemplate(null); clearTemplateParam(); }}
+            onClose={() => { setShowCreate(false); if (loadedTemplate) { setLoadedTemplate(null); clearTemplateParam(); } }}
             onCreated={() => { fetchCampaigns(); clearTemplateParam(); }}
             userTemplates={userTemplates}
             initialTemplate={loadedTemplate}

@@ -217,7 +217,7 @@ export default function ConversationDetailPage() {
                   {conversation.status}
                 </span>
                 {conversation.consentGiven && (
-                  <Shield className="h-4 w-4 text-emerald-400" title="DSGVO-Consent erteilt" />
+                  <span title="DSGVO-Consent erteilt"><Shield className="h-4 w-4 text-emerald-400" /></span>
                 )}
               </div>
             </div>
