@@ -35,7 +35,7 @@ function isDashboardPath(pathname: string): boolean {
   );
 }
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Dashboard-Schutz via Magic-Link Cookie
@@ -67,13 +67,13 @@ export function middleware(req: NextRequest) {
       : null;
 
     // Session-Token via Bearer-Header pruefen
-    if (bearerToken && validateAdminSession(bearerToken)) {
+    if (bearerToken && await validateAdminSession(bearerToken)) {
       return NextResponse.next();
     }
 
     // Fallback: Session-Cookie (Browser-Aufrufe aus dem Admin-Dashboard)
     const adminCookie = req.cookies.get("admin_token")?.value;
-    if (adminCookie && validateAdminSession(adminCookie)) {
+    if (adminCookie && await validateAdminSession(adminCookie)) {
       return NextResponse.next();
     }
 
@@ -82,7 +82,7 @@ export function middleware(req: NextRequest) {
 
   // 2. Admin-Seiten (/admin): Cookie-basierte Authentifizierung
   const adminCookie = req.cookies.get("admin_token")?.value;
-  if (adminCookie && validateAdminSession(adminCookie)) {
+  if (adminCookie && await validateAdminSession(adminCookie)) {
     return NextResponse.next();
   }
 

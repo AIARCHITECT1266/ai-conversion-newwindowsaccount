@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Session-Token generieren (nicht das Secret selbst!)
-  const sessionToken = createAdminSession();
+  const sessionToken = await createAdminSession();
 
   auditLog("admin.login", { ip });
   const response = NextResponse.json({ success: true });
