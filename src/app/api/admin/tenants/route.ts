@@ -116,7 +116,10 @@ export async function POST(request: NextRequest) {
       slug: tenant.slug,
     });
 
-    return NextResponse.json({ tenant }, { status: 201 });
+    return NextResponse.json({
+      tenant,
+      dashboardLoginPath: `/dashboard/login?token=${dashboardToken}`,
+    }, { status: 201 });
   } catch (error) {
     // Duplikat-Fehler abfangen (slug oder whatsappPhoneId bereits vergeben)
     if (
