@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/lib/dashboard-auth";
 
 // Zod-Schema fuer Tenant-Erstellung
 const createTenantSchema = z.object({
@@ -92,8 +93,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Dashboard Magic-Link Token generieren
-    const dashboardToken = randomBytes(32).toString("hex");
+    // Dashboard Magic-Link Token generieren und gehasht speichern
+    const rawToken = randomBytes(32).toString("hex");
 
     const tenant = await db.tenant.create({
       data: {
@@ -104,10 +105,11 @@ export async function POST(request: NextRequest) {
         brandColor: body.brandColor,
         retentionDays: body.retentionDays,
         systemPrompt: body.systemPrompt,
-        dashboardToken,
+        dashboardToken: hashToken(rawToken),
+        dashboardTokenExpiresAt: new Date(Date.now() + MAGIC_LINK_EXPIRY_MS),
         isActive: true,
       },
-      // Nur oeffentliche Felder zurueckgeben – dashboardToken wird NICHT exponiert
+      // Nur oeffentliche Felder zurueckgeben – Token-Hash wird NICHT exponiert
       select: TENANT_PUBLIC_SELECT,
     });
 
@@ -116,9 +118,10 @@ export async function POST(request: NextRequest) {
       slug: tenant.slug,
     });
 
+    // Klartext-Token einmalig dem Admin zeigen (wird nur gehasht in DB gespeichert)
     return NextResponse.json({
       tenant,
-      dashboardLoginPath: `/dashboard/login?token=${dashboardToken}`,
+      dashboardLoginPath: `/dashboard/login?token=${rawToken}`,
     }, { status: 201 });
   } catch (error) {
     // Duplikat-Fehler abfangen (slug oder whatsappPhoneId bereits vergeben)

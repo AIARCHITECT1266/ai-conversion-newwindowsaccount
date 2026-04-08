@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/lib/dashboard-auth";
 
 // Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
 const TENANT_PUBLIC_SELECT = {
@@ -149,21 +150,24 @@ export async function POST(
       return NextResponse.json({ error: "Ungültige Tenant-ID" }, { status: 400 });
     }
 
-    const dashboardToken = randomBytes(32).toString("hex");
+    const rawToken = randomBytes(32).toString("hex");
 
     const tenant = await db.tenant.update({
       where: { id },
-      data: { dashboardToken },
+      data: {
+        dashboardToken: hashToken(rawToken),
+        dashboardTokenExpiresAt: new Date(Date.now() + MAGIC_LINK_EXPIRY_MS),
+      },
       select: { id: true, name: true },
     });
 
     console.log("[Admin] Dashboard-Token regeneriert", { tenantId: tenant.id });
 
-    // Token-Wert wird NICHT in der Response exponiert – nur der Login-Pfad
-    // Der Admin muss den Link direkt an den Tenant weitergeben
+    // Klartext-Token einmalig dem Admin zeigen – in DB nur als Hash gespeichert
     return NextResponse.json({
       tenantId: tenant.id,
       message: "Dashboard-Token wurde regeneriert",
+      dashboardLoginPath: `/dashboard/login?token=${rawToken}`,
     });
   } catch (error) {
     if (

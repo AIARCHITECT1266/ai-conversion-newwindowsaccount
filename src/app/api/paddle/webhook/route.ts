@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { randomBytes, createHmac, timingSafeEqual } from "crypto";
 import { Resend } from "resend";
+import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/lib/dashboard-auth";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://ai-conversion.ai";
 
@@ -149,7 +150,7 @@ async function handleTransactionCompleted(event: PaddleEvent) {
     .replace(/^-|-$/g, "")
     || `tenant-${Date.now()}`;
 
-  const dashboardToken = randomBytes(32).toString("hex");
+  const rawToken = randomBytes(32).toString("hex");
 
   const tenant = await db.tenant.create({
     data: {
@@ -158,7 +159,8 @@ async function handleTransactionCompleted(event: PaddleEvent) {
       whatsappPhoneId: `pending-${Date.now()}`,
       brandName: companyName,
       systemPrompt: "",
-      dashboardToken,
+      dashboardToken: hashToken(rawToken),
+      dashboardTokenExpiresAt: new Date(Date.now() + MAGIC_LINK_EXPIRY_MS),
       isActive: true,
       paddleCustomerId: customerId,
       paddleSubscriptionId: subscriptionId,
@@ -174,9 +176,9 @@ async function handleTransactionCompleted(event: PaddleEvent) {
     slug: tenant.slug,
   });
 
-  // Magic-Link per Resend E-Mail senden
+  // Magic-Link per Resend E-Mail senden (Klartext-Token, einmalig gueltig)
   if (email) {
-    await sendWelcomeEmail(email, companyName, dashboardToken, plan);
+    await sendWelcomeEmail(email, companyName, rawToken, plan);
   }
 }
 

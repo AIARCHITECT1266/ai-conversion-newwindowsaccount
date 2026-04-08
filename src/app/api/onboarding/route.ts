@@ -1,8 +1,9 @@
 // ============================================================
 // Onboarding-API: Oeffentlicher Endpoint fuer Tenant-Erstellung
 // Separiert vom Admin-API, mit eigenem Rate-Limiting.
-// POST: Tenant erstellen
-// PATCH: Tenant aktualisieren (System-Prompt, Aktivierung)
+// POST: Tenant erstellen (oeffentlich, rate-limited)
+// Updates erfolgen ueber /api/dashboard/settings (Dashboard-Auth)
+// oder /api/admin/tenants/[id] (Admin-Auth).
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -10,22 +11,15 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/lib/dashboard-auth";
 
-// Zod-Schemas
+// Zod-Schema fuer Tenant-Erstellung
 const createSchema = z.object({
   name: z.string().min(1, "Firmenname fehlt").max(255),
   slug: z.string().min(1, "Slug fehlt").max(64),
   whatsappPhoneId: z.string().min(1, "WhatsApp Phone ID fehlt").max(64),
   brandName: z.string().min(1, "Markenname fehlt").max(255),
   systemPrompt: z.string().max(10000).optional().default(""),
-});
-
-const updateSchema = z.object({
-  tenantId: z.string().min(1, "Tenant-ID fehlt"),
-  systemPrompt: z.string().max(10000).optional(),
-  isActive: z.boolean().optional(),
-}).refine((data) => data.systemPrompt !== undefined || data.isActive !== undefined, {
-  message: "Mindestens systemPrompt oder isActive muss angegeben werden",
 });
 
 // Oeffentliche Felder (ohne dashboardToken)
@@ -80,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const dashboardToken = randomBytes(32).toString("hex");
+    const rawToken = randomBytes(32).toString("hex");
 
     const tenant = await db.tenant.create({
       data: {
@@ -89,7 +83,8 @@ export async function POST(request: NextRequest) {
         whatsappPhoneId: body.whatsappPhoneId,
         brandName: body.brandName,
         systemPrompt: body.systemPrompt,
-        dashboardToken,
+        dashboardToken: hashToken(rawToken),
+        dashboardTokenExpiresAt: new Date(Date.now() + MAGIC_LINK_EXPIRY_MS),
         isActive: false, // Onboarding: Standardmaessig inaktiv bis explizit aktiviert
       },
       select: PUBLIC_SELECT,
@@ -119,57 +114,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ---------- PATCH: Tenant aktualisieren (System-Prompt / Aktivierung) ----------
-
-export async function PATCH(request: NextRequest) {
-  // Rate-Limiting: 10 Updates pro Minute pro IP
-  const ip = getClientIp(request);
-  const limit = await checkRateLimit(`onboarding-update:${ip}`, { max: 10, windowMs: 60_000 });
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Zu viele Anfragen" },
-      { status: 429 }
-    );
-  }
-
-  try {
-    const rawBody: unknown = await request.json();
-    const parseResult = updateSchema.safeParse(rawBody);
-    if (!parseResult.success) {
-      const errors = parseResult.error.issues
-        .map((i) => `${i.path.join(".")}: ${i.message}`)
-        .join(", ");
-      return NextResponse.json({ error: errors }, { status: 400 });
-    }
-
-    const { tenantId, ...data } = parseResult.data;
-
-    const tenant = await db.tenant.update({
-      where: { id: tenantId },
-      data,
-      select: PUBLIC_SELECT,
-    });
-
-    console.log("[Onboarding] Tenant aktualisiert", {
-      tenantId: tenant.id,
-      fields: Object.keys(data),
-    });
-
-    return NextResponse.json({ tenant });
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("Record to update not found")
-    ) {
-      return NextResponse.json(
-        { error: "Tenant nicht gefunden" },
-        { status: 404 }
-      );
-    }
-
-    console.error("[Onboarding] Fehler beim Aktualisieren", {
-      error: error instanceof Error ? error.message : "Unbekannt",
-    });
-    return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
-  }
-}
+// PATCH entfernt – Tenant-Updates nur ueber authentifizierte Endpoints:
+// - /api/dashboard/settings (Dashboard-Auth via Cookie)
+// - /api/admin/tenants/[id] (Admin-Auth via Session)
