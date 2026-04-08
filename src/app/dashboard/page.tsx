@@ -172,12 +172,12 @@ function HubSpotSettings() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ...spring, delay: 0.65 }}
-      className="mt-6 rounded-xl p-6"
+      className="mt-5 rounded-2xl p-6"
       style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
     >
       <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Settings className="h-4 w-4 text-[#c9a84c]" />
+        <div className="flex items-center gap-2.5">
+          <Settings className="h-4 w-4 text-[#c9a84c]/60" />
           <h2 className="text-sm font-semibold">HubSpot-Integration</h2>
         </div>
         {connected !== null && (
@@ -417,73 +417,58 @@ export default function TenantDashboard() {
         <div className="absolute -left-[10%] -top-[5%] h-[600px] w-[600px] rounded-full bg-[rgba(201,168,76,0.05)] blur-[160px]" />
       </div>
 
-      {/* Header */}
-      <header
-        className="relative z-10 backdrop-blur-md"
-        style={{ borderBottom: '1px solid var(--gold-border)', background: 'rgba(7,7,13,0.8)' }}
-      >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div>
-              <h1 className="text-lg font-semibold flex items-center gap-2">
-                <span style={{ fontFamily: 'var(--serif)', color: 'var(--gold)', fontSize: '1.25rem', fontWeight: 700 }}>AI Conversion.</span>
-                <span style={{ fontFamily: 'var(--serif)', color: 'var(--text)' }}>{tenantName ?? "Mein Dashboard"}</span>
+      {/* ═══ Header ═══ */}
+      <header className="relative z-10" style={{ borderBottom: '1px solid var(--gold-border)', background: 'rgba(7,7,13,0.85)', backdropFilter: 'blur(12px)' }}>
+        <div className="mx-auto max-w-7xl px-6">
+          {/* Obere Zeile: Brand + Status + Aktionen */}
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-4">
+              <h1 className="flex items-baseline gap-2">
+                <span style={{ fontFamily: 'var(--serif)', color: 'var(--gold)', fontSize: '1.2rem', fontWeight: 700 }}>AI Conversion.</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>{tenantName ?? "Dashboard"}</span>
               </h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>AI Conversion • WhatsApp Bot</p>
+              {/* Bot-Status — subtiler Indikator */}
+              <div className="flex items-center gap-1.5 pl-4 border-l border-white/[0.06]">
+                <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                <span className="text-[11px] text-emerald-400/70">Bot aktiv</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={fetchStats} title="Aktualisieren"
+                className="rounded-lg p-2 text-slate-600 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
+                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              </button>
+              <button onClick={() => setChatOpen(!chatOpen)} title="Plattform-Hilfe"
+                className="rounded-lg p-2 text-slate-600 hover:text-purple-400 hover:bg-purple-500/5 transition-colors">
+                <HelpCircle className="h-4 w-4" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={fetchStats}
-              className="rounded-lg border border-white/[0.06] p-1.5 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-[#c9a84c]"
-              title="Aktualisieren"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            </button>
-            <div className="flex items-center gap-2 rounded-full bg-purple-500/10 px-3 py-1.5">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-purple-400" />
-              <span className="text-xs font-medium text-purple-400">Bot aktiv</span>
-            </div>
-            <a
-              href="/dashboard/crm"
-              className="flex items-center gap-2 rounded-lg border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.05)] px-3 py-1.5 text-sm font-medium text-[#c9a84c] transition-colors hover:bg-[rgba(201,168,76,0.1)]"
-            >
-              <Kanban className="h-4 w-4" />
-              CRM Pipeline
-            </a>
-            <a
-              href="/dashboard/campaigns"
-              className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-500/20"
-            >
-              <Megaphone className="h-4 w-4" />
-              Kampagnen
-            </a>
-            <a
-              href="/dashboard/broadcasts"
-              className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-3 py-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-[#c9a84c] hover:border-[rgba(201,168,76,0.2)]"
-            >
-              Broadcasts
-            </a>
-            <a
-              href="/dashboard/clients"
-              className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
-            >
-              Clients
-            </a>
-            <a
-              href="/dashboard/assets"
-              className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/20"
-            >
-              Asset Studio
-            </a>
-            <button
-              onClick={() => setChatOpen(!chatOpen)}
-              className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-500/20"
-            >
-              <HelpCircle className="h-4 w-4" />
-              Plattform-Hilfe
-            </button>
-          </div>
+
+          {/* Navigation — saubere, einheitliche Links */}
+          <nav className="flex items-center gap-1 -mb-px">
+            {[
+              { href: "/dashboard", label: "Uebersicht", icon: Activity, active: true },
+              { href: "/dashboard/crm", label: "CRM", icon: Kanban },
+              { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone },
+              { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send },
+              { href: "/dashboard/clients", label: "Clients", icon: Users },
+              { href: "/dashboard/assets", label: "Asset Studio", icon: Zap },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <a key={item.href} href={item.href}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 ${
+                    item.active
+                      ? "border-[#c9a84c] text-[#c9a84c]"
+                      : "border-transparent text-slate-500 hover:text-[#ede8df]/80 hover:border-white/10"
+                  }`}>
+                  <Icon className="h-3.5 w-3.5" />
+                  {item.label}
+                </a>
+              );
+            })}
+          </nav>
         </div>
       </header>
 
@@ -504,52 +489,50 @@ export default function TenantDashboard() {
         ) : stats ? (
           <>
             {/* KPI-Karten */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {kpis.map((kpi, i) => {
                 const Icon = kpi.icon;
-                const colorMap: Record<string, string> = {
-                  purple: "bg-purple-500/[0.08] text-purple-400",
-                  emerald: "bg-emerald-500/[0.08] text-emerald-400",
-                  blue: "bg-blue-500/[0.08] text-blue-400",
-                  amber: "bg-amber-500/[0.08] text-amber-400",
+                const iconColors: Record<string, string> = {
+                  purple: "text-purple-400/70",
+                  emerald: "text-emerald-400/70",
+                  blue: "text-blue-400/70",
+                  amber: "text-[#c9a84c]/70",
                 };
                 return (
                   <motion.div
                     key={kpi.label}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...spring, delay: i * 0.08 }}
-                    className="rounded-xl p-5"
+                    transition={{ ...spring, delay: i * 0.06 }}
+                    className="group rounded-2xl p-6 transition-colors hover:border-[rgba(201,168,76,0.18)]"
                     style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${colorMap[kpi.color]}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
+                    <div className="flex items-center justify-between mb-4">
+                      <Icon className={`h-5 w-5 ${iconColors[kpi.color]}`} />
                     </div>
-                    <p className="mt-3 text-2xl font-bold" style={{ fontFamily: 'var(--serif)' }}>{kpi.value}</p>
-                    <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{kpi.label}</p>
+                    <p className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--serif)', color: 'var(--text)' }}>{kpi.value}</p>
+                    <p className="mt-1.5 text-xs tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>{kpi.label}</p>
                   </motion.div>
                 );
               })}
             </div>
 
             {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}
-            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            <div className="mt-8 grid gap-5 lg:grid-cols-3">
               {/* Letzte Gespräche */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: 0.35 }}
-                className="rounded-xl p-6 lg:col-span-2"
+                className="rounded-2xl p-6 lg:col-span-2"
                 style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
               >
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-[#c9a84c]" />
-                    <h2 className="text-sm font-semibold">Letzte Gespräche</h2>
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="h-4 w-4 text-[#c9a84c]/60" />
+                    <h2 className="text-sm font-semibold tracking-wide">Letzte Gespraeche</h2>
                   </div>
-                  <span className="text-xs text-slate-500">Live-Übersicht</span>
+                  <span className="text-[11px] text-slate-600 uppercase tracking-wider">Live</span>
                 </div>
                 <div className="space-y-3">
                   {stats.conversations.length === 0 ? (
@@ -590,12 +573,12 @@ export default function TenantDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: 0.45 }}
-                className="rounded-xl p-6"
+                className="rounded-2xl p-6"
                 style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
               >
-                <div className="mb-5 flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-[#c9a84c]" />
-                  <h2 className="text-sm font-semibold">Lead-Pipeline</h2>
+                <div className="mb-6 flex items-center gap-2.5">
+                  <BarChart3 className="h-4 w-4 text-[#c9a84c]/60" />
+                  <h2 className="text-sm font-semibold tracking-wide">Lead-Pipeline</h2>
                 </div>
 
                 {/* Gestapelter Balken */}
@@ -637,12 +620,12 @@ export default function TenantDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...spring, delay: 0.55 }}
-              className="mt-6 rounded-xl p-6"
+              className="mt-5 rounded-2xl p-6"
               style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
             >
-              <div className="mb-5 flex items-center gap-2">
-                <Bot className="h-4 w-4 text-[#c9a84c]" />
-                <h2 className="text-sm font-semibold">Bot-Aktivität (24h)</h2>
+              <div className="mb-6 flex items-center gap-2.5">
+                <Bot className="h-4 w-4 text-[#c9a84c]/60" />
+                <h2 className="text-sm font-semibold tracking-wide">Bot-Aktivitaet (24h)</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 {[
