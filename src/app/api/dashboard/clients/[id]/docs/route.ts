@@ -5,9 +5,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
-import { decryptText } from "@/lib/encryption";
-import { db } from "@/lib/db";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
+import { decryptText } from "@/modules/encryption/aes";
+import { db } from "@/shared/db";
 
 const DOCS_PROMPT = `Du bist ein Onboarding-Spezialist für den DACH-Markt. Erstelle basierend auf dem Gesprächsverlauf zwischen KI-Bot und dem neuen Kunden drei Onboarding-Dokumente.
 

@@ -4,9 +4,9 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { editImage } from "../../lib/edit";
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 
 export async function POST(request: Request) {
   // Authentifizierung

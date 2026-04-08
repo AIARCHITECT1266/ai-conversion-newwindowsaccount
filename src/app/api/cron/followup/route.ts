@@ -6,10 +6,10 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { decryptText, encryptText } from "@/lib/encryption";
-import { sendMessage } from "@/lib/whatsapp";
-import { safeCompare } from "@/lib/session";
+import { db } from "@/shared/db";
+import { decryptText, encryptText } from "@/modules/encryption/aes";
+import { sendMessage } from "@/modules/whatsapp/client";
+import { safeCompare } from "@/modules/auth/session";
 
 // Follow-Up Stufen: eskalierende Dringlichkeit
 const FOLLOW_UP_TEMPLATES: Record<number, (brandName: string) => string> = {

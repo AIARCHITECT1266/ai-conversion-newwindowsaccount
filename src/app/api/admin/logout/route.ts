@@ -1,6 +1,6 @@
 // POST /api/admin/logout — Admin-Session invalidieren und Cookie löschen
 import { NextRequest, NextResponse } from "next/server";
-import { invalidateAdminSession } from "@/lib/session";
+import { invalidateAdminSession } from "@/modules/auth/session";
 
 export async function POST(req: NextRequest) {
   const token = req.cookies.get("admin_token")?.value;

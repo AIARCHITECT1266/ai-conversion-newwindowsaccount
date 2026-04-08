@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 
 export async function GET() {
   const tenant = await getDashboardTenant();

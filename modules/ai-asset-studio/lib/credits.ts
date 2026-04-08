@@ -4,7 +4,7 @@
 // Bearbeitungen (edit) sind credits-neutral.
 // ============================================================
 
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 import type { CreditCheck } from "./types";
 
 /**

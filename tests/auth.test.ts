@@ -10,7 +10,7 @@ import {
   validateAdminSession,
   invalidateAdminSession,
   safeCompare,
-} from "@/lib/session";
+} from "@/modules/auth/session";
 
 describe("Admin Session Management", () => {
   it("erstellt einen 64-Zeichen-Hex-Token", () => {

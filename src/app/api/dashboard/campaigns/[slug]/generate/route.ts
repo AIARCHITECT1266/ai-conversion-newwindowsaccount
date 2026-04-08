@@ -5,8 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
-import { db } from "@/lib/db";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
+import { db } from "@/shared/db";
 
 const CONTENT_PROMPT = `Du bist ein erfahrener Marketing-Texter und Vertriebsstratege für den DACH-Markt.
 Erstelle ein komplettes Content-Paket für eine WhatsApp-Marketing-Kampagne.

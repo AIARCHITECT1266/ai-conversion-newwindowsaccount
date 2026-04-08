@@ -5,7 +5,7 @@
 // In-Memory-Cache mit 60s TTL reduziert DB-Last.
 // ============================================================
 
-import { db } from "./db";
+import { db } from "@/shared/db";
 import type { Tenant } from "@/generated/prisma/client";
 
 // ---------- Cache ----------

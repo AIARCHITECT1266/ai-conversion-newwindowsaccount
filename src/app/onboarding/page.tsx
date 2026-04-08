@@ -7,7 +7,7 @@ import {
   BRANCHEN_TEMPLATES,
   getTemplateById,
   fillPromptTemplate,
-} from "@/lib/bot/system-prompts";
+} from "@/modules/bot/system-prompts";
 
 // ---------- Typen ----------
 

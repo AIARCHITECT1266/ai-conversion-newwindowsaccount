@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateAdminSession } from "@/lib/session-validate";
+import { validateAdminSession } from "@/modules/auth/session-validate";
 
 export const runtime = "nodejs";
 

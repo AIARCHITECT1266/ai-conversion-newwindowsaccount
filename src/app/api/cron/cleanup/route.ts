@@ -6,8 +6,8 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { safeCompare } from "@/lib/session";
+import { db } from "@/shared/db";
+import { safeCompare } from "@/modules/auth/session";
 
 export async function GET(request: NextRequest) {
   // Absicherung: CRON_SECRET muss konfiguriert sein

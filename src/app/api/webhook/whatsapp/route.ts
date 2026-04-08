@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
-import { handleIncomingMessage } from "@/lib/bot/handler";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { safeCompare } from "@/lib/session";
-import { db } from "@/lib/db";
+import { handleIncomingMessage } from "@/modules/bot/handler";
+import { checkRateLimit, getClientIp } from "@/shared/rate-limit";
+import { safeCompare } from "@/modules/auth/session";
+import { db } from "@/shared/db";
 
 // ============================================================
 // WhatsApp Cloud API – Webhook Endpoint

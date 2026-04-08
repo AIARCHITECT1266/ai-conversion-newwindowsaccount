@@ -4,9 +4,9 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
-import { decryptText } from "@/lib/encryption";
-import { db } from "@/lib/db";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
+import { decryptText } from "@/modules/encryption/aes";
+import { db } from "@/shared/db";
 
 const VALID_PIPELINE_STATUSES = ["NEU", "QUALIFIZIERT", "TERMIN", "ANGEBOT", "GEWONNEN"] as const;
 type PipelineStatus = (typeof VALID_PIPELINE_STATUSES)[number];

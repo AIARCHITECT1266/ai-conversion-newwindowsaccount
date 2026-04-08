@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { db } from "@/lib/db";
-import { hashToken, SESSION_EXPIRY_MS } from "@/lib/dashboard-auth";
+import { db } from "@/shared/db";
+import { hashToken, SESSION_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");

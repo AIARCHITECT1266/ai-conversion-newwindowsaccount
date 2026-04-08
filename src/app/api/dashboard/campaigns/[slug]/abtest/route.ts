@@ -4,8 +4,8 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
-import { db } from "@/lib/db";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
+import { db } from "@/shared/db";
 
 export async function GET(
   _request: NextRequest,

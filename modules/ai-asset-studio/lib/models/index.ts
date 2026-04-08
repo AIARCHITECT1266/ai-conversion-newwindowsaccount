@@ -4,7 +4,7 @@
 // Pro Tenant können 1-4 Modelle aktiviert werden.
 // ============================================================
 
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 import type { ModelId, ModelHandler, GenerateRequest, GenerateResult } from "../types";
 import { checkCredits, deductCredits } from "../credits";
 import { GrokHandler } from "./grok";

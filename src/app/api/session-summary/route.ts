@@ -6,9 +6,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createSessionNote } from "@/lib/notion";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { safeCompare } from "@/lib/session";
+import { createSessionNote } from "@/shared/notion";
+import { checkRateLimit, getClientIp } from "@/shared/rate-limit";
+import { safeCompare } from "@/modules/auth/session";
 
 // Zod-Schema fuer den Request-Body
 const bodySchema = z.object({

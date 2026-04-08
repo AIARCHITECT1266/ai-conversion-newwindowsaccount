@@ -9,9 +9,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
-import { db } from "@/lib/db";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/lib/dashboard-auth";
+import { db } from "@/shared/db";
+import { checkRateLimit, getClientIp } from "@/shared/rate-limit";
+import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 
 // Zod-Schema fuer Tenant-Erstellung
 const createSchema = z.object({

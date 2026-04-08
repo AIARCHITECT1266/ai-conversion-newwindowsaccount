@@ -9,8 +9,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
-import { db } from "@/lib/db";
-import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/lib/dashboard-auth";
+import { db } from "@/shared/db";
+import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 
 // Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
 const TENANT_PUBLIC_SELECT = {

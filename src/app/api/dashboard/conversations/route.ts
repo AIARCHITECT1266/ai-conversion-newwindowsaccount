@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
-import { decryptText } from "@/lib/encryption";
+import { db } from "@/shared/db";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
+import { decryptText } from "@/modules/encryption/aes";
 
 // Zod-Schema fuer Query-Parameter
 const statusSchema = z.enum(["ACTIVE", "PAUSED", "CLOSED", "ARCHIVED"]).optional();

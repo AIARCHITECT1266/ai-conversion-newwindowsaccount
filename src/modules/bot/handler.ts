@@ -5,15 +5,15 @@
 // ============================================================
 
 import { createHash } from "crypto";
-import { db } from "../db";
-import { getTenantByPhoneId } from "../tenant";
-import { encryptText, decryptText } from "../encryption";
+import { db } from "@/shared/db";
+import { getTenantByPhoneId } from "@/modules/tenant/resolver";
+import { encryptText, decryptText } from "@/modules/encryption/aes";
 import { generateReply } from "./claude";
 import { scoreLeadFromConversation } from "./gpt";
-import { sendMessage } from "../whatsapp";
-import { auditLog } from "../audit-log";
-import { notifyHighScoreLead } from "../lead-notification";
-import { pushLeadToHubSpot } from "../hubspot";
+import { sendMessage } from "@/modules/whatsapp/client";
+import { auditLog } from "@/modules/compliance/audit-log";
+import { notifyHighScoreLead } from "@/modules/crm/lead-notification";
+import { pushLeadToHubSpot } from "@/modules/crm/hubspot";
 import { loadSystemPrompt } from "./system-prompts";
 import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
 

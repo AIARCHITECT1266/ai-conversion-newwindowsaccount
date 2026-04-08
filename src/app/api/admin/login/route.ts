@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { auditLog } from "@/lib/audit-log";
-import { createAdminSession, safeCompare } from "@/lib/session";
+import { checkRateLimit, getClientIp } from "@/shared/rate-limit";
+import { auditLog } from "@/modules/compliance/audit-log";
+import { createAdminSession, safeCompare } from "@/modules/auth/session";
 
 // POST /api/admin/login – Validiert Admin-Secret und setzt HttpOnly Session-Cookie
 export async function POST(request: NextRequest) {

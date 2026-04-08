@@ -5,7 +5,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 import type { LeadQualification } from "@/generated/prisma/enums";
 
 // Gueltige Qualifikationsstufen fuer typsichere Indexierung

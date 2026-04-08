@@ -7,7 +7,7 @@
 import { parseArgs } from "node:util";
 import fs from "fs/promises";
 import { editImage } from "../../lib/edit";
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 
 export async function editCommand(): Promise<void> {
   const { values, positionals } = parseArgs({

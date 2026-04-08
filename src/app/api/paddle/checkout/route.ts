@@ -5,7 +5,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getPlan } from "@/lib/paddle";
+import { getPlan } from "@/modules/billing/paddle";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://ai-conversion.ai";
 const WA_FALLBACK = "mailto:hello@ai-conversion.ai";

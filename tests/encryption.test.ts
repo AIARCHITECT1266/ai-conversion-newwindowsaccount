@@ -13,7 +13,7 @@ beforeAll(() => {
 
 describe("Encryption", () => {
   it("verschluesselt und entschluesselt Text korrekt (Roundtrip)", async () => {
-    const { encryptText, decryptText } = await import("@/lib/encryption");
+    const { encryptText, decryptText } = await import("@/modules/encryption/aes");
 
     const plaintext = "Hallo, dies ist ein geheimer Text!";
     const encrypted = encryptText(plaintext);
@@ -26,7 +26,7 @@ describe("Encryption", () => {
   });
 
   it("erzeugt unterschiedliche Ciphertexte fuer denselben Klartext (zufaellige IV)", async () => {
-    const { encryptText } = await import("@/lib/encryption");
+    const { encryptText } = await import("@/modules/encryption/aes");
 
     const plaintext = "Gleicher Text, unterschiedliche Verschluesselung";
     const encrypted1 = encryptText(plaintext);
@@ -36,7 +36,7 @@ describe("Encryption", () => {
   });
 
   it("verschluesselt leere Strings korrekt", async () => {
-    const { encryptText, decryptText } = await import("@/lib/encryption");
+    const { encryptText, decryptText } = await import("@/modules/encryption/aes");
 
     const encrypted = encryptText("");
     const decrypted = decryptText(encrypted);
@@ -44,7 +44,7 @@ describe("Encryption", () => {
   });
 
   it("verschluesselt lange Texte korrekt", async () => {
-    const { encryptText, decryptText } = await import("@/lib/encryption");
+    const { encryptText, decryptText } = await import("@/modules/encryption/aes");
 
     const plaintext = "A".repeat(10000);
     const encrypted = encryptText(plaintext);
@@ -53,7 +53,7 @@ describe("Encryption", () => {
   });
 
   it("verschluesselt Unicode/Emojis korrekt", async () => {
-    const { encryptText, decryptText } = await import("@/lib/encryption");
+    const { encryptText, decryptText } = await import("@/modules/encryption/aes");
 
     const plaintext = "Hallo Welt! Ä Ö Ü ß 日本語 🎉🔐";
     const encrypted = encryptText(plaintext);
@@ -62,7 +62,7 @@ describe("Encryption", () => {
   });
 
   it("wirft Fehler bei ungueltigem Datenformat", async () => {
-    const { decryptText } = await import("@/lib/encryption");
+    const { decryptText } = await import("@/modules/encryption/aes");
 
     expect(() => decryptText("ungueltig")).toThrow("Ungültiges Datenformat");
     expect(() => decryptText("a:b")).toThrow("Ungültiges Datenformat");
@@ -70,7 +70,7 @@ describe("Encryption", () => {
   });
 
   it("wirft Fehler bei manipiertem Ciphertext (Integritaetspruefung)", async () => {
-    const { encryptText, decryptText } = await import("@/lib/encryption");
+    const { encryptText, decryptText } = await import("@/modules/encryption/aes");
 
     const encrypted = encryptText("Geheimer Text");
     const parts = encrypted.split(":");
@@ -82,7 +82,7 @@ describe("Encryption", () => {
   });
 
   it("Ciphertext hat korrektes Format (IV:AuthTag:Ciphertext, Base64)", async () => {
-    const { encryptText } = await import("@/lib/encryption");
+    const { encryptText } = await import("@/modules/encryption/aes");
 
     const encrypted = encryptText("Test");
     const parts = encrypted.split(":");

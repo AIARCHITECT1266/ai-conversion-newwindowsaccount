@@ -7,10 +7,10 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 import { randomBytes, createHmac, timingSafeEqual } from "crypto";
 import { Resend } from "resend";
-import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/lib/dashboard-auth";
+import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://ai-conversion.ai";
 

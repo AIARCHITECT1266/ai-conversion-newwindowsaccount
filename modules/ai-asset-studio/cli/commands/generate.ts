@@ -7,7 +7,7 @@ import { parseArgs } from "node:util";
 import path from "path";
 import fs from "fs/promises";
 import { generateWithModel } from "../../lib/models";
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 import type { ModelId } from "../../lib/types";
 
 const VALID_MODELS: ModelId[] = ["grok", "claude", "gemini", "flux"];

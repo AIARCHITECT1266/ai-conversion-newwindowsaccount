@@ -7,9 +7,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
-import { decryptText } from "@/lib/encryption";
-import { db } from "@/lib/db";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
+import { decryptText } from "@/modules/encryption/aes";
+import { db } from "@/shared/db";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 Stunden
 

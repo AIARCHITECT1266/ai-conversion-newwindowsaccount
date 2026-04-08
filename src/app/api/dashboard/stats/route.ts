@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getDashboardTenant } from "@/lib/dashboard-auth";
-import { decryptText } from "@/lib/encryption";
+import { db } from "@/shared/db";
+import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
+import { decryptText } from "@/modules/encryption/aes";
 
 // GET /api/dashboard/stats — Tenant wird aus dem Cookie aufgelöst
 export async function GET() {

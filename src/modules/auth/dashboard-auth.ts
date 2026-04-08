@@ -6,7 +6,7 @@
 
 import { createHash } from "crypto";
 import { cookies, headers } from "next/headers";
-import { db } from "@/lib/db";
+import { db } from "@/shared/db";
 
 // Token-Ablaufzeiten
 export const MAGIC_LINK_EXPIRY_MS = 72 * 60 * 60 * 1000; // 72 Stunden fuer Magic-Links
