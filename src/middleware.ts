@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateAdminSession } from "@/lib/session";
+import { validateAdminSession } from "@/lib/session-validate";
 
 // Geschuetzte Pfade: /admin und /api/admin/*
 const ADMIN_PATHS = ["/admin", "/api/admin"];
