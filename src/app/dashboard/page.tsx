@@ -290,6 +290,22 @@ export default function TenantDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [aiStudioOpen, setAiStudioOpen] = useState(false);
+  const aiStudioRef = useRef<HTMLDivElement>(null);
+
+  // Klick ausserhalb schliesst AI Studio Dropdown
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (aiStudioRef.current && !aiStudioRef.current.contains(e.target as Node)) {
+        setAiStudioOpen(false);
+      }
+    }
+    if (aiStudioOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [aiStudioOpen]);
+
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -475,7 +491,7 @@ export default function TenantDashboard() {
             </div>
           </div>
 
-          {/* Navigation — saubere, einheitliche Links */}
+          {/* Navigation */}
           <nav className="flex items-center gap-1 -mb-px">
             {[
               { href: "/dashboard", label: "Uebersicht", icon: Activity, active: true },
@@ -483,7 +499,6 @@ export default function TenantDashboard() {
               { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone },
               { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send },
               { href: "/dashboard/clients", label: "Clients", icon: Users },
-              { href: "/dashboard/assets", label: "AI Studio", icon: Zap },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -498,6 +513,35 @@ export default function TenantDashboard() {
                 </a>
               );
             })}
+
+            {/* AI Studio Dropdown */}
+            <div ref={aiStudioRef} className="relative">
+              <button
+                onClick={() => setAiStudioOpen(!aiStudioOpen)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 ${
+                  aiStudioOpen
+                    ? "border-[#c9a84c]/50 text-[#c9a84c]"
+                    : "border-transparent text-slate-500 hover:text-[#ede8df]/80 hover:border-white/10"
+                }`}
+              >
+                <Zap className="h-3.5 w-3.5" />
+                AI Studio
+                <ChevronDown className={`h-3 w-3 transition-transform ${aiStudioOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {aiStudioOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 rounded-xl border border-white/[0.06] bg-[#0e0e1a] shadow-xl z-50 overflow-hidden">
+                  <a href="/dashboard/assets/generator"
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-[#ede8df]/70 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
+                    <Zap className="h-4 w-4" /> Asset Generator
+                  </a>
+                  <a href="/dashboard/assets/ai-modul"
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-[#ede8df]/70 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
+                    <MessageSquare className="h-4 w-4" /> AI Modul
+                  </a>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       </header>
