@@ -62,40 +62,37 @@ export async function editImage(request: EditRequest): Promise<EditResult> {
   const hasSaturation = request.saturation !== undefined && request.saturation !== 0;
 
   if (hasBrightness || hasSaturation) {
-    // Sharp modulate: brightness ist Multiplikator (1.0 = unveraendert)
-    // Unsere Skala: -100..+100 → 0.3..1.7
+    // Staerker als vorher — passt zu CSS-Filter-Preview
+    // Helligkeit: -100..+100 → 0.0..2.0 (vorher 0.3..1.7)
     const brightnessFactor = hasBrightness
-      ? 1 + (request.brightness! / 100) * 0.7
+      ? 1 + (request.brightness! / 100)
       : 1;
-    // Saettigung: -100..+100 → 0..2 (0 = graustufen, 2 = uebersaettigt)
+    // Saettigung: -100..+100 → 0..3 (vorher 0..2)
     const saturationFactor = hasSaturation
-      ? 1 + (request.saturation! / 100)
+      ? 1 + (request.saturation! / 100) * 2
       : 1;
 
     pipeline = pipeline.modulate({
-      brightness: brightnessFactor,
-      saturation: saturationFactor,
+      brightness: Math.max(0, brightnessFactor),
+      saturation: Math.max(0, saturationFactor),
     });
   }
 
   // ---------- Kontrast (linear) ----------
   if (request.contrast !== undefined && request.contrast !== 0) {
-    // Skala: -100..+100 → Multiplikator 0.3..2.5, Offset berechnet
-    const a = request.contrast > 0
-      ? 1 + (request.contrast / 100) * 1.5
-      : 1 + (request.contrast / 100) * 0.7;
+    // Staerker — -100..+100 → Multiplikator 0.0..3.0 (passt zu CSS contrast())
+    const a = 1 + (request.contrast / 100) * 2;
     const b = 128 * (1 - a);
-    pipeline = pipeline.linear(a, b);
+    pipeline = pipeline.linear(Math.max(0, a), b);
   }
 
-  // ---------- Schaerfe (sigma 0.5 - 5.0, deutlich staerker) ----------
+  // ---------- Schaerfe (sigma 1.0 - 10.0, sehr deutlich sichtbar) ----------
   if (request.sharpen && request.sharpen > 0) {
-    const sigma = 0.5 + (request.sharpen / 100) * 4.5;
-    // flat und jagged fuer staerkere Kantenerkennung
+    const sigma = 1.0 + (request.sharpen / 100) * 9.0;
     pipeline = pipeline.sharpen({
       sigma,
-      m1: 1.5, // flat-Bereich Staerke
-      m2: 2.0, // jagged-Bereich Staerke
+      m1: 2.0,
+      m2: 3.0,
     });
   }
 
@@ -169,10 +166,9 @@ async function applyVignette(
   width: number,
   height: number,
 ): Promise<sharp.Sharp> {
-  // Opacity skaliert von 0.3 (leicht) bis 0.85 (sehr stark)
-  const opacity = 0.3 + (strength / 100) * 0.55;
-  // Radius des hellen Bereichs: je staerker, desto kleiner
-  const innerStop = Math.max(10, 50 - (strength / 100) * 30);
+  // Staerker: Opacity 0.3 bis 0.95, innerer Bereich schrumpft deutlich
+  const opacity = 0.3 + (strength / 100) * 0.65;
+  const innerStop = Math.max(0, 55 - strength * 0.5);
 
   const vignetteSvg = Buffer.from(
     `<svg width="${width}" height="${height}">
