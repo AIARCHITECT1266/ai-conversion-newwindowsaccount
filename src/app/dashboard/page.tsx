@@ -530,7 +530,7 @@ export default function TenantDashboard() {
               </button>
 
               {aiStudioOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 rounded-xl border border-white/[0.06] bg-[#0e0e1a] shadow-xl z-50 overflow-hidden">
+                <div className="absolute top-full left-0 mt-2 w-48 rounded-xl border border-white/[0.06] bg-[#0e0e1a] shadow-xl z-[100] overflow-hidden">
                   <a href="/dashboard/assets/generator"
                     className="flex items-center gap-2 px-4 py-3 text-sm text-[#ede8df]/70 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
                     <Zap className="h-4 w-4" /> Asset Generator
