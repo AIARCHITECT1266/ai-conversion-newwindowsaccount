@@ -470,6 +470,12 @@ export default function TenantDashboard() {
             >
               Clients
             </a>
+            <a
+              href="/dashboard/assets"
+              className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/20"
+            >
+              Asset Studio
+            </a>
             <button
               onClick={() => setChatOpen(!chatOpen)}
               className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-500/20"
