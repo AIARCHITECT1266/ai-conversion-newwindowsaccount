@@ -9,7 +9,6 @@ import {
   Text,
   Image as KonvaImage,
   Transformer,
-  Line,
 } from "react-konva";
 import type Konva from "konva";
 import type { Layer, ImageLayer, TextLayer, ShapeLayer } from "./types";
@@ -22,138 +21,138 @@ interface KonvaCanvasProps {
   canvasBg: string;
   onSelect: (id: string | null) => void;
   onTransform: (id: string, attrs: Partial<Layer>) => void;
+  onDeleteSelected: () => void;
 }
 
-// Bild-Cache fuer ImageLayer (verhindert Neuladen bei jedem Render)
+// Bild-Cache
 const imageCache = new Map<string, HTMLImageElement>();
 
 function useImage(src: string): HTMLImageElement | null {
   const [img, setImg] = useState<HTMLImageElement | null>(() => imageCache.get(src) ?? null);
-
   useEffect(() => {
-    if (imageCache.has(src)) {
-      setImg(imageCache.get(src)!);
-      return;
-    }
+    if (imageCache.has(src)) { setImg(imageCache.get(src)!); return; }
     const el = new window.Image();
     el.crossOrigin = "anonymous";
-    el.onload = () => {
-      imageCache.set(src, el);
-      setImg(el);
-    };
+    el.onload = () => { imageCache.set(src, el); setImg(el); };
     el.src = src;
   }, [src]);
-
   return img;
 }
 
-// ---------- Einzelne Layer-Renderer ----------
+// ---------- Image Layer ----------
 
-function ImageLayerNode({ layer, isSelected, onSelect, onTransform }: {
+function ImageLayerNode({ layer, onSelect, onTransform }: {
   layer: ImageLayer;
-  isSelected: boolean;
   onSelect: () => void;
   onTransform: (attrs: Partial<Layer>) => void;
 }) {
   const img = useImage(layer.src);
-  const shapeRef = useRef<Konva.Image>(null);
-
+  const ref = useRef<Konva.Image>(null);
   if (!img) return null;
 
   return (
     <KonvaImage
-      ref={shapeRef}
+      ref={ref}
+      id={layer.id}
       image={img}
-      x={layer.x}
-      y={layer.y}
-      width={layer.width}
-      height={layer.height}
+      x={layer.x} y={layer.y}
+      width={layer.width} height={layer.height}
       rotation={layer.rotation}
       opacity={layer.opacity}
       visible={layer.visible}
       draggable={!layer.locked}
-      onClick={onSelect}
-      onTap={onSelect}
-      onDragEnd={(e) => {
-        onTransform({ x: e.target.x(), y: e.target.y() });
-      }}
+      onClick={onSelect} onTap={onSelect}
+      onDragEnd={(e) => onTransform({ x: e.target.x(), y: e.target.y() })}
       onTransformEnd={() => {
-        const node = shapeRef.current;
-        if (!node) return;
-        const scaleX = node.scaleX();
-        const scaleY = node.scaleY();
-        node.scaleX(1);
-        node.scaleY(1);
+        const n = ref.current;
+        if (!n) return;
+        const sx = n.scaleX(), sy = n.scaleY();
+        n.scaleX(1); n.scaleY(1);
         onTransform({
-          x: node.x(),
-          y: node.y(),
-          width: Math.max(5, node.width() * scaleX),
-          height: Math.max(5, node.height() * scaleY),
-          rotation: node.rotation(),
+          x: n.x(), y: n.y(),
+          width: Math.max(10, n.width() * sx),
+          height: Math.max(10, n.height() * sy),
+          rotation: n.rotation(),
         });
       }}
     />
   );
 }
 
-function TextLayerNode({ layer, onSelect, onTransform }: {
+// ---------- Text Layer ----------
+
+function TextLayerNode({ layer, isSelected, onSelect, onTransform }: {
   layer: TextLayer;
   isSelected: boolean;
   onSelect: () => void;
   onTransform: (attrs: Partial<Layer>) => void;
 }) {
-  const shapeRef = useRef<Konva.Text>(null);
+  const ref = useRef<Konva.Text>(null);
+  const PAD = 6;
 
   return (
-    <Text
-      ref={shapeRef}
-      text={layer.text}
-      x={layer.x}
-      y={layer.y}
-      fontSize={layer.fontSize}
-      fontFamily={layer.fontFamily}
-      fontStyle={layer.fontStyle}
-      fill={layer.fill}
-      align={layer.align}
-      width={layer.width}
-      rotation={layer.rotation}
-      opacity={layer.opacity}
-      visible={layer.visible}
-      draggable={!layer.locked}
-      onClick={onSelect}
-      onTap={onSelect}
-      onDragEnd={(e) => {
-        onTransform({ x: e.target.x(), y: e.target.y() });
-      }}
-      onTransformEnd={() => {
-        const node = shapeRef.current;
-        if (!node) return;
-        const scaleX = node.scaleX();
-        node.scaleX(1);
-        node.scaleY(1);
-        onTransform({
-          x: node.x(),
-          y: node.y(),
-          width: Math.max(20, node.width() * scaleX),
-          fontSize: Math.max(8, layer.fontSize * scaleX),
-          rotation: node.rotation(),
-        });
-      }}
-    />
+    <>
+      {/* Sichtbarer Greifbereich — nur wenn selektiert */}
+      {isSelected && layer.visible && (
+        <Rect
+          x={layer.x - PAD}
+          y={layer.y - PAD}
+          width={layer.width + PAD * 2}
+          height={(layer.fontSize * 1.3) + PAD * 2}
+          rotation={layer.rotation}
+          fill="rgba(201,168,76,0.06)"
+          stroke="rgba(201,168,76,0.2)"
+          strokeWidth={1}
+          cornerRadius={4}
+          listening={false}
+        />
+      )}
+      <Text
+        ref={ref}
+        id={layer.id}
+        text={layer.text}
+        x={layer.x} y={layer.y}
+        fontSize={layer.fontSize}
+        fontFamily={layer.fontFamily}
+        fontStyle={layer.fontStyle}
+        fill={layer.fill}
+        align={layer.align}
+        width={layer.width}
+        rotation={layer.rotation}
+        opacity={layer.opacity}
+        visible={layer.visible}
+        draggable={!layer.locked}
+        onClick={onSelect} onTap={onSelect}
+        onDragEnd={(e) => onTransform({ x: e.target.x(), y: e.target.y() })}
+        onTransformEnd={() => {
+          const n = ref.current;
+          if (!n) return;
+          const sx = n.scaleX();
+          n.scaleX(1); n.scaleY(1);
+          onTransform({
+            x: n.x(), y: n.y(),
+            width: Math.max(20, n.width() * sx),
+            fontSize: Math.max(8, Math.round(layer.fontSize * sx)),
+            rotation: n.rotation(),
+          });
+        }}
+      />
+    </>
   );
 }
 
+// ---------- Shape Layer ----------
+
 function ShapeLayerNode({ layer, onSelect, onTransform }: {
   layer: ShapeLayer;
-  isSelected: boolean;
   onSelect: () => void;
   onTransform: (attrs: Partial<Layer>) => void;
 }) {
-  const shapeRef = useRef<Konva.Rect | Konva.Circle>(null);
+  const ref = useRef<Konva.Rect | Konva.Circle>(null);
 
-  const commonProps = {
-    x: layer.x,
-    y: layer.y,
+  const common = {
+    id: layer.id,
+    x: layer.x, y: layer.y,
     rotation: layer.rotation,
     opacity: layer.opacity,
     visible: layer.visible,
@@ -164,46 +163,32 @@ function ShapeLayerNode({ layer, onSelect, onTransform }: {
       onTransform({ x: e.target.x(), y: e.target.y() });
     },
     onTransformEnd: () => {
-      const node = shapeRef.current;
-      if (!node) return;
-      const scaleX = node.scaleX();
-      const scaleY = node.scaleY();
-      node.scaleX(1);
-      node.scaleY(1);
+      const n = ref.current;
+      if (!n) return;
+      const sx = n.scaleX(), sy = n.scaleY();
+      n.scaleX(1); n.scaleY(1);
       onTransform({
-        x: node.x(),
-        y: node.y(),
-        width: Math.max(5, node.width() * scaleX),
-        height: Math.max(5, node.height() * scaleY),
-        rotation: node.rotation(),
+        x: n.x(), y: n.y(),
+        width: Math.max(10, n.width() * sx),
+        height: Math.max(10, n.height() * sy),
+        rotation: n.rotation(),
       });
     },
   };
 
   if (layer.shapeKind === "circle") {
     return (
-      <Circle
-        ref={shapeRef as React.RefObject<Konva.Circle>}
-        {...commonProps}
+      <Circle ref={ref as React.RefObject<Konva.Circle>} {...common}
         radius={Math.min(layer.width, layer.height) / 2}
-        fill={layer.fill}
-        stroke={layer.stroke}
-        strokeWidth={layer.strokeWidth}
-      />
+        fill={layer.fill} stroke={layer.stroke} strokeWidth={layer.strokeWidth} />
     );
   }
 
   return (
-    <Rect
-      ref={shapeRef as React.RefObject<Konva.Rect>}
-      {...commonProps}
-      width={layer.width}
-      height={layer.height}
-      fill={layer.fill}
-      stroke={layer.stroke}
-      strokeWidth={layer.strokeWidth}
-      cornerRadius={layer.cornerRadius}
-    />
+    <Rect ref={ref as React.RefObject<Konva.Rect>} {...common}
+      width={layer.width} height={layer.height}
+      fill={layer.fill} stroke={layer.stroke} strokeWidth={layer.strokeWidth}
+      cornerRadius={layer.cornerRadius} />
   );
 }
 
@@ -217,11 +202,14 @@ export default function KonvaCanvas({
   canvasBg,
   onSelect,
   onTransform,
+  onDeleteSelected,
 }: KonvaCanvasProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
 
-  // Transformer an ausgewaehltes Element binden
+  // Transformer an selektiertes Element binden
+  // layers in Deps behalten: nach addLayer muss Transformer den neuen Node finden
+  const prevSelectedRef = useRef<string | null>(null);
   useEffect(() => {
     const tr = transformerRef.current;
     const stage = stageRef.current;
@@ -230,33 +218,46 @@ export default function KonvaCanvas({
     if (!selectedLayerId) {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
+      prevSelectedRef.current = null;
       return;
     }
 
-    const selectedNode = stage.findOne(`#${selectedLayerId}`);
-    if (selectedNode) {
-      tr.nodes([selectedNode]);
-      tr.getLayer()?.batchDraw();
+    const node = stage.findOne(`#${selectedLayerId}`);
+    if (node) {
+      tr.nodes([node]);
     } else {
       tr.nodes([]);
-      tr.getLayer()?.batchDraw();
     }
+    tr.getLayer()?.batchDraw();
+    prevSelectedRef.current = selectedLayerId;
   }, [selectedLayerId, layers]);
+
+  // Keyboard: Delete/Backspace loescht selektierten Layer
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Nicht loeschen wenn Fokus in einem Input/Textarea ist
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedLayerId) {
+        e.preventDefault();
+        onDeleteSelected();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedLayerId, onDeleteSelected]);
 
   // Klick auf leere Flaeche = Deselect
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (e.target === e.target.getStage()) {
-      onSelect(null);
-    }
+    if (e.target === e.target.getStage()) onSelect(null);
   }, [onSelect]);
 
-  // Export-Methode (wird ueber ref vom Parent aufgerufen)
-  // Stattdessen nutzen wir eine globale Funktion
+  // Export
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__exportCanvas = () => {
       const stage = stageRef.current;
       if (!stage) return null;
-      // Transformer verstecken fuer Export
       const tr = transformerRef.current;
       tr?.nodes([]);
       tr?.getLayer()?.batchDraw();
@@ -265,7 +266,6 @@ export default function KonvaCanvas({
     };
   }, []);
 
-  // Sichtbare Layer (von unten nach oben)
   const visibleLayers = layers.filter((l) => l.visible);
 
   return (
@@ -275,65 +275,48 @@ export default function KonvaCanvas({
       height={canvasHeight}
       onClick={handleStageClick}
       onTap={handleStageClick}
-      style={{ background: canvasBg, borderRadius: "8px" }}
+      style={{ background: canvasBg, borderRadius: "8px", cursor: "default" }}
     >
       <KonvaLayer>
         <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill={canvasBg} listening={false} />
 
         {visibleLayers.map((layer) => {
-          const isSelected = layer.id === selectedLayerId;
-          const selectThis = () => onSelect(layer.id);
-          const transformThis = (attrs: Partial<Layer>) => onTransform(layer.id, attrs);
-
-          // Jedes Element bekommt id={layer.id} fuer Transformer-Lookup
-          const wrapperProps = { key: layer.id };
+          const select = () => onSelect(layer.id);
+          const transform = (a: Partial<Layer>) => onTransform(layer.id, a);
 
           switch (layer.type) {
             case "image":
-              return (
-                <ImageLayerNode
-                  {...wrapperProps}
-                  layer={layer}
-                  isSelected={isSelected}
-                  onSelect={selectThis}
-                  onTransform={transformThis}
-                />
-              );
+              return <ImageLayerNode key={layer.id} layer={layer} onSelect={select} onTransform={transform} />;
             case "text":
-              return (
-                <TextLayerNode
-                  {...wrapperProps}
-                  layer={layer}
-                  isSelected={isSelected}
-                  onSelect={selectThis}
-                  onTransform={transformThis}
-                />
-              );
+              return <TextLayerNode key={layer.id} layer={layer} isSelected={layer.id === selectedLayerId} onSelect={select} onTransform={transform} />;
             case "shape":
-              return (
-                <ShapeLayerNode
-                  {...wrapperProps}
-                  layer={layer}
-                  isSelected={isSelected}
-                  onSelect={selectThis}
-                  onTransform={transformThis}
-                />
-              );
+              return <ShapeLayerNode key={layer.id} layer={layer} onSelect={select} onTransform={transform} />;
           }
         })}
 
-        {/* Transformer (Resize/Rotate Handles) */}
+        {/* Transformer — grosse goldene Handles mit Glow */}
         <Transformer
           ref={transformerRef}
-          boundBoxFunc={(oldBox, newBox) => {
-            if (newBox.width < 5 || newBox.height < 5) return oldBox;
-            return newBox;
-          }}
+          borderStroke="#c9a84c"
+          borderStrokeWidth={2.5}
+          borderDash={[]}
+          anchorStroke="#c9a84c"
+          anchorFill="#0e0e1a"
+          anchorSize={13}
+          anchorCornerRadius={3}
+          anchorStrokeWidth={2}
+          rotateAnchorOffset={28}
+          rotateAnchorCursor="grab"
           rotateEnabled={true}
+          keepRatio={true}
+          padding={4}
           enabledAnchors={[
             "top-left", "top-right", "bottom-left", "bottom-right",
-            "middle-left", "middle-right", "top-center", "bottom-center",
           ]}
+          boundBoxFunc={(oldBox, newBox) => {
+            if (newBox.width < 10 || newBox.height < 10) return oldBox;
+            return newBox;
+          }}
         />
       </KonvaLayer>
     </Stage>
