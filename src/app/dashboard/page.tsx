@@ -192,27 +192,57 @@ function HubSpotSettings() {
         )}
       </div>
 
-      <p className="mb-4 text-xs text-slate-500">
-        Leads mit Score &gt;70 werden automatisch als Kontakte in HubSpot angelegt.
-      </p>
-
-      <div className="flex gap-2">
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder={connected ? "Neuen API-Key eingeben oder leer lassen zum Trennen" : "HubSpot Private App Token (pat-...)"}
-          className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none"
-        />
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-          {apiKey ? "Speichern" : "Trennen"}
-        </button>
-      </div>
+      {connected ? (
+        <>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-xs text-emerald-400">Verbunden mit HubSpot</span>
+          </div>
+          <p className="mb-4 text-xs text-slate-500">
+            Leads mit Score &gt;70 werden automatisch als Kontakte in HubSpot angelegt.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Neuen API-Key eingeben..."
+              className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none"
+            />
+            {apiKey ? (
+              <button onClick={handleSave} disabled={saving}
+                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50">
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Speichern
+              </button>
+            ) : (
+              <button onClick={() => { setApiKey(""); handleSave(); }} disabled={saving}
+                className="flex items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/8 px-4 py-2 text-sm font-medium text-red-400/80 transition-colors hover:bg-red-500/15 disabled:opacity-50">
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
+                Trennen
+              </button>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="mb-4 text-xs text-slate-300">
+            HubSpot verbinden – Leads mit Score &gt;70 werden automatisch synchronisiert.
+          </p>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="HubSpot Private App Token (pat-...)"
+            className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-[rgba(201,168,76,0.3)] focus:outline-none mb-3"
+          />
+          <button onClick={handleSave} disabled={saving || !apiKey}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#c9a84c] to-[#d4b85c] px-4 py-3 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50">
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
+            Verbinden
+          </button>
+        </>
+      )}
 
       {message && (
         <p className={`mt-2 text-xs ${message.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
@@ -453,7 +483,7 @@ export default function TenantDashboard() {
               { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone },
               { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send },
               { href: "/dashboard/clients", label: "Clients", icon: Users },
-              { href: "/dashboard/assets", label: "Asset Studio", icon: Zap },
+              { href: "/dashboard/assets", label: "AI Studio", icon: Zap },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -510,8 +540,9 @@ export default function TenantDashboard() {
                     <div className="flex items-center justify-between mb-4">
                       <Icon className={`h-5 w-5 ${iconColors[kpi.color]}`} />
                     </div>
-                    <p className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--serif)', color: 'var(--text)' }}>{kpi.value}</p>
-                    <p className="mt-1.5 text-xs tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>{kpi.label}</p>
+                    <p className="text-4xl font-bold tracking-tight" style={{ fontFamily: 'var(--serif)', color: 'var(--text)' }}>{kpi.value}</p>
+                    <p className="mt-2.5 text-xs tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>{kpi.label}</p>
+                    <p className="mt-2 text-[10px] text-slate-500">Noch keine Vergleichsdaten</p>
                   </motion.div>
                 );
               })}
@@ -536,9 +567,15 @@ export default function TenantDashboard() {
                 </div>
                 <div className="space-y-3">
                   {stats.conversations.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-slate-600">
-                      Noch keine Gespräche vorhanden
-                    </p>
+                    <div className="flex flex-col items-center gap-3 text-center py-6">
+                      <p className="text-slate-500 text-sm">
+                        Noch keine Gespraeche – starte jetzt deine erste Kampagne.
+                      </p>
+                      <a href="/dashboard/campaigns"
+                         className="text-xs text-[#c9a84c] underline underline-offset-4 hover:text-[#d4b85c]">
+                        QR-Code teilen oder Kampagne erstellen &rarr;
+                      </a>
+                    </div>
                   ) : (
                     stats.conversations.map((conv) => (
                       <div

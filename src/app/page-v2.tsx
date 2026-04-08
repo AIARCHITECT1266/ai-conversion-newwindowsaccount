@@ -491,7 +491,6 @@ export default function LandingPage() {
                 { feature: "KI-Lead-Analyse + Zusammenfassung", ai: true, c1: false, c2: false,  c3: false },
                 { feature: "KI-Angebotsgenerator",          ai: true,  c1: false,   c2: false,   c3: false },
                 { feature: "CRM Pipeline (Kanban)",         ai: true,  c1: false,   c2: "basic", c3: true },
-                { feature: "AI Asset Studio",               ai: true,  c1: false,   c2: false,   c3: false },
                 { feature: "Kampagnen-Attribution + A/B",   ai: true,  c1: "basic", c2: true,    c3: "basic" },
                 { feature: "Client Onboarding Portal",      ai: true,  c1: false,   c2: false,   c3: false },
                 { feature: "QR-Code Tracking",              ai: true,  c1: false,   c2: true,    c3: "basic" },
@@ -518,6 +517,9 @@ export default function LandingPage() {
               ))}
             </tbody>
           </table>
+          <p className="text-sm text-slate-500 mt-3 text-center">
+            AI Asset Studio – Visuals, Ads &amp; Content. Alles im System, kein Tool-Wechsel.
+          </p>
         </motion.div>
 
         {/* Fazit unter der Tabelle */}
