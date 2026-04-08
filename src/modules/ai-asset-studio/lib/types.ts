@@ -28,8 +28,12 @@ export interface GenerateResult {
 export interface EditRequest {
   tenantId: string;
   assetId?: string; // Bestehendes Asset bearbeiten
-  inputPath: string; // Lokaler Pfad oder URL zum Bild
-  sharpen?: number; // 0-100
+  inputPath: string; // Lokaler Pfad, URL oder data URI
+  sharpen?: number; // 0-100 (sigma 0.5-5.0)
+  brightness?: number; // -100 bis +100 (0 = unveraendert)
+  contrast?: number; // -100 bis +100 (0 = unveraendert)
+  saturation?: number; // -100 bis +100 (0 = unveraendert)
+  vignette?: number; // 0-100 (Staerke des Vignetten-Effekts)
   roundCorners?: number; // Radius in px
   brandKit?: string; // z.B. "premium-gold"
   resize?: { width: number; height: number };

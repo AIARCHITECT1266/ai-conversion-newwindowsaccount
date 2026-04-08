@@ -23,6 +23,10 @@ export async function POST(request: Request) {
 
   let inputSource: string;
   let sharpen: number | undefined;
+  let brightness: number | undefined;
+  let contrast: number | undefined;
+  let saturation: number | undefined;
+  let vignette: number | undefined;
   let roundCorners: number | undefined;
   let brandKit: string | undefined;
   let resize: { width: number; height: number } | undefined;
@@ -60,11 +64,17 @@ export async function POST(request: Request) {
     originalPrompt = `Upload: ${file.name}`;
 
     // Edit-Parameter aus FormData lesen
-    const rawSharpen = formData.get("sharpen");
-    if (rawSharpen) sharpen = Number(rawSharpen) || undefined;
+    function numParam(key: string): number | undefined {
+      const v = formData.get(key);
+      return v ? Number(v) || undefined : undefined;
+    }
 
-    const rawRoundCorners = formData.get("roundCorners");
-    if (rawRoundCorners) roundCorners = Number(rawRoundCorners) || undefined;
+    sharpen = numParam("sharpen");
+    brightness = numParam("brightness");
+    contrast = numParam("contrast");
+    saturation = numParam("saturation");
+    vignette = numParam("vignette");
+    roundCorners = numParam("roundCorners");
 
     const rawBrandKit = formData.get("brandKit");
     if (rawBrandKit && typeof rawBrandKit === "string") brandKit = rawBrandKit;
@@ -88,6 +98,10 @@ export async function POST(request: Request) {
     const body = await request.json() as {
       assetId?: string;
       sharpen?: number;
+      brightness?: number;
+      contrast?: number;
+      saturation?: number;
+      vignette?: number;
       roundCorners?: number;
       brandKit?: string;
       resize?: { width: number; height: number };
@@ -110,6 +124,10 @@ export async function POST(request: Request) {
     inputSource = asset.imageUrl;
     originalPrompt = `Bearbeitung: Asset ${body.assetId}`;
     sharpen = body.sharpen;
+    brightness = body.brightness;
+    contrast = body.contrast;
+    saturation = body.saturation;
+    vignette = body.vignette;
     roundCorners = body.roundCorners;
     brandKit = body.brandKit;
     resize = body.resize;
@@ -127,6 +145,10 @@ export async function POST(request: Request) {
       tenantId: tenant.id,
       inputPath: inputSource,
       sharpen,
+      brightness,
+      contrast,
+      saturation,
+      vignette,
       roundCorners,
       brandKit,
       resize,
