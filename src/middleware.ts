@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateAdminSession } from "@/lib/session-validate";
 
+export const runtime = "nodejs";
+
 // Geschuetzte Pfade: /admin und /api/admin/*
 const ADMIN_PATHS = ["/admin", "/api/admin"];
 // Dashboard-Pfade (geschuetzt via Magic-Link Token)
