@@ -11,7 +11,6 @@ import { usePathname } from "next/navigation";
 const publicLinks = [
   { href: "/#features", label: "Features" },
   { href: "/pricing", label: "Preise" },
-  { href: "/multi-ai", label: "Multi-AI" },
   { href: "/faq", label: "FAQ" },
 ];
 
@@ -20,7 +19,6 @@ const homeLinks = [
   { href: "#features", label: "Features" },
   { href: "#how-it-works", label: "So funktioniert's" },
   { href: "/pricing", label: "Preise" },
-  { href: "/multi-ai", label: "Multi-AI" },
   { href: "/faq", label: "FAQ" },
 ];
 
