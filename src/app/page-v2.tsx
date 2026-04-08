@@ -451,12 +451,15 @@ export default function LandingPage() {
       <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} transition={{ duration: 0.6 }}
-          className="text-center mb-12">
+          className="text-center mb-14">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Vergleich</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
             Warum <span className="text-[#c9a84c]">AI Conversion</span>?
           </h2>
-          <p className="mt-3 text-sm text-slate-400">Nicht nur ein Chatbot &ndash; ein komplettes Revenue Operating System.</p>
+          <p className="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
+            Nicht nur ein Chatbot &ndash; ein komplettes Revenue Operating System.
+            Dort, wo andere aufhoeren, fangen wir erst an.
+          </p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
@@ -465,39 +468,49 @@ export default function LandingPage() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                <th className="py-4 pl-5 pr-3 text-slate-500 font-medium w-[200px]">Feature</th>
-                <th className="py-4 px-3 text-center font-semibold text-[#c9a84c]">AI Conversion</th>
-                <th className="py-4 px-3 text-center font-medium text-slate-500">Chatarmin</th>
-                <th className="py-4 px-3 text-center font-medium text-slate-500">Respond.io</th>
-                <th className="py-4 px-3 text-center font-medium text-slate-500 pr-5">moin.ai</th>
+                <th className="py-4 pl-6 pr-4 text-slate-500 font-medium w-[220px]">Feature</th>
+                <th className="py-4 px-4 text-center">
+                  <span className="text-[#c9a84c] font-semibold">AI Conversion</span>
+                </th>
+                <th className="py-4 px-4 text-center text-slate-600 font-medium">
+                  <span className="block text-[11px] leading-tight">Typische<br />WhatsApp-Bots</span>
+                </th>
+                <th className="py-4 px-4 text-center text-slate-600 font-medium">
+                  <span className="block text-[11px] leading-tight">Automatisierungs-<br />Tools</span>
+                </th>
+                <th className="py-4 px-4 pr-6 text-center text-slate-600 font-medium">
+                  <span className="block text-[11px] leading-tight">Standard CRM +<br />Bot Loesungen</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {[
-                { feature: "WhatsApp KI-Bot", ai: true, chatarmin: true, respond: true, moin: true },
-                { feature: "Lead-Scoring (0-100)", ai: true, chatarmin: false, respond: false, moin: false },
-                { feature: "CRM Pipeline (Kanban)", ai: true, chatarmin: false, respond: true, moin: false },
-                { feature: "Predictive Close Score", ai: true, chatarmin: false, respond: false, moin: false },
-                { feature: "AI Lead-Analyse", ai: true, chatarmin: false, respond: false, moin: false },
-                { feature: "AI Proposal Generator", ai: true, chatarmin: false, respond: false, moin: false },
-                { feature: "Kampagnen-Attribution", ai: true, chatarmin: true, respond: true, moin: false },
-                { feature: "A/B Testing Opener", ai: true, chatarmin: true, respond: false, moin: false },
-                { feature: "AI Content Creator", ai: true, chatarmin: false, respond: false, moin: false },
-                { feature: "Client Onboarding Portal", ai: true, chatarmin: false, respond: false, moin: false },
-                { feature: "QR-Code Tracking", ai: true, chatarmin: true, respond: true, moin: false },
-                { feature: "Broadcast Manager", ai: true, chatarmin: true, respond: true, moin: false },
-                { feature: "HubSpot Auto-Sync", ai: true, chatarmin: false, respond: true, moin: false },
-                { feature: "DSGVO + AES-256", ai: true, chatarmin: true, respond: false, moin: true },
+                { feature: "WhatsApp KI-Verkaufsbot",       ai: true,  c1: "basic", c2: true,    c3: true },
+                { feature: "Lead-Scoring (0\u2013100)",     ai: true,  c1: false,   c2: false,   c3: "basic" },
+                { feature: "Predictive Close Score",        ai: true,  c1: false,   c2: false,   c3: false },
+                { feature: "KI-Lead-Analyse + Zusammenfassung", ai: true, c1: false, c2: false,  c3: false },
+                { feature: "KI-Angebotsgenerator",          ai: true,  c1: false,   c2: false,   c3: false },
+                { feature: "CRM Pipeline (Kanban)",         ai: true,  c1: false,   c2: "basic", c3: true },
+                { feature: "AI Asset Studio",               ai: true,  c1: false,   c2: false,   c3: false },
+                { feature: "Kampagnen-Attribution + A/B",   ai: true,  c1: "basic", c2: true,    c3: "basic" },
+                { feature: "Client Onboarding Portal",      ai: true,  c1: false,   c2: false,   c3: false },
+                { feature: "QR-Code Tracking",              ai: true,  c1: false,   c2: true,    c3: "basic" },
+                { feature: "Broadcast Manager",             ai: true,  c1: true,    c2: true,    c3: true },
+                { feature: "HubSpot Auto-Sync",             ai: true,  c1: false,   c2: false,   c3: "basic" },
+                { feature: "DSGVO + AES-256 Verschluesselung", ai: true, c1: "basic", c2: false, c3: "basic" },
+                { feature: "Automatische Follow-Ups",       ai: true,  c1: false,   c2: "basic", c3: false },
               ].map((row, i) => (
-                <tr key={row.feature} className={i % 2 === 0 ? "bg-white/[0.01]" : ""}>
-                  <td className="py-2.5 pl-5 pr-3 text-slate-300 font-medium">{row.feature}</td>
-                  {[row.ai, row.chatarmin, row.respond, row.moin].map((val, j) => (
-                    <td key={j} className={`py-2.5 px-3 text-center ${j === 3 ? "pr-5" : ""}`}>
-                      {val
+                <tr key={row.feature} className={`border-b border-white/[0.02] ${i % 2 === 0 ? "bg-white/[0.01]" : ""}`}>
+                  <td className="py-3 pl-6 pr-4 text-slate-300 font-medium">{row.feature}</td>
+                  {[row.ai, row.c1, row.c2, row.c3].map((val, j) => (
+                    <td key={j} className={`py-3 px-4 text-center ${j === 3 ? "pr-6" : ""}`}>
+                      {val === true
                         ? <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${j === 0 ? "bg-[#c9a84c]/15" : "bg-white/[0.04]"}`}>
                             <Check className={`h-3 w-3 ${j === 0 ? "text-[#c9a84c]" : "text-slate-500"}`} />
                           </span>
-                        : <span className="text-slate-700">&ndash;</span>
+                        : val === "basic"
+                        ? <span className="text-[10px] font-medium text-slate-600 bg-white/[0.03] rounded-full px-2 py-0.5">Teilweise</span>
+                        : <span className="text-slate-700/60">&ndash;</span>
                       }
                     </td>
                   ))}
@@ -505,6 +518,20 @@ export default function LandingPage() {
               ))}
             </tbody>
           </table>
+        </motion.div>
+
+        {/* Fazit unter der Tabelle */}
+        <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.4 }}
+          className="mt-6 flex items-center justify-center gap-3 text-xs text-slate-500">
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#c9a84c]/15">
+            <Check className="h-3 w-3 text-[#c9a84c]" />
+          </span>
+          <span>= Vollstaendig integriert</span>
+          <span className="ml-4 text-[10px] font-medium text-slate-600 bg-white/[0.03] rounded-full px-2 py-0.5">Teilweise</span>
+          <span>= Eingeschraenkt oder nur mit Zusatzkosten</span>
+          <span className="ml-4 text-slate-700/60">&ndash;</span>
+          <span>= Nicht verfuegbar</span>
         </motion.div>
       </section>
 
