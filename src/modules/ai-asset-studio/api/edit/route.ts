@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
-import { editImage } from "../../lib/edit";
+import { editImage } from "@/modules/ai-asset-studio/lib/edit";
 import { db } from "@/shared/db";
 
 export async function POST(request: Request) {

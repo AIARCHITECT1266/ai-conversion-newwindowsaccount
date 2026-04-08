@@ -1,30 +1,71 @@
 // ============================================================
 // AI Asset Studio – Bildbearbeitungs-Pipeline
-// Nutzt Sharp für performante Bildverarbeitung.
+// Nutzt Sharp fuer performante Bildverarbeitung.
 // Bearbeitungen sind credits-neutral.
+// Unterstuetzt: data URIs, HTTP URLs und lokale Dateipfade.
 // ============================================================
 
 import sharp from "sharp";
-import path from "path";
-import fs from "fs/promises";
 import type { EditRequest, EditResult, BrandKit } from "./types";
 import { BRAND_KITS } from "./types";
 
+// ---------- Bild-Quelle aufloesen ----------
+
+/**
+ * Laedt ein Bild aus verschiedenen Quellen in einen Buffer:
+ * - data:image/...;base64,... (generierte Bilder)
+ * - https://... oder http://... (externe URLs)
+ * - Lokaler Dateipfad (CLI-Nutzung)
+ */
+async function resolveImageSource(source: string): Promise<Buffer> {
+  // 1. Data URI (base64-kodiertes Bild)
+  if (source.startsWith("data:")) {
+    const base64Match = source.match(/^data:[^;]+;base64,(.+)$/);
+    if (!base64Match) {
+      throw new Error("Ungueltiges data URI Format");
+    }
+    return Buffer.from(base64Match[1], "base64");
+  }
+
+  // 2. HTTP/HTTPS URL
+  if (source.startsWith("http://") || source.startsWith("https://")) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+
+    try {
+      const response = await fetch(source, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`Bild-Download fehlgeschlagen: ${response.status}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  // 3. Lokaler Dateipfad (fuer CLI)
+  const fs = await import("fs/promises");
+  return fs.readFile(source);
+}
+
 /**
  * Bearbeitet ein Bild mit den angegebenen Parametern.
- * Unterstützt: Schärfe, abgerundete Ecken, Brand-Kit, Resize, Format-Konvertierung.
+ * Unterstuetzt: Schaerfe, abgerundete Ecken, Brand-Kit, Resize, Format-Konvertierung.
+ * Gibt den bearbeiteten Buffer als data URI zurueck (serverless-kompatibel).
  */
 export async function editImage(request: EditRequest): Promise<EditResult> {
   const { inputPath, format = "png", quality = 90 } = request;
 
-  // Eingabebild laden
-  let pipeline = sharp(inputPath);
+  // Bild aus beliebiger Quelle laden
+  const imageBuffer = await resolveImageSource(inputPath);
+  let pipeline = sharp(imageBuffer);
   const metadata = await pipeline.metadata();
 
   let width = request.resize?.width ?? metadata.width ?? 1024;
   let height = request.resize?.height ?? metadata.height ?? 1024;
 
-  // Resize wenn gewünscht
+  // Resize wenn gewuenscht
   if (request.resize) {
     pipeline = pipeline.resize(request.resize.width, request.resize.height, {
       fit: "cover",
@@ -33,7 +74,7 @@ export async function editImage(request: EditRequest): Promise<EditResult> {
     height = request.resize.height;
   }
 
-  // Schärfe anwenden (0-100 → Sharp sigma 0.3-3.0)
+  // Schaerfe anwenden (0-100 → Sharp sigma 0.3-3.0)
   if (request.sharpen && request.sharpen > 0) {
     const sigma = 0.3 + (request.sharpen / 100) * 2.7;
     pipeline = pipeline.sharpen({ sigma });
@@ -52,7 +93,7 @@ export async function editImage(request: EditRequest): Promise<EditResult> {
     pipeline = await applyRoundCorners(pipeline, request.roundCorners, width, height);
   }
 
-  // Format und Qualität setzen
+  // Format und Qualitaet setzen
   switch (format) {
     case "webp":
       pipeline = pipeline.webp({ quality });
@@ -64,17 +105,13 @@ export async function editImage(request: EditRequest): Promise<EditResult> {
       pipeline = pipeline.png({ quality: Math.min(quality, 100) });
   }
 
-  // Ausgabepfad generieren
-  const inputBasename = path.basename(inputPath, path.extname(inputPath));
-  const outputDir = path.dirname(inputPath);
-  const outputPath = path.join(outputDir, `${inputBasename}_edited.${format}`);
-
-  // Bild speichern
+  // Buffer erzeugen (kein Dateisystem noetig – serverless-kompatibel)
   const outputBuffer = await pipeline.toBuffer();
-  await fs.writeFile(outputPath, outputBuffer);
+  const mimeType = format === "jpeg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
+  const outputDataUri = `data:${mimeType};base64,${outputBuffer.toString("base64")}`;
 
   return {
-    outputPath,
+    outputPath: outputDataUri,
     format,
     width,
     height,

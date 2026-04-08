@@ -5,9 +5,9 @@
 
 import { NextResponse } from "next/server";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
-import { generateWithModel } from "../../lib/models";
+import { generateWithModel } from "@/modules/ai-asset-studio/lib/models";
 import { db } from "@/shared/db";
-import type { ModelId } from "../../lib/types";
+import type { ModelId } from "@/modules/ai-asset-studio/lib/types";
 
 const VALID_MODELS: ModelId[] = ["grok", "claude", "gemini", "flux"];
 
