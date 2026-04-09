@@ -7,8 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/shared/db";
-import { decryptText, encryptText } from "@/modules/encryption/aes";
-import { sendMessage } from "@/modules/whatsapp/client";
+import { encryptText } from "@/modules/encryption/aes";
 import { safeCompare } from "@/modules/auth/session";
 
 // Follow-Up Stufen: eskalierende Dringlichkeit
@@ -49,145 +48,136 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Leads mit aktiven Conversations laden, die Follow-Ups brauchen könnten
-    // Bedingungen: followUpCount < 3, Conversation ACTIVE, Consent gegeben
-    const candidates = await db.lead.findMany({
-      where: {
-        followUpCount: { lt: 3 },
-        status: { notIn: ["CONVERTED", "LOST"] },
-        conversation: {
-          status: "ACTIVE",
-          consentGiven: true,
-        },
-        tenant: { isActive: true },
-      },
-      include: {
-        conversation: {
-          select: {
-            id: true,
-            externalId: true,
-          },
-        },
-        tenant: {
-          select: {
-            id: true,
-            brandName: true,
-            whatsappPhoneId: true,
-          },
-        },
-      },
-    });
-
+    const BATCH_SIZE = 100;
+    let cursor: string | undefined = undefined;
     let followUpsSent = 0;
     let errors = 0;
+    let candidatesChecked = 0;
 
-    for (const lead of candidates) {
-      try {
-        // Letzte USER-Nachricht in dieser Conversation finden
-        const lastUserMessage = await db.message.findFirst({
-          where: {
-            conversationId: lead.conversation.id,
-            role: "USER",
+    while (true) {
+      const paginationArgs: { skip?: number; cursor?: { id: string } } = cursor
+        ? { skip: 1, cursor: { id: cursor } }
+        : {};
+
+      const batch = await db.lead.findMany({
+        where: {
+          followUpCount: { lt: 3 },
+          status: { notIn: ["CONVERTED", "LOST"] },
+          conversation: {
+            status: "ACTIVE",
+            consentGiven: true,
           },
-          orderBy: { timestamp: "desc" },
-          select: { timestamp: true },
-        });
+          tenant: { isActive: true },
+        },
+        select: {
+          id: true,
+          followUpCount: true,
+          lastFollowUpAt: true,
+          score: true,
+          conversation: { select: { id: true, externalId: true } },
+          tenant: { select: { id: true, brandName: true, whatsappPhoneId: true } },
+        },
+        take: BATCH_SIZE,
+        ...paginationArgs,
+        orderBy: { id: "asc" },
+      });
 
-        if (!lastUserMessage) continue;
+      if (batch.length === 0) break;
 
-        const hoursSinceLastMessage =
-          (Date.now() - lastUserMessage.timestamp.getTime()) / (1000 * 60 * 60);
+      // Batch-Query für letzte User-Nachrichten (eliminiert N+1)
+      const conversationIds = batch.map((l) => l.conversation.id);
+      const lastMessages = await db.message.findMany({
+        where: {
+          conversationId: { in: conversationIds },
+          role: "USER",
+        },
+        orderBy: { timestamp: "desc" },
+        distinct: ["conversationId"],
+        select: { conversationId: true, timestamp: true },
+      });
+      const lastMessageMap = new Map(
+        lastMessages.map((m) => [m.conversationId, m.timestamp])
+      );
 
-        // Nächste Follow-Up Stufe bestimmen (0-basiert → 1-basiert)
-        const nextFollowUpLevel = lead.followUpCount + 1;
-        if (nextFollowUpLevel > 3) continue;
+      for (const lead of batch) {
+        try {
+          const lastMessageTimestamp = lastMessageMap.get(lead.conversation.id);
+          if (!lastMessageTimestamp) continue;
 
-        const requiredHours = FOLLOW_UP_THRESHOLDS_HOURS[nextFollowUpLevel - 1];
+          const hoursSinceLastMessage =
+            (Date.now() - lastMessageTimestamp.getTime()) / (1000 * 60 * 60);
 
-        // Noch nicht fällig?
-        if (hoursSinceLastMessage < requiredHours) continue;
+          // Nächste Follow-Up Stufe bestimmen (0-basiert → 1-basiert)
+          const nextFollowUpLevel = lead.followUpCount + 1;
+          if (nextFollowUpLevel > 3) continue;
 
-        // Bereits ein Follow-Up auf dieser Stufe gesendet? (Schutz vor Doppel-Sends)
-        if (lead.lastFollowUpAt) {
-          const hoursSinceLastFollowUp =
-            (Date.now() - lead.lastFollowUpAt.getTime()) / (1000 * 60 * 60);
-          // Mindestens 20h seit letztem Follow-Up (Puffer)
-          if (hoursSinceLastFollowUp < 20) continue;
+          const requiredHours = FOLLOW_UP_THRESHOLDS_HOURS[nextFollowUpLevel - 1];
+
+          // Noch nicht fällig?
+          if (hoursSinceLastMessage < requiredHours) continue;
+
+          // Bereits ein Follow-Up auf dieser Stufe gesendet? (Schutz vor Doppel-Sends)
+          if (lead.lastFollowUpAt) {
+            const hoursSinceLastFollowUp =
+              (Date.now() - lead.lastFollowUpAt.getTime()) / (1000 * 60 * 60);
+            // Mindestens 20h seit letztem Follow-Up (Puffer)
+            if (hoursSinceLastFollowUp < 20) continue;
+          }
+
+          // Follow-Up Nachricht generieren
+          const template = FOLLOW_UP_TEMPLATES[nextFollowUpLevel];
+          const followUpText = template(lead.tenant.brandName);
+
+          // Follow-Up als ASSISTANT-Nachricht verschlüsselt speichern
+          await db.message.create({
+            data: {
+              conversationId: lead.conversation.id,
+              role: "ASSISTANT",
+              contentEncrypted: encryptText(followUpText),
+              messageType: "TEXT",
+            },
+          });
+
+          // Lead-Follow-Up Status aktualisieren
+          await db.lead.update({
+            where: { id: lead.id },
+            data: {
+              followUpCount: nextFollowUpLevel,
+              lastFollowUpAt: new Date(),
+            },
+          });
+
+          followUpsSent++;
+
+          console.log("[Follow-Up] Gesendet", {
+            tenantId: lead.tenant.id,
+            leadId: lead.id,
+            level: nextFollowUpLevel,
+            hoursSinceLastMessage: Math.round(hoursSinceLastMessage),
+          });
+        } catch (error) {
+          errors++;
+          console.error("[Follow-Up] Fehler bei Lead", {
+            leadId: lead.id,
+            error: error instanceof Error ? error.message : "Unbekannt",
+          });
         }
-
-        // externalId → Telefonnummer geht nicht direkt (DSGVO: gehasht)
-        // Stattdessen: Letzte ASSISTANT-Nachricht im Gesprächsverlauf finden
-        // und über die WhatsApp-Conversation-ID die Nummer ermitteln.
-        // Da WhatsApp Conversations über die externalId (= gehashte Nummer) laufen,
-        // brauchen wir die Klartextnummer. Diese liegt nur in WhatsApp vor.
-        // Lösung: Follow-Up als Bot-Nachricht speichern und die WhatsApp-API
-        // nutzt die Conversation-basierte Zustellung (reply within 24h window).
-        //
-        // WICHTIG: WhatsApp erlaubt Nachrichten an Nutzer nur innerhalb von 24h
-        // nach der letzten Nutzer-Nachricht (Customer Service Window).
-        // Nach 24h müssen Templates verwendet werden.
-        // Für Follow-Ups nutzen wir die sendMessage-Funktion, die bei
-        // abgelaufenem Fenster einen Fehler zurückgibt – das ist gewollt.
-
-        // Telefonnummer aus der letzten eingehenden Nachricht rekonstruieren
-        // ist DSGVO-bedingt nicht möglich (nur Hash gespeichert).
-        // Alternative: Die WhatsApp Cloud API erlaubt proaktive Nachrichten
-        // nur mit Templates. Wir speichern die Follow-Up als Bot-Antwort
-        // und senden sie, wenn der Nutzer das nächste Mal schreibt.
-        //
-        // PRAXIS-LÖSUNG: Wir nutzen die externalId (WhatsApp Chat-ID / gehashte Nummer).
-        // In der Realität speichern Multi-Tenant Systeme die Klartext-Nummer
-        // verschlüsselt. Hier nehmen wir die from-Nummer aus dem Message-Kontext.
-
-        // Follow-Up Nachricht generieren
-        const template = FOLLOW_UP_TEMPLATES[nextFollowUpLevel];
-        const followUpText = template(lead.tenant.brandName);
-
-        // Follow-Up als ASSISTANT-Nachricht verschlüsselt speichern
-        await db.message.create({
-          data: {
-            conversationId: lead.conversation.id,
-            role: "ASSISTANT",
-            contentEncrypted: encryptText(followUpText),
-            messageType: "TEXT",
-          },
-        });
-
-        // Lead-Follow-Up Status aktualisieren
-        await db.lead.update({
-          where: { id: lead.id },
-          data: {
-            followUpCount: nextFollowUpLevel,
-            lastFollowUpAt: new Date(),
-          },
-        });
-
-        followUpsSent++;
-
-        console.log("[Follow-Up] Gesendet", {
-          tenantId: lead.tenant.id,
-          leadId: lead.id,
-          level: nextFollowUpLevel,
-          hoursSinceLastMessage: Math.round(hoursSinceLastMessage),
-        });
-      } catch (error) {
-        errors++;
-        console.error("[Follow-Up] Fehler bei Lead", {
-          leadId: lead.id,
-          error: error instanceof Error ? error.message : "Unbekannt",
-        });
       }
+
+      cursor = batch[batch.length - 1].id;
+      candidatesChecked += batch.length;
+      if (batch.length < BATCH_SIZE) break;
     }
 
     console.log("[Follow-Up] Abgeschlossen", {
-      candidatesChecked: candidates.length,
+      candidatesChecked,
       followUpsSent,
       errors,
     });
 
     return NextResponse.json({
       success: true,
-      candidatesChecked: candidates.length,
+      candidatesChecked,
       followUpsSent,
       errors,
     });
