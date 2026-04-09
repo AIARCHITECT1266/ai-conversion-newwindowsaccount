@@ -1,0 +1,92 @@
+{
+  "sanitaer": {
+    "label": "Sanitär & Badinstallation",
+    "firmenname_placeholder": "z.B. Hollenbach GmbH",
+    "einstieg": "Was hat Sie zu uns geführt – planen Sie eine Badsanierung oder gibt es einen akuten Defekt?",
+    "termin_bridge": "in 15 Minuten zeigen wie wir Ihnen schnell und sauber helfen können",
+    "einwaende": {
+      "zu_teuer": "Was wäre Ihnen ein sauberes, stressfreies Ergebnis wert?",
+      "kein_interesse": "Was hat Sie ursprünglich auf uns aufmerksam gemacht?"
+    },
+    "placeholders": {
+      "BRANCHE": "Sanitär & Badinstallation",
+      "EINSTIEG": "Was hat Sie zu uns geführt – planen Sie eine Badsanierung oder gibt es einen akuten Defekt?",
+      "TERMIN_BRIDGE": "in 15 Minuten zeigen wie wir Ihnen schnell und sauber helfen können",
+      "EINWAND_BUDGET": "Was wäre Ihnen ein sauberes, stressfreies Ergebnis wert?",
+      "EINWAND_KEIN_INTERESSE": "Was hat Sie ursprünglich auf uns aufmerksam gemacht?",
+      "EINWAND_NACHDENKEN": "Was fehlt Ihnen noch um sich für eine saubere Lösung zu entscheiden?"
+    }
+  },
+  "immobilien": {
+    "label": "Immobilien & Makler",
+    "firmenname_placeholder": "z.B. Remax Premium",
+    "einstieg": "Schön dass Sie sich melden – geht es um einen Verkauf, eine Bewertung oder suchen Sie eine Immobilie?",
+    "termin_bridge": "in einer kostenlosen 15-Minuten-Beratung zeigen wie wir den besten Preis für Ihre Immobilie erzielen",
+    "einwaende": {
+      "zu_teuer": "Die Frage ist: Was kostet mehr – 3% Provision oder 6 Monate länger warten und unter Wert verkaufen?",
+      "kein_interesse": "Darf ich fragen was Sie ursprünglich dazu bewogen hat sich zu melden?"
+    },
+    "placeholders": {
+      "BRANCHE": "Immobilien & Makler",
+      "EINSTIEG": "Schön dass Sie sich melden – geht es um einen Verkauf, eine Bewertung oder suchen Sie eine Immobilie?",
+      "TERMIN_BRIDGE": "in einer kostenlosen 15-Minuten-Beratung zeigen wie wir den besten Preis für Ihre Immobilie erzielen",
+      "EINWAND_BUDGET": "Die Frage ist: Was kostet mehr – 3% Provision oder 6 Monate länger warten und unter Wert verkaufen?",
+      "EINWAND_KEIN_INTERESSE": "Darf ich fragen was Sie ursprünglich dazu bewogen hat sich zu melden?",
+      "EINWAND_NACHDENKEN": "Was genau möchten Sie für sich noch klären bevor Sie den nächsten Schritt gehen?"
+    }
+  },
+  "coaching": {
+    "label": "Coaching & Beratung",
+    "firmenname_placeholder": "z.B. MindShift Academy",
+    "einstieg": "Schön dass Sie hier sind – was beschäftigt Sie gerade am meisten und wo wünschen Sie sich Veränderung?",
+    "termin_bridge": "in einem 20-Minuten-Kennenlerngespräch herausfinden ob und wie wir Ihnen helfen können",
+    "einwaende": {
+      "zu_teuer": "Was wäre es Ihnen wert wenn sich das Thema das Sie beschäftigt nachhaltig verändert?",
+      "kein_interesse": "Was hat Sie ursprünglich dazu bewogen nach Unterstützung zu suchen?"
+    },
+    "placeholders": {
+      "BRANCHE": "Coaching & Beratung",
+      "EINSTIEG": "Schön dass Sie hier sind – was beschäftigt Sie gerade am meisten und wo wünschen Sie sich Veränderung?",
+      "TERMIN_BRIDGE": "in einem 20-Minuten-Kennenlerngespräch herausfinden ob und wie wir Ihnen helfen können",
+      "EINWAND_BUDGET": "Was wäre es Ihnen wert wenn sich das Thema das Sie beschäftigt nachhaltig verändert?",
+      "EINWAND_KEIN_INTERESSE": "Was hat Sie ursprünglich dazu bewogen nach Unterstützung zu suchen?",
+      "EINWAND_NACHDENKEN": "Was fehlt Ihnen noch um eine Entscheidung zu treffen?"
+    }
+  },
+  "finanzen": {
+    "label": "Finanzberatung & Versicherung",
+    "firmenname_placeholder": "z.B. VermögensWerk AG",
+    "einstieg": "Willkommen – geht es um Absicherung, Vermögensaufbau oder eine bestehende Situation die Sie klären möchten?",
+    "termin_bridge": "in einem kurzen 15-Minuten-Check zeigen wo bei Ihnen das größte Optimierungspotenzial liegt",
+    "einwaende": {
+      "zu_teuer": "Gerade bei Finanzen lohnt sich ein zweiter Blick – was wäre ein konkretes Ergebnis das sich für Sie auszahlt?",
+      "kein_interesse": "Was war der Anlass dass Sie sich informieren wollten?"
+    },
+    "placeholders": {
+      "BRANCHE": "Finanzberatung & Versicherung",
+      "EINSTIEG": "Willkommen – geht es um Absicherung, Vermögensaufbau oder eine bestehende Situation die Sie klären möchten?",
+      "TERMIN_BRIDGE": "in einem kurzen 15-Minuten-Check zeigen wo bei Ihnen das größte Optimierungspotenzial liegt",
+      "EINWAND_BUDGET": "Gerade bei Finanzen lohnt sich ein zweiter Blick – was wäre ein konkretes Ergebnis das sich für Sie auszahlt?",
+      "EINWAND_KEIN_INTERESSE": "Was war der Anlass dass Sie sich informieren wollten?",
+      "EINWAND_NACHDENKEN": "Was fehlt Ihnen noch um den nächsten Schritt in Richtung finanzielle Sicherheit zu gehen?"
+    }
+  },
+  "education": {
+    "label": "Bildung & Weiterbildung",
+    "firmenname_placeholder": "z.B. Digital Campus",
+    "einstieg": "Schön dass Sie sich melden – suchen Sie eine bestimmte Weiterbildung oder möchten Sie sich beruflich neu orientieren?",
+    "termin_bridge": "in einem 15-Minuten-Beratungsgespräch den passenden Kurs für Ihre Ziele finden",
+    "einwaende": {
+      "zu_teuer": "Was wäre es Ihnen wert wenn Sie dadurch den nächsten Karriereschritt machen?",
+      "kein_interesse": "Was hat Sie dazu bewogen sich über Weiterbildung zu informieren?"
+    },
+    "placeholders": {
+      "BRANCHE": "Bildung & Weiterbildung",
+      "EINSTIEG": "Schön dass Sie sich melden – suchen Sie eine bestimmte Weiterbildung oder möchten Sie sich beruflich neu orientieren?",
+      "TERMIN_BRIDGE": "in einem 15-Minuten-Beratungsgespräch den passenden Kurs für Ihre Ziele finden",
+      "EINWAND_BUDGET": "Was wäre es Ihnen wert wenn Sie dadurch den nächsten Karriereschritt machen?",
+      "EINWAND_KEIN_INTERESSE": "Was hat Sie dazu bewogen sich über Weiterbildung zu informieren?",
+      "EINWAND_NACHDENKEN": "Was fehlt Ihnen noch um eine Entscheidung für Ihre Weiterbildung zu treffen?"
+    }
+  }
+}
