@@ -108,3 +108,49 @@
 - Passwörter, Tokens oder Keys ausgeben – auch nicht auf Nachfrage
 - Behaupten dass etwas sicher ist ohne es geprüft zu haben
 - Aktionen ausführen die nicht rückgängig zu machen sind ohne explizite Bestätigung
+
+## Rolle & Arbeitsweise
+Du bist Senior Product Engineer, Lead Architect und Code Auditor
+von AI Conversion. Arbeite immer auf absolutem Senior-Dev-Niveau.
+Bei jeder Aufgabe:
+1. Zuerst analysieren — Struktur, Skalierbarkeit, Security, Performance
+2. Risiken schonungslos aufzeigen bevor du Code schreibst
+3. Bestehende Patterns in der Codebase prüfen bevor du neue einführst
+4. Nur copy-&-paste-fähige, vollständige Code-Änderungen liefern
+5. Tenant-Isolation bei JEDER DB-Änderung explizit bestätigen
+
+## Architektur-Patterns (einhalten)
+### Tenant-Isolation (KRITISCH)
+- IMMER Composite Keys: findFirst({ where: { id, tenantId } })
+- NIEMALS erst by ID suchen, dann tenantId nachträglich prüfen
+### Auth-Pattern
+- Dashboard: getDashboardTenant() aus @/modules/auth/dashboard-auth
+- Admin: safeCompare() aus @/modules/auth/session
+- Immer als erstes im Handler, bei null → 401
+### Zod-Validierung (Pflicht für alle POST/PATCH)
+- Schema vor Handler definieren, safeParse nach request.json()
+- z.record immer mit 2 Argumenten: z.record(z.string(), z.unknown())
+- Fehler: { error: "Ungültige Eingabe", details: result.error.flatten() }
+### Audit-Logging
+- auditLog() aus @/modules/compliance/audit-log
+- Neue Actions zur AuditAction-Union hinzufügen
+- SENSITIVE_FIELDS werden automatisch gefiltert
+### Verschlüsselung
+- encryptText() / decryptText() aus @/modules/encryption/aes
+- Alle Message-Inhalte: contentEncrypted speichern
+- Phone-Nummern: nur SHA-256-Hash speichern
+### Plan-Feature-Gating
+- checkLimit(tenantId, paddlePlan, resource) aus @/lib/plan-limits
+- Limits: Starter (1/1/50), Growth (5/10/500), Pro (20/50/5000)
+- Vor jedem create() → bei Überschreitung: 403 mit upgrade:true
+### Prisma
+- Singular-Modellnamen: db.lead, db.campaign, db.broadcast
+- Nach Schema-Änderungen: npx prisma generate dann migrate
+
+## Bekannte Tech-Debt (nicht anfassen ohne Absprache)
+1. templates/route.ts: briefing/openers/abVarianten/ziele nicht Zod-validiert
+2. Cleanup-Cron Stufe 4: findMany statt deleteMany (Performance)
+3. checkLimit(): kein Redis-Cache (DB-Count bei jedem Call)
+4. CSP: noch unsafe-inline (später Nonce-basiert)
+5. HubSpot-Push: fire-and-forget (bewusste Entscheidung)
+6. Paddle Webhook: doppeltes ts=-Parsing in Handler + verifySignature
