@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ---------- Typen ----------
 
@@ -12,6 +13,7 @@ interface Tenant {
   brandName: string;
   brandColor: string;
   retentionDays: number;
+  paddlePlan: string | null;
   systemPrompt: string;
   isActive: boolean;
   createdAt: string;
@@ -75,6 +77,44 @@ export default function AdminDashboard() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [editingTenant, setEditingTenant] = useState<TenantDetail | null>(null);
   const [saving, setSaving] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Escape schließt Edit-Modal / Delete-Dialog / Menü
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (deleteTarget) setDeleteTarget(null);
+        else if (editingTenant) setEditingTenant(null);
+        else if (selectedTenant) setSelectedTenant(null);
+        else if (openMenuId) setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [editingTenant, selectedTenant, openMenuId, deleteTarget]);
+
+  // Click-Outside schliesst Dropdown
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [openMenuId]);
+
+  // Toast auto-hide
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const loadData = useCallback(async () => {
     try {
@@ -102,6 +142,7 @@ export default function AdminDashboard() {
   }, []);
 
   const loadTenantDetail = useCallback(async (id: string) => {
+    setOpenMenuId(null);
     setDetailLoading(true);
     try {
       const res = await fetch(`/api/admin/tenants/${id}`);
@@ -322,7 +363,7 @@ export default function AdminDashboard() {
           Tenant-Übersicht
         </h2>
         <div
-          className="overflow-hidden rounded-xl"
+          className="overflow-visible rounded-xl"
           style={{
             background: "var(--surface)",
             border: "1px solid var(--gold-border)",
@@ -337,7 +378,7 @@ export default function AdminDashboard() {
               Keine Tenants vorhanden
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-visible">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr
@@ -351,6 +392,7 @@ export default function AdminDashboard() {
                     <th className="px-6 py-4 text-right">Leads</th>
                     <th className="px-6 py-4">Pipeline</th>
                     <th className="px-6 py-4">Letzter Kontakt</th>
+                    <th className="px-6 py-4 w-12"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-purple-500/5">
@@ -418,6 +460,49 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 text-xs text-gray-400">
                           {formatDate(ts?.lastContact ?? null)}
                         </td>
+                        {/* Aktionen – stopPropagation verhindert Row-Click */}
+                        <td className="relative px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === tenant.id ? null : tenant.id);
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-[#c9a84c]"
+                          >
+                            ⋯
+                          </button>
+                          <AnimatePresence>
+                            {openMenuId === tenant.id && (
+                              <motion.div
+                                ref={menuRef}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ duration: 0.15, ease: "easeOut" }}
+                                className="absolute right-0 top-8 z-[9999] w-40 rounded-xl border border-white/[0.06] bg-[#0e0e1a] py-1 shadow-xl"
+                              >
+                                <button
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    loadTenantDetail(tenant.id);
+                                  }}
+                                  className="w-full px-4 py-2.5 text-left text-sm text-gray-300 transition-colors hover:bg-white/[0.04] hover:text-white"
+                                >
+                                  Bearbeiten
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setDeleteTarget({ id: tenant.id, name: tenant.name });
+                                  }}
+                                  className="w-full px-4 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-500/10"
+                                >
+                                  Löschen
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </td>
                       </tr>
                     );
                   })}
@@ -427,6 +512,65 @@ export default function AdminDashboard() {
           )}
         </div>
       </section>
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className="fixed bottom-6 right-6 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-xl"
+          style={{ background: "var(--surface)", border: "1px solid var(--gold-border)", color: "var(--gold)" }}
+        >
+          {toast}
+        </div>
+      )}
+
+      {/* Modal: Tenant löschen */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setDeleteTarget(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6"
+            style={{ background: "var(--surface)", border: "1px solid var(--gold-border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="mb-2 text-lg font-semibold text-white">Tenant löschen</h3>
+            <p className="mb-6 text-sm text-gray-400">
+              Tenant „{deleteTarget.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="rounded-lg border border-white/[0.08] px-4 py-2 text-sm text-gray-400 transition hover:border-white/[0.15] hover:text-white"
+                style={{ background: "transparent" }}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={async () => {
+                  setDeleting(true);
+                  try {
+                    const res = await fetch(`/api/admin/tenants/${deleteTarget.id}`, { method: "DELETE" });
+                    if (!res.ok) throw new Error("Fehler beim Löschen");
+                    setDeleteTarget(null);
+                    setToast("Tenant wurde gelöscht");
+                    await loadData();
+                  } catch (err) {
+                    setToast(err instanceof Error ? err.message : "Fehler beim Löschen");
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                disabled={deleting}
+                className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/30 disabled:opacity-50"
+              >
+                {deleting ? "Löschen…" : "Löschen"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal: Neuen Tenant anlegen */}
       {(showCreateForm || createdMagicLink) && (
@@ -954,6 +1098,29 @@ function EditTenantModal({
     systemPrompt: tenant.systemPrompt || "",
     isActive: tenant.isActive,
   });
+  const [activePlan, setActivePlan] = useState<string | null>(() => {
+    const pp = tenant.paddlePlan?.toLowerCase() ?? null;
+    if (pp?.includes("professional") || pp?.includes("pro")) return "professional";
+    if (pp?.includes("growth")) return "growth";
+    return "starter";
+  });
+  const [loadingPrompt, setLoadingPrompt] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState("");
+
+  async function loadPlanPrompt(plan: string) {
+    setLoadingPrompt(true);
+    setActivePlan(plan);
+    try {
+      const params = new URLSearchParams({ plan });
+      if (selectedBranch) params.set("branch", selectedBranch);
+      const res = await fetch(`/api/admin/plan-prompts?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setForm((f) => ({ ...f, systemPrompt: data.prompt }));
+      }
+    } catch { /* ignore */ }
+    finally { setLoadingPrompt(false); }
+  }
 
   const isValid = form.name && form.brandName && Number(form.retentionDays) > 0;
 
@@ -1050,6 +1217,39 @@ function EditTenantModal({
             >
               System-Prompt
             </label>
+            <p className="mb-2 text-[10px] text-slate-500">
+              Lädt die optimierte Vorlage für den jeweiligen Plan – danach noch anpassbar.
+            </p>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              {(["starter", "growth", "professional"] as const).map((plan) => (
+                <button
+                  key={plan}
+                  type="button"
+                  disabled={loadingPrompt}
+                  onClick={() => loadPlanPrompt(plan)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs transition ${
+                    activePlan === plan
+                      ? "border-[rgba(201,168,76,0.3)] bg-[rgba(201,168,76,0.1)] text-[#c9a84c]"
+                      : "border-white/[0.08] text-gray-400 hover:border-white/[0.15] hover:text-white"
+                  }`}
+                  style={{ background: activePlan === plan ? undefined : "transparent" }}
+                >
+                  {plan.charAt(0).toUpperCase() + plan.slice(1)}-Vorlage laden
+                </button>
+              ))}
+              <select
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                className="rounded-lg border border-white/[0.08] bg-transparent px-3 py-1.5 text-xs text-gray-400 outline-none transition hover:border-white/[0.15] hover:text-white focus:border-[rgba(201,168,76,0.3)]"
+              >
+                <option value="">Keine Branche</option>
+                <option value="sanitaer">Sanitär & Bad</option>
+                <option value="immobilien">Immobilien</option>
+                <option value="coaching">Coaching</option>
+                <option value="finanzen">Finanzen</option>
+                <option value="education">Bildung</option>
+              </select>
+            </div>
             <textarea
               value={form.systemPrompt}
               onChange={(e) =>

@@ -2,6 +2,9 @@
 // Zentrale Bot-Logik – Nachrichtenverarbeitung
 // Ablauf: Nachricht empfangen → DB speichern (verschlüsselt)
 // → Claude antwortet → GPT bewertet Lead → Antwort senden
+//
+// Webhook gibt sofort 200 OK zurueck – diese Datei laeuft
+// komplett asynchron im Hintergrund (fire-and-forget).
 // ============================================================
 
 import { createHash } from "crypto";
@@ -17,7 +20,52 @@ import { pushLeadToHubSpot } from "@/modules/crm/hubspot";
 import { loadSystemPrompt } from "./system-prompts";
 import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
 
-// DSGVO: Telefonnummern nie als Klartext speichern
+// ---------- Retry-Konfiguration ----------
+
+const RETRY_CONFIG = {
+  maxRetries: 2,
+  baseDelay: 600,
+  maxDelay: 2000,
+  timeoutMs: 12000, // maximal 12 Sekunden pro Versuch
+};
+
+// ---------- Retry-Wrapper mit Timeout ----------
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  context: string
+): Promise<T | null> {
+  for (let attempt = 0; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      return await Promise.race([
+        fn(),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`Timeout after ${RETRY_CONFIG.timeoutMs}ms`)),
+            RETRY_CONFIG.timeoutMs
+          )
+        ),
+      ]);
+    } catch (error) {
+      if (attempt === RETRY_CONFIG.maxRetries) {
+        console.error(
+          `[Handler] ${context} fehlgeschlagen nach ${attempt + 1} Versuchen`,
+          { error: error instanceof Error ? error.message : "Unbekannt" }
+        );
+        return null;
+      }
+      const delay = Math.min(
+        RETRY_CONFIG.baseDelay * Math.pow(1.5, attempt),
+        RETRY_CONFIG.maxDelay
+      );
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  return null;
+}
+
+// ---------- DSGVO: Telefonnummern hashen ----------
+
 function hashPhoneNumber(phone: string): string {
   const salt = process.env.ENCRYPTION_KEY;
   if (!salt) {
@@ -32,11 +80,11 @@ const LEAD_STATUS_ORDER = ["NEW", "CONTACTED", "APPOINTMENT_SET", "CONVERTED", "
 // ---------- Typen ----------
 
 interface IncomingMessage {
-  phoneNumberId: string; // WhatsApp Business Phone Number ID
-  from: string; // Absender-Telefonnummer
-  messageId: string; // WhatsApp Message ID
-  text: string; // Nachrichteninhalt
-  timestamp: string; // Unix-Timestamp
+  phoneNumberId: string;
+  from: string;
+  messageId: string;
+  text: string;
+  timestamp: string;
 }
 
 interface HandleResult {
@@ -45,7 +93,7 @@ interface HandleResult {
   error?: string;
 }
 
-// ---------- DSGVO: Consent-Nachricht ----------
+// ---------- Nachrichten ----------
 
 const CONSENT_MESSAGE =
   "Willkommen! Bevor wir starten: Ihre Nachrichten werden verschlüsselt " +
@@ -57,13 +105,18 @@ const FALLBACK_MESSAGE =
   "Entschuldigung, es ist ein technischer Fehler aufgetreten. " +
   "Bitte versuchen Sie es in wenigen Minuten erneut.";
 
+const RETRY_FALLBACK_MESSAGE =
+  "Entschuldigung, ich hatte gerade einen kurzen technischen Hänger. " +
+  "Können Sie Ihre letzte Nachricht noch einmal schicken? " +
+  "Ich bin sofort wieder für Sie da.";
+
 // ---------- Gesprächsverlauf laden (entschlüsselt) ----------
 
 async function loadConversationHistory(conversationId: string) {
   const messages = await db.message.findMany({
     where: { conversationId },
     orderBy: { timestamp: "asc" },
-    take: 20, // Letzte 20 Nachrichten für Kontext
+    take: 20,
   });
 
   return messages.map((msg) => ({
@@ -102,17 +155,172 @@ async function saveMessage(
   });
 }
 
+// ---------- Hintergrund: Lead-Scoring + CRM ----------
+
+function runScoringPipeline(
+  conversationId: string,
+  tenantId: string,
+  tenantName: string,
+  fullHistory: Array<{ role: "user" | "assistant"; content: string }>,
+  lastUserMessage: string
+): void {
+  const scoringText = formatConversationForScoring(fullHistory);
+
+  withRetry(
+    () => scoreLeadFromConversation(scoringText),
+    "GPT Lead-Scoring"
+  )
+    .then(async (scoreResult) => {
+      if (!scoreResult?.success || scoreResult.score === undefined) return;
+
+      // Bestehenden Lead laden um Status-Downgrade zu verhindern
+      const existingLead = await db.lead.findUnique({
+        where: { conversationId },
+        select: { status: true },
+      });
+
+      const proposedStatus: LeadStatus = scoreResult.score >= 76 ? "CONTACTED" : "NEW";
+      let finalStatus: LeadStatus = proposedStatus;
+      if (existingLead) {
+        const currentIdx = LEAD_STATUS_ORDER.indexOf(
+          existingLead.status as typeof LEAD_STATUS_ORDER[number]
+        );
+        const proposedIdx = LEAD_STATUS_ORDER.indexOf(
+          proposedStatus as typeof LEAD_STATUS_ORDER[number]
+        );
+        if (currentIdx > proposedIdx) {
+          finalStatus = existingLead.status as LeadStatus;
+        }
+      }
+
+      // Campaign-Zuordnung ueber Conversation-Slug aufloesen
+      let campaignId: string | undefined;
+      let abTestVariant: string | undefined;
+      let leadSourceResolved: string | undefined;
+      const conv = await db.conversation.findUnique({
+        where: { id: conversationId },
+        select: { campaignSlug: true, leadSource: true },
+      });
+      if (conv?.leadSource) leadSourceResolved = conv.leadSource;
+      if (conv?.campaignSlug) {
+        const campaign = await db.campaign.findUnique({
+          where: { tenantId_slug: { tenantId, slug: conv.campaignSlug } },
+          select: { id: true },
+        });
+        if (campaign) {
+          campaignId = campaign.id;
+          const activeTest = await db.abTest.findFirst({
+            where: { campaignId: campaign.id, isActive: true },
+          });
+          if (activeTest) {
+            abTestVariant = activeTest.sendsA <= activeTest.sendsB ? "A" : "B";
+            await db.abTest.update({
+              where: { id: activeTest.id },
+              data:
+                abTestVariant === "A"
+                  ? { sendsA: { increment: 1 } }
+                  : { sendsB: { increment: 1 } },
+            });
+          }
+        }
+      }
+
+      await db.lead.upsert({
+        where: { conversationId },
+        create: {
+          tenantId,
+          conversationId,
+          score: scoreResult.score,
+          qualification: scoreResult.qualification || "UNQUALIFIED",
+          status: "NEW",
+          ...(campaignId ? { campaignId } : {}),
+          ...(abTestVariant ? { abTestVariant } : {}),
+          ...(leadSourceResolved ? { source: leadSourceResolved } : {}),
+        },
+        update: {
+          score: scoreResult.score,
+          qualification: scoreResult.qualification || "UNQUALIFIED",
+          status: finalStatus,
+        },
+      });
+
+      auditLog("bot.lead_scored", {
+        tenantId,
+        details: { conversationId, score: scoreResult.score },
+      });
+
+      // E-Mail + HubSpot bei Hot-Leads (Score > 70)
+      if (scoreResult.score > 70) {
+        notifyHighScoreLead({
+          tenantName,
+          score: scoreResult.score,
+          qualification: scoreResult.qualification || "UNQUALIFIED",
+          lastMessage: lastUserMessage,
+          conversationId,
+        }).catch((err) => {
+          console.error("[Handler] Lead-Benachrichtigung fehlgeschlagen", {
+            error: err instanceof Error ? err.message : "Unbekannt",
+          });
+        });
+
+        // HubSpot Auto-Push (wenn API-Key konfiguriert)
+        db.tenant
+          .findUnique({
+            where: { id: tenantId },
+            select: { hubspotApiKey: true },
+          })
+          .then(async (tenantFull) => {
+            if (!tenantFull?.hubspotApiKey) return;
+            const hubspotKey = decryptText(tenantFull.hubspotApiKey);
+            const currentLead = await db.lead.findUnique({
+              where: { conversationId },
+              select: { pipelineStatus: true, dealValue: true, notes: true },
+            });
+            const result = await pushLeadToHubSpot(hubspotKey, {
+              leadScore: scoreResult.score!,
+              qualification: scoreResult.qualification || "UNQUALIFIED",
+              pipelineStatus: currentLead?.pipelineStatus ?? "NEU",
+              conversationId,
+              tenantName,
+              dealValue: currentLead?.dealValue,
+              notes: currentLead?.notes,
+            });
+            if (result.success) {
+              auditLog("bot.hubspot_pushed", {
+                tenantId,
+                details: { conversationId, contactId: result.contactId },
+              });
+            }
+          })
+          .catch((err) => {
+            console.error("[Handler] HubSpot-Push fehlgeschlagen", {
+              error: err instanceof Error ? err.message : "Unbekannt",
+            });
+          });
+      }
+    })
+    .catch((error) => {
+      console.error("[Handler] Scoring-Pipeline fehlgeschlagen", {
+        conversationId,
+        error: error instanceof Error ? error.message : "Unbekannt",
+      });
+    });
+}
+
 // ---------- Hauptverarbeitung ----------
 
 /**
  * Verarbeitet eine eingehende WhatsApp-Nachricht:
  * 1. Tenant anhand Phone ID ermitteln
  * 2. Conversation finden oder erstellen
- * 3. DSGVO-Consent prüfen
- * 4. Nachricht verschlüsselt speichern
- * 5. Claude-Antwort generieren
- * 6. Antwort verschlüsselt speichern & senden
- * 7. Lead-Score mit GPT-4o aktualisieren
+ * 3. DSGVO-Consent pruefen
+ * 4. Nachricht verschluesselt speichern
+ * 5. Claude-Antwort generieren (mit Retry + Timeout)
+ * 6. Antwort verschluesselt speichern & senden
+ * 7. Lead-Score mit GPT-4o aktualisieren (async, non-blocking)
+ *
+ * Wird vom Webhook fire-and-forget aufgerufen.
+ * WhatsApp 200 OK ist bereits gesendet bevor diese Funktion laeuft.
  */
 export async function handleIncomingMessage(
   message: IncomingMessage
@@ -124,7 +332,7 @@ export async function handleIncomingMessage(
       return { success: false, error: "Kein Tenant für diese Phone ID" };
     }
 
-    // 2. Conversation finden oder erstellen (atomar via upsert gegen Race Conditions)
+    // 2. Conversation finden oder erstellen (atomar via upsert)
     const externalId = hashPhoneNumber(message.from);
     const conversationBefore = await db.conversation.findUnique({
       where: {
@@ -134,7 +342,6 @@ export async function handleIncomingMessage(
     });
 
     // Campaign + Source aus erster Nachricht parsen
-    // Format: "campaign:slug" (Link) oder "qr:slug" (QR-Code)
     let campaignSlug: string | null = null;
     let leadSource: string | null = null;
 
@@ -175,15 +382,20 @@ export async function handleIncomingMessage(
         });
       }
 
-      auditLog("bot.conversation_created", { tenantId: tenant.id, details: { conversationId: conversation.id } });
-      auditLog("bot.consent_requested", { tenantId: tenant.id, details: { conversationId: conversation.id } });
+      auditLog("bot.conversation_created", {
+        tenantId: tenant.id,
+        details: { conversationId: conversation.id },
+      });
+      auditLog("bot.consent_requested", {
+        tenantId: tenant.id,
+        details: { conversationId: conversation.id },
+      });
 
       return { success: true, conversationId: conversation.id };
     }
 
-    // 3. STOP-Befehl prüfen (DSGVO: Verarbeitung beenden)
+    // 3. STOP-Befehl pruefen (DSGVO: Verarbeitung beenden)
     if (message.text.trim().toUpperCase() === "STOP") {
-      // Bereits geschlossene Conversations nicht erneut verarbeiten
       if (conversationBefore.status === "CLOSED") {
         return { success: true, conversationId: conversation.id };
       }
@@ -206,7 +418,10 @@ export async function handleIncomingMessage(
         });
       }
 
-      auditLog("bot.conversation_stopped", { tenantId: tenant.id, details: { conversationId: conversation.id } });
+      auditLog("bot.conversation_stopped", {
+        tenantId: tenant.id,
+        details: { conversationId: conversation.id },
+      });
 
       return { success: true, conversationId: conversation.id };
     }
@@ -222,12 +437,11 @@ export async function handleIncomingMessage(
       });
     }
 
-    // 5. Nutzer-Nachricht verschlüsselt speichern
+    // 5. Nutzer-Nachricht verschluesselt speichern
     await saveMessage(conversation.id, "USER", message.text);
 
-    // 6. Gesprächsverlauf laden und Claude-Antwort generieren
+    // 6. Gespraechsverlauf laden und Claude-Antwort generieren (mit Retry)
     const history = await loadConversationHistory(conversation.id);
-    // System-Prompt laden: Tenant-eigener Prompt oder plan-spezifischer Default
     const resolvedPrompt = loadSystemPrompt({
       systemPrompt: tenant.systemPrompt,
       paddlePlan: tenant.paddlePlan,
@@ -235,30 +449,34 @@ export async function handleIncomingMessage(
       name: tenant.name,
     });
 
-    const claudeResult = await generateReply(
-      resolvedPrompt,
-      tenant.brandName,
-      history.slice(0, -1), // Ohne die gerade gespeicherte Nachricht (wird als userMessage übergeben)
-      message.text
+    const claudeResult = await withRetry(
+      () =>
+        generateReply(
+          resolvedPrompt,
+          tenant.brandName,
+          history.slice(0, -1),
+          message.text
+        ),
+      "Claude Antwortgenerierung"
     );
 
-    if (!claudeResult.success || !claudeResult.reply) {
-      console.error("[Handler] Claude-Antwort fehlgeschlagen", {
+    // Alle Retries fehlgeschlagen oder Timeout → freundliche Fallback-Nachricht
+    if (!claudeResult || !claudeResult.success || !claudeResult.reply) {
+      console.error("[Handler] Claude-Antwort fehlgeschlagen nach allen Retries", {
         conversationId: conversation.id,
-        error: claudeResult.error,
+        error: claudeResult?.error ?? "Timeout oder null",
       });
 
-      // Fallback-Nachricht an den Nutzer senden, damit er nicht ohne Antwort bleibt
-      await sendMessage(message.from, FALLBACK_MESSAGE, message.phoneNumberId);
+      await sendMessage(message.from, RETRY_FALLBACK_MESSAGE, message.phoneNumberId);
 
       return {
         success: false,
         conversationId: conversation.id,
-        error: claudeResult.error,
+        error: claudeResult?.error ?? "Claude nicht erreichbar",
       };
     }
 
-    // 7. Claude-Antwort verschlüsselt speichern & parallel senden
+    // 7. Claude-Antwort verschluesselt speichern & parallel senden
     const [, sendResult] = await Promise.all([
       saveMessage(conversation.id, "ASSISTANT", claudeResult.reply),
       sendMessage(message.from, claudeResult.reply, message.phoneNumberId),
@@ -269,149 +487,30 @@ export async function handleIncomingMessage(
         conversationId: conversation.id,
         error: sendResult.error,
       });
-      auditLog("bot.reply_failed", { tenantId: tenant.id, details: { conversationId: conversation.id } });
+      auditLog("bot.reply_failed", {
+        tenantId: tenant.id,
+        details: { conversationId: conversation.id },
+      });
     }
 
-    // 8. Lead-Score aktualisieren (im Hintergrund, blockiert nicht die Antwort)
+    auditLog("bot.reply_sent", {
+      tenantId: tenant.id,
+      details: { conversationId: conversation.id },
+    });
+
+    // 8. Lead-Scoring + CRM komplett asynchron (blockiert nichts)
     const fullHistory = [
       ...history,
       { role: "assistant" as const, content: claudeResult.reply },
     ];
-    const scoringText = formatConversationForScoring(fullHistory);
 
-    // Lead-Scoring asynchron – Fehler werden geloggt, blockieren aber nicht
-    scoreLeadFromConversation(scoringText)
-      .then(async (scoreResult) => {
-        if (!scoreResult.success || scoreResult.score === undefined) return;
-
-        // Bestehenden Lead laden um Status-Downgrade zu verhindern
-        const existingLead = await db.lead.findUnique({
-          where: { conversationId: conversation.id },
-          select: { status: true },
-        });
-
-        // Neuen Status berechnen (nie herabstufen)
-        const proposedStatus: LeadStatus = scoreResult.score >= 76 ? "CONTACTED" : "NEW";
-        let finalStatus: LeadStatus = proposedStatus;
-        if (existingLead) {
-          const currentIdx = LEAD_STATUS_ORDER.indexOf(
-            existingLead.status as typeof LEAD_STATUS_ORDER[number]
-          );
-          const proposedIdx = LEAD_STATUS_ORDER.indexOf(
-            proposedStatus as typeof LEAD_STATUS_ORDER[number]
-          );
-          if (currentIdx > proposedIdx) {
-            finalStatus = existingLead.status as LeadStatus;
-          }
-        }
-
-        // Campaign-Zuordnung über Conversation-Slug auflösen
-        let campaignId: string | undefined;
-        let abTestVariant: string | undefined;
-        let leadSourceResolved: string | undefined;
-        const conv = await db.conversation.findUnique({
-          where: { id: conversation.id },
-          select: { campaignSlug: true, leadSource: true },
-        });
-        if (conv?.leadSource) leadSourceResolved = conv.leadSource;
-        if (conv?.campaignSlug) {
-          const campaign = await db.campaign.findUnique({
-            where: { tenantId_slug: { tenantId: tenant.id, slug: conv.campaignSlug } },
-            select: { id: true },
-          });
-          if (campaign) {
-            campaignId = campaign.id;
-            // A/B Test: Variante alternierend zuweisen
-            const activeTest = await db.abTest.findFirst({
-              where: { campaignId: campaign.id, isActive: true },
-            });
-            if (activeTest) {
-              abTestVariant = activeTest.sendsA <= activeTest.sendsB ? "A" : "B";
-              await db.abTest.update({
-                where: { id: activeTest.id },
-                data: abTestVariant === "A" ? { sendsA: { increment: 1 } } : { sendsB: { increment: 1 } },
-              });
-            }
-          }
-        }
-
-        await db.lead.upsert({
-          where: { conversationId: conversation.id },
-          create: {
-            tenantId: tenant.id,
-            conversationId: conversation.id,
-            score: scoreResult.score,
-            qualification: scoreResult.qualification || "UNQUALIFIED",
-            status: "NEW",
-            ...(campaignId ? { campaignId } : {}),
-            ...(abTestVariant ? { abTestVariant } : {}),
-            ...(leadSourceResolved ? { source: leadSourceResolved } : {}),
-          },
-          update: {
-            score: scoreResult.score,
-            qualification: scoreResult.qualification || "UNQUALIFIED",
-            status: finalStatus,
-          },
-        });
-
-        auditLog("bot.lead_scored", {
-          tenantId: tenant.id,
-          details: { conversationId: conversation.id, score: scoreResult.score },
-        });
-
-        // E-Mail-Benachrichtigung bei Hot-Leads (Score > 70)
-        if (scoreResult.score > 70) {
-          notifyHighScoreLead({
-            tenantName: tenant.name,
-            score: scoreResult.score,
-            qualification: scoreResult.qualification || "UNQUALIFIED",
-            lastMessage: message.text,
-            conversationId: conversation.id,
-          }).catch((err) => {
-            console.error("[Handler] Lead-Benachrichtigung fehlgeschlagen", {
-              error: err instanceof Error ? err.message : "Unbekannt",
-            });
-          });
-
-          // HubSpot Auto-Push bei Score > 70 (wenn API-Key konfiguriert)
-          const tenantFull = await db.tenant.findUnique({
-            where: { id: tenant.id },
-            select: { hubspotApiKey: true },
-          });
-          if (tenantFull?.hubspotApiKey) {
-            const hubspotKey = decryptText(tenantFull.hubspotApiKey);
-            const currentLead = await db.lead.findUnique({
-              where: { conversationId: conversation.id },
-              select: { pipelineStatus: true, dealValue: true, notes: true },
-            });
-            pushLeadToHubSpot(hubspotKey, {
-              leadScore: scoreResult.score,
-              qualification: scoreResult.qualification || "UNQUALIFIED",
-              pipelineStatus: currentLead?.pipelineStatus ?? "NEU",
-              conversationId: conversation.id,
-              tenantName: tenant.name,
-              dealValue: currentLead?.dealValue,
-              notes: currentLead?.notes,
-            }).then((result) => {
-              if (result.success) {
-                auditLog("bot.hubspot_pushed", { tenantId: tenant.id, details: { conversationId: conversation.id, contactId: result.contactId } });
-              }
-            }).catch((err) => {
-              console.error("[Handler] HubSpot-Push fehlgeschlagen", {
-                error: err instanceof Error ? err.message : "Unbekannt",
-              });
-            });
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("[Handler] Lead-Scoring fehlgeschlagen", {
-          conversationId: conversation.id,
-          error: error instanceof Error ? error.message : "Unbekannt",
-        });
-      });
-
-    auditLog("bot.reply_sent", { tenantId: tenant.id, details: { conversationId: conversation.id } });
+    runScoringPipeline(
+      conversation.id,
+      tenant.id,
+      tenant.name,
+      fullHistory,
+      message.text
+    );
 
     return { success: true, conversationId: conversation.id };
   } catch (error) {

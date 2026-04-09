@@ -9,6 +9,7 @@ import type { PlanType } from "./base";
 import { STARTER_SYSTEM_PROMPT } from "./starter";
 import { GROWTH_SYSTEM_PROMPT, GROWTH_IMMOBILIEN_PROMPT } from "./growth";
 import { PROFESSIONAL_SYSTEM_PROMPT } from "./professional";
+import branchTemplates from "@/data/branch-templates.json";
 
 // Re-exports fuer Zugriff von aussen
 export type { PlanType } from "./base";
@@ -17,7 +18,62 @@ export { GROWTH_SYSTEM_PROMPT, GROWTH_IMMOBILIEN_PROMPT } from "./growth";
 export { PROFESSIONAL_SYSTEM_PROMPT } from "./professional";
 
 // ============================================================
+// Template-Engine: Universelle Platzhalter-Ersetzung
+// ============================================================
+
+/**
+ * Ersetzt beliebige [KEY]-Platzhalter im Prompt.
+ * Skalierbar: Neue Platzhalter in branch-templates.json
+ * werden automatisch aufgeloest ohne Code-Aenderung.
+ */
+export function fillTemplate(
+  basePrompt: string,
+  vars: Record<string, string>
+): string {
+  let result = basePrompt;
+  Object.entries(vars).forEach(([key, value]) => {
+    result = result.replace(
+      new RegExp(`\\[${key}\\]`, "g"),
+      value || ""
+    );
+  });
+  return result;
+}
+
+// ============================================================
+// Branchen-Metadaten (Fallbacks fuer Templates ohne JSON-Eintrag)
+// ============================================================
+
+function getBranchDescription(id: string): string {
+  const descriptions: Record<string, string> = {
+    immobilien: "Verkauf, Bewertung und Vermittlung von Immobilien",
+    sanitaer: "Badsanierung, Notfälle, Installationen",
+    coaching: "Persönliche und berufliche Weiterentwicklung",
+    finanzen: "Vermögensaufbau, Absicherung, Optimierung",
+    education: "Weiterbildung und berufliche Neuorientierung",
+    handwerk: "Handwerk & Dienstleistungen",
+    generisch: "Universeller Vertriebsrahmen",
+  };
+  return descriptions[id] ?? "Branchenspezifischer Vertrieb";
+}
+
+function getBranchIcon(id: string): string {
+  const icons: Record<string, string> = {
+    immobilien: "\u{1F3E0}",
+    sanitaer: "\u{1F6BF}",
+    coaching: "\u{1F3AF}",
+    finanzen: "\u{1F4B0}",
+    education: "\u{1F393}",
+    handwerk: "\u{1F527}",
+    generisch: "\u{26A1}",
+  };
+  return icons[id] ?? "\u{1F4BC}";
+}
+
+// ============================================================
 // Branchen-Templates (fuer das Onboarding-UI)
+// Automatisch aus branch-templates.json generiert.
+// Neue Branchen hinzufuegen = nur JSON erweitern, kein Code.
 // ============================================================
 
 export interface BranchenPromptVariables {
@@ -49,35 +105,41 @@ export function fillPromptTemplate(
     .replace(/\[REGION\]/g, vars.region);
 }
 
-// Branchen-Templates nutzen den Growth-Immobilien-Prompt als Immobilien-Vorlage
-// und den Growth-System-Prompt als generische Vorlage
+// Dynamisch aus JSON generiert – neue Branchen brauchen keinen Code
+// handwerk und generisch sind nicht im JSON und werden statisch angehaengt
 export const BRANCHEN_TEMPLATES: BranchenTemplate[] = [
-  {
-    id: "immobilien",
-    label: "Immobilienmakler",
-    description: "Verkäufer-/Käufer-Leads, Bewertungen, DISC-Modell, Einwand-Bibliothek",
-    icon: "\u{1F3E0}",
-    template: GROWTH_IMMOBILIEN_PROMPT,
-  },
-  {
-    id: "coaching",
-    label: "Coaching & Beratung",
-    description: "Kennenlern-Gespräche, Transformation, empathische Gesprächsführung",
-    icon: "\u{1F3AF}",
-    template: GROWTH_SYSTEM_PROMPT,
-  },
+  ...Object.entries(branchTemplates).map(([id, template]) => {
+    const basePrompt =
+      id === "immobilien" ? GROWTH_IMMOBILIEN_PROMPT : GROWTH_SYSTEM_PROMPT;
+
+    let filledTemplate = basePrompt;
+
+    // Nur Branchen mit placeholders verarbeiten
+    if (template.placeholders && typeof template.placeholders === "object") {
+      filledTemplate = fillTemplate(basePrompt, template.placeholders as Record<string, string>);
+    }
+
+    return {
+      id,
+      label: template.label,
+      description: getBranchDescription(id),
+      icon: getBranchIcon(id),
+      template: filledTemplate,
+    };
+  }),
+  // Statische Branchen ohne JSON-Eintrag
   {
     id: "handwerk",
     label: "Handwerk & Dienstleistung",
-    description: "Vor-Ort-Termine, Kostenvoranschläge, bodenständige Sprache",
-    icon: "\u{1F527}",
+    description: getBranchDescription("handwerk"),
+    icon: getBranchIcon("handwerk"),
     template: GROWTH_SYSTEM_PROMPT,
   },
   {
     id: "generisch",
     label: "Andere Branche",
-    description: "Universeller Vertriebsrahmen – individuell anpassbar",
-    icon: "\u{1F4BC}",
+    description: getBranchDescription("generisch"),
+    icon: getBranchIcon("generisch"),
     template: GROWTH_SYSTEM_PROMPT,
   },
 ];
