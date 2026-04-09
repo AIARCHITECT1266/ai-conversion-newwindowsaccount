@@ -19,6 +19,7 @@ import { notifyHighScoreLead } from "@/modules/crm/lead-notification";
 import { pushLeadToHubSpot } from "@/modules/crm/hubspot";
 import { loadSystemPrompt } from "./system-prompts";
 import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
+import { processMessage } from "@/lib/bot/processMessage";
 
 // ---------- Retry-Konfiguration ----------
 
@@ -372,6 +373,42 @@ export async function handleIncomingMessage(
       update: {},
     });
 
+    // Feature-Flag: kanal-agnostischer Pfad (Phase 1)
+    if (process.env.ENABLE_PROCESS_MESSAGE_V2 === "true") {
+      // CLOSED-Conversation Early-Return (Semantik-Paritaet mit altem Pfad, Zeile ~431)
+      if (conversationBefore?.status === "CLOSED") {
+        return { success: true, conversationId: conversation.id };
+      }
+
+      const pmResult = await processMessage({
+        tenantId: tenant.id,
+        channel: "WHATSAPP",
+        conversationId: conversation.id,
+        senderIdentifier: externalId,
+        message: message.text,
+        isNewConversation: !conversationBefore,
+        consentGiven: conversationBefore?.consentGiven ?? false,
+      });
+
+      // Transport: Bot-Antworten nach Persistenz an WhatsApp senden
+      for (const response of pmResult.responses) {
+        const sendResult = await sendMessage(message.from, response, message.phoneNumberId);
+        if (!sendResult.success) {
+          console.error("[Handler] WhatsApp-Transport-Fehler", {
+            conversationId: conversation.id,
+            error: sendResult.error,
+          });
+        }
+      }
+
+      return {
+        success: pmResult.success,
+        conversationId: pmResult.conversationId,
+        error: pmResult.error,
+      };
+    }
+
+    // Alter Pfad (unveraendert — aktiv wenn ENABLE_PROCESS_MESSAGE_V2 != "true")
     // Neue Konversation: DSGVO-Consent anfordern
     if (!conversationBefore) {
       const sendResult = await sendMessage(message.from, CONSENT_MESSAGE, message.phoneNumberId);
