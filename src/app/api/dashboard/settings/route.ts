@@ -4,9 +4,20 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { encryptText, decryptText } from "@/modules/encryption/aes";
 import { db } from "@/shared/db";
+
+const settingsSchema = z.object({
+  brandName: z.string().min(1).max(255).optional(),
+  brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  retentionDays: z.number().int().min(1).max(3650).optional(),
+  hubspotApiKey: z.string().startsWith("pat-").nullable().optional(),
+  webhookUrl: z.string().url().optional(),
+}).refine(data => Object.keys(data).length > 0, {
+  message: "Mindestens ein Feld erforderlich"
+});
 
 // GET: Aktuelle Einstellungen laden (API-Key nur als Boolean)
 export async function GET() {
@@ -33,23 +44,20 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
+  const result = settingsSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
+      { status: 400 }
+    );
+  }
+
   const updateData: Record<string, unknown> = {};
 
-  // HubSpot API-Key verschlüsselt speichern
-  if (body.hubspotApiKey !== undefined) {
-    if (body.hubspotApiKey === null || body.hubspotApiKey === "") {
-      updateData.hubspotApiKey = null;
-    } else {
-      // Validierung: HubSpot API-Keys beginnen mit "pat-"
-      const key = String(body.hubspotApiKey).trim();
-      if (!key.startsWith("pat-")) {
-        return NextResponse.json(
-          { error: "Ungültiger HubSpot API-Key (muss mit 'pat-' beginnen)" },
-          { status: 400 }
-        );
-      }
-      updateData.hubspotApiKey = encryptText(key);
-    }
+  if (result.data.hubspotApiKey !== undefined) {
+    updateData.hubspotApiKey = result.data.hubspotApiKey === null
+      ? null
+      : encryptText(result.data.hubspotApiKey);
   }
 
   if (Object.keys(updateData).length === 0) {

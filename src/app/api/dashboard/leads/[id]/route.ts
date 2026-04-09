@@ -4,9 +4,19 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { decryptText } from "@/modules/encryption/aes";
 import { db } from "@/shared/db";
+
+const leadUpdateSchema = z.object({
+  status: z.enum(["NEW","CONTACTED","QUALIFIED","CONVERTED","LOST"]).optional(),
+  pipelineStatus: z.string().max(64).optional(),
+  score: z.number().int().min(0).max(100).optional(),
+  dealValue: z.number().min(0).optional(),
+  notes: z.string().max(10000).optional(),
+  qualification: z.enum(["UNQUALIFIED","POTENTIAL","QUALIFIED","HOT"]).optional(),
+});
 
 const VALID_PIPELINE_STATUSES = ["NEU", "QUALIFIZIERT", "TERMIN", "ANGEBOT", "GEWONNEN"] as const;
 type PipelineStatus = (typeof VALID_PIPELINE_STATUSES)[number];
@@ -115,29 +125,20 @@ export async function PATCH(
   }
 
   const body = await request.json();
+  const result = leadUpdateSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const validated = result.data;
   const updateData: Record<string, unknown> = {};
 
-  // Pipeline-Status validieren
-  if (body.pipelineStatus !== undefined) {
-    if (!VALID_PIPELINE_STATUSES.includes(body.pipelineStatus as PipelineStatus)) {
-      return NextResponse.json({ error: "Ungültiger Pipeline-Status" }, { status: 400 });
-    }
-    updateData.pipelineStatus = body.pipelineStatus;
-  }
-
-  // Deal-Wert validieren
-  if (body.dealValue !== undefined) {
-    const val = body.dealValue === null ? null : Number(body.dealValue);
-    if (val !== null && (isNaN(val) || val < 0)) {
-      return NextResponse.json({ error: "Ungültiger Deal-Wert" }, { status: 400 });
-    }
-    updateData.dealValue = val;
-  }
-
-  // Notizen (Text, kann null sein)
-  if (body.notes !== undefined) {
-    updateData.notes = body.notes === "" ? null : String(body.notes);
-  }
+  if (validated.pipelineStatus !== undefined) updateData.pipelineStatus = validated.pipelineStatus;
+  if (validated.dealValue !== undefined) updateData.dealValue = validated.dealValue;
+  if (validated.notes !== undefined) updateData.notes = validated.notes === "" ? null : validated.notes;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "Keine Änderungen" }, { status: 400 });

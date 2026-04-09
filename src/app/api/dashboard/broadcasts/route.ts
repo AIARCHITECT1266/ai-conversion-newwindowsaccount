@@ -4,9 +4,16 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
 import { checkLimit } from "@/lib/plan-limits";
+
+const broadcastSchema = z.object({
+  message: z.string().min(1).max(4096),
+  campaignId: z.string().optional(),
+  segment: z.record(z.string(), z.unknown()),
+});
 
 export async function GET() {
   const tenant = await getDashboardTenant();
@@ -31,7 +38,14 @@ export async function POST(request: NextRequest) {
   if (!tenant) return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
 
   const body = await request.json();
-  const { message, campaignId, segment } = body;
+  const result = broadcastSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { message, campaignId, segment } = result.data;
 
   // Plan-Limit pruefen
   const gate = await checkLimit(tenant.id, tenant.paddlePlan, "broadcasts");
@@ -40,13 +54,6 @@ export async function POST(request: NextRequest) {
       { error: "Plan-Limit erreicht", current: gate.current, limit: gate.limit, upgrade: true },
       { status: 403 },
     );
-  }
-
-  if (!message?.trim()) {
-    return NextResponse.json({ error: "Nachricht ist erforderlich" }, { status: 400 });
-  }
-  if (!segment) {
-    return NextResponse.json({ error: "Segment ist erforderlich" }, { status: 400 });
   }
 
   // Leads basierend auf Segment filtern

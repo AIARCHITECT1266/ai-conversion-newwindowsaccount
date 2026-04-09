@@ -4,9 +4,17 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
 import { checkLimit } from "@/lib/plan-limits";
+
+const campaignSchema = z.object({
+  name: z.string().min(2).max(255),
+  description: z.string().max(2048).optional(),
+  isTemplate: z.boolean().optional(),
+  templateData: z.record(z.string(), z.unknown()).optional(),
+});
 
 export async function GET() {
   const tenant = await getDashboardTenant();
@@ -40,7 +48,14 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name, description, isTemplate, templateData } = body;
+  const result = campaignSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { name, description, isTemplate, templateData } = result.data;
 
   // Plan-Limit pruefen
   const gate = await checkLimit(tenant.id, tenant.paddlePlan, "campaigns");
@@ -49,10 +64,6 @@ export async function POST(request: NextRequest) {
       { error: "Plan-Limit erreicht", current: gate.current, limit: gate.limit, upgrade: true },
       { status: 403 },
     );
-  }
-
-  if (!name || typeof name !== "string" || name.trim().length < 2) {
-    return NextResponse.json({ error: "Name ist erforderlich (min. 2 Zeichen)" }, { status: 400 });
   }
 
   // Slug aus Name generieren
