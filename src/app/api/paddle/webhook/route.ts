@@ -68,9 +68,32 @@ export async function POST(req: NextRequest) {
   }
 
   const rawBody = await req.text();
-  const signature = req.headers.get("paddle-signature") || "";
+  const signatureHeader = req.headers.get("paddle-signature");
 
-  if (!verifySignature(rawBody, signature, webhookSecret)) {
+  // 1. Header vorhanden?
+  if (!signatureHeader) {
+    console.error("[Paddle Webhook] Kein paddle-signature Header");
+    return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+  }
+
+  // 2. Timestamp valide + im 5-Minuten-Fenster? (Replay-Attack-Protection)
+  const ts = signatureHeader.split(";").find(p => p.startsWith("ts="))?.split("=")[1];
+  const timestamp = parseInt(ts ?? "", 10);
+
+  if (!ts || isNaN(timestamp)) {
+    console.error("[Paddle Webhook] Ungültiges Signatur-Format");
+    return NextResponse.json({ error: "Invalid signature format" }, { status: 401 });
+  }
+
+  if (Math.abs(Math.floor(Date.now() / 1000) - timestamp) > 300) {
+    console.error("[Paddle Webhook] Replay-Angriff erkannt", {
+      timestampAge: Math.abs(Math.floor(Date.now() / 1000) - timestamp),
+    });
+    return NextResponse.json({ error: "Replay attack detected" }, { status: 401 });
+  }
+
+  // 3. Signatur-Validierung (HMAC-SHA256)
+  if (!verifySignature(rawBody, signatureHeader, webhookSecret)) {
     console.error("[Paddle Webhook] Signatur ungueltig");
     return NextResponse.json({ error: "Ungueltige Signatur" }, { status: 400 });
   }
