@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/shared/db";
 import { safeCompare } from "@/modules/auth/session";
+import { auditLog } from "@/modules/compliance/audit-log";
 
 export async function GET(request: NextRequest) {
   // Absicherung: CRON_SECRET muss konfiguriert sein
@@ -84,12 +85,45 @@ export async function GET(request: NextRequest) {
         totalConversationsDeleted += deletedConvs.count;
       }
 
-      if (deletedMessages.count > 0 || emptyConversations.length > 0) {
-        console.log("[DSGVO Cleanup] Daten geloescht", {
+      // Stufe 3: Eigenstaendige Lead-Retention
+      // Leads loeschen, die aelter als retentionDays sind – UNABHAENGIG vom Conversation-Status
+      // Ausnahme: Leads mit verknuepftem Client bleiben erhalten (aktive Kundenbeziehung)
+      const orphanedLeads = await db.lead.deleteMany({
+        where: {
           tenantId: tenant.id,
-          messagesDeleted: deletedMessages.count,
-          conversationsDeleted: emptyConversations.length,
-          retentionDays: tenant.retentionDays,
+          createdAt: { lt: cutoff },
+          client: { is: null },
+        },
+      });
+
+      // Stufe 4: Verwaiste Clients bereinigen
+      // Cascade loescht Clients mit ihrem Lead, diese Stufe faengt Edge-Cases ab
+      const allClientIds = (await db.client.findMany({
+        where: { tenantId: tenant.id },
+        select: { id: true, leadId: true },
+      }));
+      const existingLeadIds = new Set(
+        (await db.lead.findMany({
+          where: { tenantId: tenant.id },
+          select: { id: true },
+        })).map((l) => l.id)
+      );
+      const orphanedClientIds = allClientIds
+        .filter((c) => !existingLeadIds.has(c.leadId))
+        .map((c) => c.id);
+      const orphanedClients = orphanedClientIds.length > 0
+        ? await db.client.deleteMany({ where: { id: { in: orphanedClientIds } } })
+        : { count: 0 };
+
+      if (deletedMessages.count > 0 || emptyConversations.length > 0 || orphanedLeads.count > 0 || orphanedClients.count > 0) {
+        auditLog("cron.cleanup_completed", {
+          tenantId: tenant.id,
+          details: {
+            messagesDeleted: deletedMessages.count,
+            conversationsDeleted: emptyConversations.length,
+            leadsDeleted: orphanedLeads.count,
+            clientsDeleted: orphanedClients.count,
+          },
         });
       }
     }
