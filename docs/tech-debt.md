@@ -22,3 +22,12 @@
   kompatibel und helfen bei späterem Debugging.
 - Wann fixen: Nicht fixen. Wird in Phase 2+ ohnehin Standard sein,
   wenn Web-Kanal produktiv läuft.
+
+## Phase 2 — Schema-Migration
+
+### Daten-Migration generate-widget-keys.ts nicht erstellt
+- Status: bewusst verschoben auf Phase 3
+- Grund: Das Skript wird erst benötigt, wenn der Widget-API-Endpoint
+  tatsächlich den webWidgetPublicKey zur Tenant-Auflösung nutzt.
+  Derzeit ist nur das Schema-Feld vorhanden, kein Code liest es.
+- Wann erstellen: In Phase 3, zusammen mit der ersten Verwendung.

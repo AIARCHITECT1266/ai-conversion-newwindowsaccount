@@ -37,6 +37,10 @@ model Tenant {
 
   hubspotApiKey        String?    @db.Text // AES-256-GCM verschlüsselt
 
+  webWidgetEnabled    Boolean    @default(false) // Web-Widget aktiviert
+  webWidgetPublicKey  String?    @unique          // Oeffentlicher Key (pub_xxx)
+  webWidgetConfig     Json?                       // { primaryColor, logoUrl, welcomeMessage }
+
   conversations    Conversation[]
   leads            Lead[]
   campaigns        Campaign[]
@@ -57,7 +61,8 @@ model Conversation {
   consentAt      DateTime?          // Zeitpunkt der Einwilligung
   language       String             @default("de") // Erkannte Sprache (ISO 639-1)
   campaignSlug   String?            // Kampagnen-Tracking aus WhatsApp-Link
-  leadSource     String?            // "qr", "link", "organic"
+  leadSource     String?            // "qr", "link", "organic", "web"
+  channel        Channel            @default(WHATSAPP) // Kanal: WhatsApp oder Web-Widget
   status         ConversationStatus @default(ACTIVE)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -68,6 +73,7 @@ model Conversation {
 
   @@unique([tenantId, externalId])
   @@index([tenantId, status])
+  @@index([tenantId, channel])
   @@index([tenantId, createdAt])
   @@map("conversations")
 }
@@ -385,4 +391,10 @@ enum AssetStatus {
   COMPLETED
   FAILED
   EDITED
+}
+
+// ---------- Kanal-Enum (Web-Widget Phase 2) ----------
+enum Channel {
+  WHATSAPP
+  WEB
 }
