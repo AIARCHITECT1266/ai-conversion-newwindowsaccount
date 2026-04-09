@@ -49,8 +49,8 @@ export async function POST(
   if (!client) return NextResponse.json({ error: "Client nicht gefunden" }, { status: 404 });
 
   // Chat-Verlauf laden
-  const lead = await db.lead.findUnique({
-    where: { id: client.leadId },
+  const lead = await db.lead.findFirst({
+    where: { id: client.leadId, tenantId: tenant.id },
     select: { conversationId: true, score: true, dealValue: true },
   });
   if (!lead) return NextResponse.json({ error: "Lead nicht gefunden" }, { status: 404 });

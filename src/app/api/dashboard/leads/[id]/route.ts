@@ -156,7 +156,7 @@ export async function PATCH(
 
   // Auto-Client erstellen wenn Pipeline auf GEWONNEN gesetzt wird
   if (updateData.pipelineStatus === "GEWONNEN" && lead.pipelineStatus !== "GEWONNEN") {
-    const existingClient = await db.client.findUnique({ where: { leadId: id } });
+    const existingClient = await db.client.findFirst({ where: { leadId: id, tenantId: tenant.id } });
     if (!existingClient) {
       await db.client.create({
         data: {

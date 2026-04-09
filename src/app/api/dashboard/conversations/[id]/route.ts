@@ -20,8 +20,8 @@ export async function GET(
 
   const { id } = await params;
 
-  const conversation = await db.conversation.findUnique({
-    where: { id },
+  const conversation = await db.conversation.findFirst({
+    where: { id, tenantId: tenant.id },
     include: {
       messages: {
         orderBy: { timestamp: "asc" },
@@ -49,7 +49,7 @@ export async function GET(
     },
   });
 
-  if (!conversation || conversation.tenantId !== tenant.id) {
+  if (!conversation) {
     return NextResponse.json(
       { error: "Konversation nicht gefunden" },
       { status: 404 }
