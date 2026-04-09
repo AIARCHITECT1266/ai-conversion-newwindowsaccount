@@ -175,6 +175,7 @@ export default function AdminDashboard() {
         await loadData();
       } catch (err) {
         alert(err instanceof Error ? err.message : "Fehler");
+        throw err;
       } finally {
         setSaving(false);
       }
@@ -614,9 +615,13 @@ export default function AdminDashboard() {
           loading={detailLoading}
           onClose={() => setSelectedTenant(null)}
           onEdit={() => setEditingTenant(selectedTenant)}
-          onSavePrompt={(prompt) =>
-            selectedTenant && saveTenant(selectedTenant.id, { systemPrompt: prompt })
-          }
+          onSavePrompt={async (prompt) => {
+            if (!selectedTenant) return false;
+            try {
+              await saveTenant(selectedTenant.id, { systemPrompt: prompt });
+              return true;
+            } catch { return false; }
+          }}
         />
       )}
 
@@ -919,18 +924,25 @@ function TenantDetailModal({
   loading: boolean;
   onClose: () => void;
   onEdit: () => void;
-  onSavePrompt: (prompt: string) => void;
+  onSavePrompt: (prompt: string) => Promise<boolean>;
 }) {
   const [activePlan, setActivePlan] = useState<string | null>(null);
   const [selectedBranch, setSelectedBranch] = useState("");
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [editedPrompt, setEditedPrompt] = useState(tenant?.systemPrompt || "");
   const [promptDirty, setPromptDirty] = useState(false);
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [toast, setToast] = useState("");
+  const tenantIdRef = useRef(tenant?.id);
 
-  // Sync beim Tenant-Wechsel
+  // Sync nur beim echten Tenant-Wechsel (nicht nach Speichern)
   useEffect(() => {
-    setEditedPrompt(tenant?.systemPrompt || "");
-    setPromptDirty(false);
+    if (tenant?.id !== tenantIdRef.current) {
+      tenantIdRef.current = tenant?.id;
+      setEditedPrompt(tenant?.systemPrompt || "");
+      setPromptDirty(false);
+      setToast("");
+    }
   }, [tenant?.id, tenant?.systemPrompt]);
 
   async function loadPlanPrompt(plan: string) {
@@ -1092,18 +1104,44 @@ function TenantDetailModal({
                   border: "1px solid var(--gold-border)",
                 }}
               />
-              {promptDirty && (
+              {promptDirty && !savingPrompt && (
                 <button
                   type="button"
-                  onClick={() => {
-                    onSavePrompt(editedPrompt);
-                    setPromptDirty(false);
+                  onClick={async () => {
+                    setSavingPrompt(true);
+                    setToast("");
+                    try {
+                      const ok = await onSavePrompt(editedPrompt);
+                      if (ok) {
+                        setPromptDirty(false);
+                        setToast("Prompt gespeichert");
+                      } else {
+                        setToast("Fehler beim Speichern");
+                      }
+                    } catch {
+                      setToast("Fehler beim Speichern");
+                    } finally {
+                      setSavingPrompt(false);
+                      setTimeout(() => setToast(""), 3000);
+                    }
                   }}
                   className="mt-2 rounded-lg bg-[rgba(201,168,76,0.15)] px-4 py-1.5 text-xs font-medium text-[#c9a84c] transition hover:bg-[rgba(201,168,76,0.25)]"
                   style={{ border: "1px solid rgba(201,168,76,0.3)" }}
                 >
                   Prompt speichern
                 </button>
+              )}
+              {savingPrompt && (
+                <span className="mt-2 inline-block text-xs text-gray-400">Speichert…</span>
+              )}
+              {toast && (
+                <span className={`mt-2 inline-block rounded-lg px-3 py-1.5 text-xs font-medium ${
+                  toast.includes("Fehler")
+                    ? "bg-red-500/10 text-red-400"
+                    : "bg-emerald-500/10 text-emerald-400"
+                }`}>
+                  {toast}
+                </span>
               )}
             </div>
 
