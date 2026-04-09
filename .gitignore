@@ -45,3 +45,8 @@ next-env.d.ts
 
 .env*.local
 dashboard-links.txt
+
+# Temporäre Credential-Dateien (niemals committen)
+.tmp_*
+.tmp_UPSTASH_*
+*.tmp.env
