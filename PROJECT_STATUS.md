@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-09
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** 1348ccc (Phase 2g — Untracked-Triage)
+**Letzter Commit:** 75ac832 (Phase 2f+2g cleanup)
 
 ---
 
@@ -51,7 +51,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - 8 ungestagte Modified-Dateien aus früheren Sessions inspiziert
   (Triage-Entscheidung folgt vor Phase 3a)
 
-### Phase 2e.1 — Diff-Inspektion (Commit 1eceaf8)
+### Phase 2e.1 — Diff-Inspektion (Commit b9116f2)
 - .claude/settings.local.json aus Git-Tracking entfernt und gitignored
 - Vollständige Diffs der 7 Modified-Dateien zur Review bereitgestellt
 - ts=-Parsing-Status im Paddle-Webhook dokumentiert
