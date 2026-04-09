@@ -173,11 +173,21 @@ function runScoringPipeline(
     .then(async (scoreResult) => {
       if (!scoreResult?.success || scoreResult.score === undefined) return;
 
-      // Bestehenden Lead laden um Status-Downgrade zu verhindern
-      const existingLead = await db.lead.findUnique({
-        where: { conversationId },
-        select: { status: true },
-      });
+      // OPT 1+3: Lead, Conversation und Tenant parallel laden
+      const [existingLead, conv, tenantForHubSpot] = await Promise.all([
+        db.lead.findUnique({
+          where: { conversationId },
+          select: { status: true, pipelineStatus: true, dealValue: true, notes: true },
+        }),
+        db.conversation.findUnique({
+          where: { id: conversationId },
+          select: { campaignSlug: true, leadSource: true },
+        }),
+        db.tenant.findUnique({
+          where: { id: tenantId },
+          select: { hubspotApiKey: true },
+        }),
+      ]);
 
       const proposedStatus: LeadStatus = scoreResult.score >= 76 ? "CONTACTED" : "NEW";
       let finalStatus: LeadStatus = proposedStatus;
@@ -197,10 +207,6 @@ function runScoringPipeline(
       let campaignId: string | undefined;
       let abTestVariant: string | undefined;
       let leadSourceResolved: string | undefined;
-      const conv = await db.conversation.findUnique({
-        where: { id: conversationId },
-        select: { campaignSlug: true, leadSource: true },
-      });
       if (conv?.leadSource) leadSourceResolved = conv.leadSource;
       if (conv?.campaignSlug) {
         const campaign = await db.campaign.findUnique({
@@ -225,7 +231,8 @@ function runScoringPipeline(
         }
       }
 
-      await db.lead.upsert({
+      // OPT 2: Upsert-Ergebnis direkt nutzen statt erneut zu laden
+      const upsertedLead = await db.lead.upsert({
         where: { conversationId },
         create: {
           tenantId,
@@ -242,6 +249,7 @@ function runScoringPipeline(
           qualification: scoreResult.qualification || "UNQUALIFIED",
           status: finalStatus,
         },
+        select: { pipelineStatus: true, dealValue: true, notes: true },
       });
 
       auditLog("bot.lead_scored", {
@@ -264,39 +272,31 @@ function runScoringPipeline(
         });
 
         // HubSpot Auto-Push (wenn API-Key konfiguriert)
-        db.tenant
-          .findUnique({
-            where: { id: tenantId },
-            select: { hubspotApiKey: true },
+        if (tenantForHubSpot?.hubspotApiKey) {
+          const hubspotKey = decryptText(tenantForHubSpot.hubspotApiKey);
+          pushLeadToHubSpot(hubspotKey, {
+            leadScore: scoreResult.score,
+            qualification: scoreResult.qualification || "UNQUALIFIED",
+            pipelineStatus: upsertedLead.pipelineStatus ?? "NEU",
+            conversationId,
+            tenantName,
+            dealValue: upsertedLead.dealValue,
+            notes: upsertedLead.notes,
           })
-          .then(async (tenantFull) => {
-            if (!tenantFull?.hubspotApiKey) return;
-            const hubspotKey = decryptText(tenantFull.hubspotApiKey);
-            const currentLead = await db.lead.findUnique({
-              where: { conversationId },
-              select: { pipelineStatus: true, dealValue: true, notes: true },
-            });
-            const result = await pushLeadToHubSpot(hubspotKey, {
-              leadScore: scoreResult.score!,
-              qualification: scoreResult.qualification || "UNQUALIFIED",
-              pipelineStatus: currentLead?.pipelineStatus ?? "NEU",
-              conversationId,
-              tenantName,
-              dealValue: currentLead?.dealValue,
-              notes: currentLead?.notes,
-            });
-            if (result.success) {
-              auditLog("bot.hubspot_pushed", {
-                tenantId,
-                details: { conversationId, contactId: result.contactId },
+            .then((result) => {
+              if (result.success) {
+                auditLog("bot.hubspot_pushed", {
+                  tenantId,
+                  details: { conversationId, contactId: result.contactId },
+                });
+              }
+            })
+            .catch((err) => {
+              console.error("[Handler] HubSpot-Push fehlgeschlagen", {
+                error: err instanceof Error ? err.message : "Unbekannt",
               });
-            }
-          })
-          .catch((err) => {
-            console.error("[Handler] HubSpot-Push fehlgeschlagen", {
-              error: err instanceof Error ? err.message : "Unbekannt",
             });
-          });
+        }
       }
     })
     .catch((error) => {
