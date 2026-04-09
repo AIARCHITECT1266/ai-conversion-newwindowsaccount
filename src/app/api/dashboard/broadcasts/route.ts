@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
+import { checkLimit } from "@/lib/plan-limits";
 
 export async function GET() {
   const tenant = await getDashboardTenant();
@@ -31,6 +32,15 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const { message, campaignId, segment } = body;
+
+  // Plan-Limit pruefen
+  const gate = await checkLimit(tenant.id, tenant.paddlePlan, "broadcasts");
+  if (!gate.allowed) {
+    return NextResponse.json(
+      { error: "Plan-Limit erreicht", current: gate.current, limit: gate.limit, upgrade: true },
+      { status: 403 },
+    );
+  }
 
   if (!message?.trim()) {
     return NextResponse.json({ error: "Nachricht ist erforderlich" }, { status: 400 });

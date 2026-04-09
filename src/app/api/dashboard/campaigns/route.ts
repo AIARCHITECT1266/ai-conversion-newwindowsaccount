@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
+import { checkLimit } from "@/lib/plan-limits";
 
 export async function GET() {
   const tenant = await getDashboardTenant();
@@ -40,6 +41,15 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const { name, description, isTemplate, templateData } = body;
+
+  // Plan-Limit pruefen
+  const gate = await checkLimit(tenant.id, tenant.paddlePlan, "campaigns");
+  if (!gate.allowed) {
+    return NextResponse.json(
+      { error: "Plan-Limit erreicht", current: gate.current, limit: gate.limit, upgrade: true },
+      { status: 403 },
+    );
+  }
 
   if (!name || typeof name !== "string" || name.trim().length < 2) {
     return NextResponse.json({ error: "Name ist erforderlich (min. 2 Zeichen)" }, { status: 400 });

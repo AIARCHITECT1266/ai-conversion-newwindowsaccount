@@ -29,6 +29,7 @@ export async function getDashboardTenant(): Promise<{
   id: string;
   name: string;
   brandName: string;
+  paddlePlan: string | null;
 } | null> {
   // Token aus Cookie oder Middleware-Header lesen
   const cookieStore = await cookies();
@@ -49,6 +50,7 @@ export async function getDashboardTenant(): Promise<{
       id: true,
       name: true,
       brandName: true,
+      paddlePlan: true,
       isActive: true,
       dashboardTokenExpiresAt: true,
     },
@@ -61,5 +63,5 @@ export async function getDashboardTenant(): Promise<{
     return null;
   }
 
-  return { id: tenant.id, name: tenant.name, brandName: tenant.brandName };
+  return { id: tenant.id, name: tenant.name, brandName: tenant.brandName, paddlePlan: tenant.paddlePlan };
 }
