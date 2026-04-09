@@ -20,44 +20,47 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Token hashen und in DB suchen
+  // Token hashen, validieren und atomar rotieren (Race-Condition-sicher)
   const tokenHash = hashToken(token);
-  const tenant = await db.tenant.findUnique({
-    where: { dashboardToken: tokenHash },
-    select: { id: true, name: true, isActive: true, dashboardTokenExpiresAt: true },
+  const tenant = await db.$transaction(async (tx) => {
+    const found = await tx.tenant.findUnique({
+      where: { dashboardToken: tokenHash },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        dashboardTokenExpiresAt: true,
+      },
+    });
+
+    if (!found || !found.isActive) return null;
+    if (!found.dashboardTokenExpiresAt || found.dashboardTokenExpiresAt < new Date()) return null;
+
+    const newRawToken = randomBytes(32).toString("hex");
+    const newTokenHash = hashToken(newRawToken);
+    const newExpiry = new Date(Date.now() + SESSION_EXPIRY_MS);
+
+    await tx.tenant.update({
+      where: { id: found.id },
+      data: {
+        dashboardToken: newTokenHash,
+        dashboardTokenExpiresAt: newExpiry,
+      },
+    });
+
+    return { ...found, newRawToken };
   });
 
-  if (!tenant || !tenant.isActive) {
-    return new NextResponse(loginPage("Ungueltiger oder deaktivierter Link."), {
+  if (!tenant) {
+    return new NextResponse(loginPage("Ungueltiger, deaktivierter oder abgelaufener Link."), {
       status: 401,
       headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   }
-
-  // Ablauf pruefen
-  if (tenant.dashboardTokenExpiresAt && tenant.dashboardTokenExpiresAt < new Date()) {
-    return new NextResponse(loginPage("Dieser Link ist abgelaufen. Bitte fordere einen neuen an."), {
-      status: 401,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
-  }
-
-  // Token rotieren: neuen Token generieren, alten Magic-Link ungueltig machen
-  const newToken = randomBytes(32).toString("hex");
-  const newTokenHash = hashToken(newToken);
-  const newExpiry = new Date(Date.now() + SESSION_EXPIRY_MS);
-
-  await db.tenant.update({
-    where: { id: tenant.id },
-    data: {
-      dashboardToken: newTokenHash,
-      dashboardTokenExpiresAt: newExpiry,
-    },
-  });
 
   // Cookie mit neuem Token setzen und zum Dashboard weiterleiten
   const response = NextResponse.redirect(new URL("/dashboard", req.url));
-  response.cookies.set("dashboard_token", newToken, {
+  response.cookies.set("dashboard_token", tenant.newRawToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
