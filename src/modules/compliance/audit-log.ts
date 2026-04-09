@@ -9,6 +9,7 @@ type AuditAction =
   | "admin.login_failed"
   | "admin.tenant_created"
   | "admin.tenant_updated"
+  | "admin.tenant_deleted"
   | "admin.token_regenerated"
   | "dashboard.login"
   | "dashboard.login_failed"

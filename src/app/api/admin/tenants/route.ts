@@ -32,6 +32,7 @@ const TENANT_PUBLIC_SELECT = {
   brandName: true,
   brandColor: true,
   retentionDays: true,
+  paddlePlan: true,
   isActive: true,
   createdAt: true,
 } as const;

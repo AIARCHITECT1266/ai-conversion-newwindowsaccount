@@ -477,6 +477,8 @@ export default function TenantDashboard() {
               <div className="flex items-center gap-1.5 pl-4 border-l border-white/[0.06]">
                 <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                 <span className="text-[11px] text-emerald-400/70">Bot aktiv</span>
+                <a href="/dashboard/bot-test" className="text-[10px] text-[#ede8df]/40 hover:text-[#c9a84c] transition-colors underline underline-offset-2">Verkaufsgespräch testen</a>
+                <a href="/dashboard/settings/prompt" className="text-[10px] text-[#ede8df]/40 hover:text-[#c9a84c] transition-colors underline underline-offset-2">Prompt anpassen</a>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -530,7 +532,7 @@ export default function TenantDashboard() {
               </button>
 
               {aiStudioOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 rounded-xl border border-white/[0.06] bg-[#0e0e1a] shadow-xl z-[100] overflow-hidden">
+                <div className="absolute top-full left-0 mt-2 w-48 rounded-xl border border-white/[0.06] bg-[#0e0e1a] shadow-xl z-[100] overflow-visible">
                   <a href="/dashboard/assets/generator"
                     className="flex items-center gap-2 px-4 py-3 text-sm text-[#ede8df]/70 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
                     <Zap className="h-4 w-4" /> Asset Generator

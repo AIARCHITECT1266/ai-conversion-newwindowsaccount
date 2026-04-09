@@ -11,6 +11,7 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 import { db } from "@/shared/db";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
+import { auditLog } from "@/modules/compliance/audit-log";
 
 // Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
 const TENANT_PUBLIC_SELECT = {
@@ -134,6 +135,48 @@ export async function PATCH(
       error: error instanceof Error ? error.message : "Unbekannt",
     });
     return NextResponse.json({ error: "Interner Fehler" }, { status: 500 });
+  }
+}
+
+// ---------- DELETE: Tenant loeschen ----------
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: "Ungültige Tenant-ID" }, { status: 400 });
+    }
+
+    await db.tenant.delete({ where: { id } });
+
+    // DSGVO-Pflicht: Tenant-Loeschung im Audit-Log dokumentieren
+    auditLog("admin.tenant_deleted", {
+      tenantId: id,
+      details: { deletedBy: "admin" },
+    });
+
+    console.log("[Admin] Tenant gelöscht", { tenantId: id });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Record to delete does not exist")
+    ) {
+      return NextResponse.json(
+        { error: "Tenant nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
+    console.error("[Admin] Fehler beim Löschen des Tenants", {
+      error: error instanceof Error ? error.message : "Unbekannt",
+    });
+    return NextResponse.json({ error: "Fehler beim Löschen" }, { status: 500 });
   }
 }
 
