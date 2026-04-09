@@ -67,6 +67,7 @@ model Conversation {
 
   @@unique([tenantId, externalId])
   @@index([tenantId, status])
+  @@index([tenantId, createdAt])
   @@map("conversations")
 }
 
@@ -139,6 +140,7 @@ model Lead {
   @@index([tenantId, qualification])
   @@index([tenantId, pipelineStatus])
   @@index([campaignId])
+  @@index([tenantId, createdAt])
   @@map("leads")
 }
 
