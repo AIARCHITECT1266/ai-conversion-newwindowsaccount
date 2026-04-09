@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-09
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** 1eceaf8 (Phase 2e.1 — Diff-Inspektion)
+**Letzter Commit:** d786869 (Phase 2e.2 — Paddle Replay-Attack-Protection)
 
 ---
 
@@ -56,6 +56,15 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Vollständige Diffs der 7 Modified-Dateien zur Review bereitgestellt
 - ts=-Parsing-Status im Paddle-Webhook dokumentiert
 - Triage-Entscheidungen folgen in Phase 2e.2
+
+### Phase 2e.2 — Triage-Entscheidungen (Commits 44ad3eb und d786869)
+- Commit A: Admin-Funktionalität (DELETE-Handler mit auditLog,
+  paddlePlan in PUBLIC_SELECT, Dashboard-Navigation)
+- Commit B: Paddle Replay-Attack-Protection
+- System-Prompt-Änderungen verworfen (Bug in Fallback-Kommentaren,
+  Qualitätsverlust, halbfertiges Refactoring)
+- Platzhalter-Idee im Tech-Debt-Backlog für spätere saubere Phase
+- Paddle doppeltes ts=-Parsing als bewusste Debt dokumentiert
 
 ---
 

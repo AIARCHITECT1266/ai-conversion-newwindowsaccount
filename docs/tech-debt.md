@@ -31,3 +31,53 @@
   tatsächlich den webWidgetPublicKey zur Tenant-Auflösung nutzt.
   Derzeit ist nur das Schema-Feld vorhanden, kein Code liest es.
 - Wann erstellen: In Phase 3, zusammen mit der ersten Verwendung.
+
+## Phase 2e.2 — Paddle Webhook doppeltes ts=-Parsing
+
+### Status
+Bewusst nicht behoben in der Replay-Attack-Commit.
+
+### Problem
+Das ts=-Timestamp wird jetzt an zwei Stellen geparst:
+1. Im POST-Handler direkt (für Replay-Attack-Check)
+2. In der verifySignature()-Helper-Funktion (für HMAC-Validierung)
+
+Beide Parses lesen dasselbe Feld aus demselben Header.
+
+### Warum akzeptiert
+- Die Replay-Protection ist Security-relevant und dringender als
+  die Performance-Optimierung.
+- Ein Refactoring auf einen gemeinsamen Parse würde die
+  verifySignature-Signatur ändern und ist ein eigenes Ticket wert.
+
+### Wann fixen
+In einer eigenen Refactoring-Session, nach Phase 3 oder wenn eine
+dritte Paddle-Änderung anfällt. Kein Blocker für Phasen 3-7.
+
+## Phase 2e.2 — System-Prompt Platzhalter-Refactoring
+
+### Status
+Halbfertiger Versuch aus früherer Session wurde verworfen.
+
+### Idee (gut, aber sauber nachzuholen)
+Hardcodierte Beispiel-Strings in den System-Prompts (starter.ts,
+growth.ts, professional.ts) sollen durch [EINSTIEG], [EINWAND_BUDGET],
+[EINWAND_NACHDENKEN], [TERMIN_BRIDGE]-Platzhalter ersetzt werden,
+die über fillTemplate() pro Tenant gefüllt werden.
+
+### Warum der erste Versuch verworfen wurde
+- "// Fallback:"-Kommentare standen innerhalb von Template-Literal-
+  Strings und wären als Teil des Prompts an Claude gegangen. Bug.
+- Keine Fallback-Strategie wenn Platzhalter im Tenant-Config leer
+  ist: der Bot würde dann leere Klammern ausgeben.
+- Vermischung mit der geplanten Kanal-Abstraktion (Phase X).
+
+### Wann richtig machen
+Als eigene Phase NACH Phase 6 (Dashboard-Integration), zusammen
+mit der Kanal-Abstraktion für Web-Widget. Dann kennen wir den
+vollständigen Platzhalter-Bedarf und können beide Refactorings
+konsolidiert umsetzen.
+
+### Aufwand
+Ca. 2-3 Stunden: Platzhalter definieren, fillTemplate erweitern,
+Fallbacks bauen, Tests.
