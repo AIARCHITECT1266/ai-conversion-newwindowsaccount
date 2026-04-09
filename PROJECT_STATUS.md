@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-09
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** d786869 (Phase 2e.2 — Paddle Replay-Attack-Protection)
+**Letzter Commit:** 1348ccc (Phase 2g — Untracked-Triage)
 
 ---
 
@@ -65,6 +65,14 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   Qualitätsverlust, halbfertiges Refactoring)
 - Platzhalter-Idee im Tech-Debt-Backlog für spätere saubere Phase
 - Paddle doppeltes ts=-Parsing als bewusste Debt dokumentiert
+
+### Phase 2f — Untracked-Inventur + 2g — Triage (Commits 6c9cdc2, 8e762ed, 1348ccc)
+- 7 untrackte Dateien katalogisiert und sauber in Git aufgenommen
+- Commit 1: Build-Fix branch-templates.json (war kritischer Build-Breaker)
+- Commit 2: Dashboard-Feature-Set Bot-Testing und Prompt-Management
+  (Legacy, wird mit Widget-Launch entfernt)
+- Commit 3: Script-Umbenennung send-session → new-session
+- Tenant-Isolation vor Feature-Commit geprüft und gewahrt
 
 ---
 
