@@ -1,3 +1,32 @@
+# AI Conversion — Projekt-Handbuch für Claude Code
+
+## Pflicht-Lesen beim Session-Start
+
+Bevor du mit irgendeiner Aufgabe beginnst, lies diese Dateien in
+exakt dieser Reihenfolge:
+
+1. **PROJECT_STATUS.md** — Wo stehen wir gerade? Was ist der nächste Schritt?
+2. **WEB_WIDGET_INTEGRATION.md** — Die Spec des aktuellen Projekts
+3. **docs/README.md** — Inhaltsverzeichnis der gesamten Doku
+4. **docs/decisions/** — Alle getroffenen Entscheidungen
+5. **docs/tech-debt.md** — Eingegangene Schuld
+6. **docs/test-debt.md** — Nicht getestete Pfade
+7. **docs/migration-workflow.md** — Regeln für Prisma-Migrationen
+
+Erst wenn diese sieben Punkte gelesen sind, darf die eigentliche
+Aufgabe beginnen.
+
+## Automatische Aktualisierung
+
+Am Ende jeder Phase MUSS PROJECT_STATUS.md mit aktualisiert werden:
+- Commit-Hash der aktuellen Phase
+- Abgeschlossene Punkte in die Historie verschoben
+- Nächster Schritt eingetragen
+
+Das Update erfolgt im selben Commit wie die Phase-Änderungen.
+
+---
+
 # AI Conversion – Claude CLI Regeln
 
 ## Sicherheit (NIEMALS verletzen)
