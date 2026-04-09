@@ -50,3 +50,6 @@ dashboard-links.txt
 .tmp_*
 .tmp_UPSTASH_*
 *.tmp.env
+
+# Lokale Claude-Code-Einstellungen (persoenlich, nicht teilen)
+.claude/settings.local.json

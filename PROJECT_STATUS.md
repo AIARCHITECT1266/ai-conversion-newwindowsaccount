@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-09
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** 793d213 (Phase 2 — Schema-Migration)
+**Letzter Commit:** 1eceaf8 (Phase 2e.1 — Diff-Inspektion)
 
 ---
 
@@ -37,6 +37,25 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Rein additive Migration, kein Drop, kein Rename
 - Rollback-Script: prisma/rollback/002_rollback_web_widget.sql
 - Migration-Workflow dokumentiert (docs/migration-workflow.md)
+
+### Phase 2d — Doku-Infrastruktur (Commit 6c58a1d)
+- PROJECT_STATUS.md als zentrale Anlaufstelle etabliert
+- Vorher untrackte Analyse-Dokumente in Git aufgenommen
+  (ARCHITECTURE_REPORT, WEB_WIDGET_INTEGRATION, decisions, adr)
+- docs/README.md als Inhaltsverzeichnis
+- CLAUDE.md um Pflicht-Lese-Reihenfolge erweitert
+
+### Phase 2e — Housekeeping (Commit 8493a50)
+- .gitignore um Credential-Pattern erweitert
+- Temporäre .tmp_UPSTASH_*-Dateien lokal entfernt
+- 8 ungestagte Modified-Dateien aus früheren Sessions inspiziert
+  (Triage-Entscheidung folgt vor Phase 3a)
+
+### Phase 2e.1 — Diff-Inspektion (Commit 1eceaf8)
+- .claude/settings.local.json aus Git-Tracking entfernt und gitignored
+- Vollständige Diffs der 7 Modified-Dateien zur Review bereitgestellt
+- ts=-Parsing-Status im Paddle-Webhook dokumentiert
+- Triage-Entscheidungen folgen in Phase 2e.2
 
 ---
 
