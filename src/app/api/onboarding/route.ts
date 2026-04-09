@@ -12,9 +12,13 @@ import { z } from "zod";
 import { db } from "@/shared/db";
 import { checkRateLimit, getClientIp } from "@/shared/rate-limit";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
+import { auditLog } from "@/modules/compliance/audit-log";
 
 // Zod-Schema fuer Tenant-Erstellung
 const createSchema = z.object({
+  dpaAccepted: z.literal(true, {
+    message: "DPA muss akzeptiert werden",
+  }),
   name: z.string().min(1, "Firmenname fehlt").max(255),
   slug: z.string().min(1, "Slug fehlt").max(64),
   whatsappPhoneId: z.string().min(1, "WhatsApp Phone ID fehlt").max(64),
@@ -31,6 +35,7 @@ const PUBLIC_SELECT = {
   brandName: true,
   brandColor: true,
   systemPrompt: true,
+  dpaAcceptedAt: true,
   isActive: true,
   createdAt: true,
 } as const;
@@ -85,9 +90,15 @@ export async function POST(request: NextRequest) {
         systemPrompt: body.systemPrompt,
         dashboardToken: hashToken(rawToken),
         dashboardTokenExpiresAt: new Date(Date.now() + MAGIC_LINK_EXPIRY_MS),
+        dpaAcceptedAt: new Date(),
         isActive: false, // Onboarding: Standardmaessig inaktiv bis explizit aktiviert
       },
       select: PUBLIC_SELECT,
+    });
+
+    auditLog("gdpr.dpa_accepted", {
+      tenantId: tenant.id,
+      details: { acceptedAt: tenant.dpaAcceptedAt },
     });
 
     console.log("[Onboarding] Tenant erstellt", {

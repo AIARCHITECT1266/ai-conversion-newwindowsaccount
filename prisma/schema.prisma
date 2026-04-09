@@ -25,6 +25,7 @@ model Tenant {
   retentionDays    Int            @default(90) // DSGVO: Aufbewahrungsfrist in Tagen
   dashboardToken   String?        @unique // SHA-256 Hash des Magic-Link Tokens
   dashboardTokenExpiresAt DateTime? // Ablaufzeitpunkt des Tokens
+  dpaAcceptedAt    DateTime?      // DSGVO: Zeitpunkt der AVV-Akzeptierung
   isActive         Boolean        @default(true)
   createdAt        DateTime       @default(now())
 
