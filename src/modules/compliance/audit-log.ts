@@ -25,7 +25,8 @@ type AuditAction =
   | "bot.lead_scored"
   | "bot.hubspot_pushed"
   | "cron.cleanup_completed"
-  | "rate_limit.exceeded";
+  | "rate_limit.exceeded"
+  | "gdpr.data_export";
 
 // DSGVO: Felder die nie in Details auftauchen duerfen
 const SENSITIVE_FIELDS = new Set([
