@@ -3,8 +3,19 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
+
+const campaignUpdateSchema = z.object({
+  name: z.string().min(2).max(255).optional(),
+  description: z.string().max(2048).optional(),
+  isActive: z.boolean().optional(),
+  isTemplate: z.boolean().optional(),
+  templateData: z.record(z.string(), z.unknown()).optional(),
+}).refine(data => Object.keys(data).length > 0, {
+  message: "Mindestens ein Feld erforderlich"
+});
 
 export async function PATCH(
   request: NextRequest,
@@ -26,11 +37,22 @@ export async function PATCH(
   }
 
   const body = await request.json();
+  const result = campaignUpdateSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const validated = result.data;
   const updateData: Record<string, unknown> = {};
 
-  if (body.isTemplate !== undefined) updateData.isTemplate = Boolean(body.isTemplate);
-  if (body.isActive !== undefined) updateData.isActive = Boolean(body.isActive);
-  if (body.templateData !== undefined) updateData.templateData = body.templateData ? JSON.stringify(body.templateData) : null;
+  if (validated.name !== undefined) updateData.name = validated.name;
+  if (validated.description !== undefined) updateData.description = validated.description;
+  if (validated.isActive !== undefined) updateData.isActive = validated.isActive;
+  if (validated.isTemplate !== undefined) updateData.isTemplate = validated.isTemplate;
+  if (validated.templateData !== undefined) updateData.templateData = validated.templateData ? JSON.stringify(validated.templateData) : null;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "Keine Änderungen" }, { status: 400 });

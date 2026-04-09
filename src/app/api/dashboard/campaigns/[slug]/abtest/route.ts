@@ -4,8 +4,15 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
+
+const abTestSchema = z.object({
+  variantA: z.string().min(1).max(4096),
+  variantB: z.string().min(1).max(4096),
+  name: z.string().min(1).max(255).optional(),
+});
 
 export async function GET(
   _request: NextRequest,
@@ -62,11 +69,14 @@ export async function POST(
   if (!campaign) return NextResponse.json({ error: "Kampagne nicht gefunden" }, { status: 404 });
 
   const body = await request.json();
-  const { variantA, variantB } = body;
-
-  if (!variantA?.trim() || !variantB?.trim()) {
-    return NextResponse.json({ error: "Beide Varianten sind erforderlich" }, { status: 400 });
+  const result = abTestSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
+      { status: 400 }
+    );
   }
+  const { variantA, variantB } = result.data;
 
   // Vorherigen aktiven Test deaktivieren
   await db.abTest.updateMany({

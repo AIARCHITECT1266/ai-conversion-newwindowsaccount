@@ -5,8 +5,16 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
+
+const templateSchema = z.object({
+  name: z.string().min(2).max(255),
+  branche: z.string().min(1).max(255),
+  beschreibung: z.string().max(2048).optional(),
+  templateData: z.record(z.string(), z.unknown()).optional(),
+});
 
 // System-Templates: Werden beim ersten Aufruf geseeded
 const SYSTEM_TEMPLATES = [
@@ -175,11 +183,15 @@ export async function POST(request: NextRequest) {
   if (!tenant) return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
 
   const body = await request.json();
-  const { name, branche, beschreibung, briefing, openers, abVarianten, ziele } = body;
-
-  if (!name?.trim() || !branche?.trim()) {
-    return NextResponse.json({ error: "Name und Branche sind erforderlich" }, { status: 400 });
+  const result = templateSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
+      { status: 400 }
+    );
   }
+  const { name, branche } = result.data;
+  const { beschreibung, briefing, openers, abVarianten, ziele } = body;
 
   const template = await db.campaignTemplate.create({
     data: {

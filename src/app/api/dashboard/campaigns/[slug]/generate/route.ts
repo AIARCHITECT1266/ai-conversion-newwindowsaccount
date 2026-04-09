@@ -4,9 +4,17 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
+
+const generateSchema = z.object({
+  audience: z.string().min(1).max(1024),
+  offer: z.string().min(1).max(1024),
+  tone: z.string().max(255).optional(),
+  additionalContext: z.string().max(2048).optional(),
+});
 
 const CONTENT_PROMPT = `Du bist ein erfahrener Marketing-Texter und Vertriebsstratege für den DACH-Markt.
 Erstelle ein komplettes Content-Paket für eine WhatsApp-Marketing-Kampagne.
@@ -81,14 +89,14 @@ export async function POST(
   }
 
   const body = await request.json();
-  const { audience, offer, tone } = body;
-
-  if (!audience || !offer) {
+  const result = generateSchema.safeParse(body);
+  if (!result.success) {
     return NextResponse.json(
-      { error: "Zielgruppe und Angebot sind erforderlich" },
+      { error: "Ungültige Eingabe", details: result.error.flatten() },
       { status: 400 }
     );
   }
+  const { audience, offer, tone } = result.data;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
