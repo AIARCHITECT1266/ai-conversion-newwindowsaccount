@@ -1158,10 +1158,29 @@ function TenantDetailModal({
                 Schliessen
               </button>
               <button
-                onClick={onEdit}
-                className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500"
+                disabled={savingPrompt}
+                onClick={async () => {
+                  if (!promptDirty) { onClose(); return; }
+                  setSavingPrompt(true);
+                  setToast("");
+                  try {
+                    const ok = await onSavePrompt(editedPrompt);
+                    if (ok) {
+                      setPromptDirty(false);
+                      setToast("Prompt gespeichert");
+                    } else {
+                      setToast("Fehler beim Speichern");
+                    }
+                  } catch {
+                    setToast("Fehler beim Speichern");
+                  } finally {
+                    setSavingPrompt(false);
+                    setTimeout(() => setToast(""), 3000);
+                  }
+                }}
+                className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
               >
-                Bearbeiten
+                {savingPrompt ? "Speichert…" : "Änderungen speichern"}
               </button>
             </div>
           </>
