@@ -3,6 +3,36 @@ import { validateAdminSession } from "@/modules/auth/session-validate";
 
 export const runtime = "nodejs";
 
+// Security-Headers auf alle Responses setzen
+const SECURITY_HEADERS: Record<string, string> = {
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy":
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+};
+
+// Webhook-Pfade: nur transport-relevante Headers, kein CSP
+const WEBHOOK_ONLY_HEADERS: Record<string, string> = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+function applySecurityHeaders(
+  response: NextResponse,
+  pathname: string
+): NextResponse {
+  const headers = pathname.startsWith("/api/webhook/")
+    ? WEBHOOK_ONLY_HEADERS
+    : SECURITY_HEADERS;
+  for (const [key, value] of Object.entries(headers)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 // Geschuetzte Pfade: /admin und /api/admin/*
 const ADMIN_PATHS = ["/admin", "/api/admin"];
 // Dashboard-Pfade (geschuetzt via Magic-Link Token)
@@ -46,19 +76,25 @@ export async function middleware(req: NextRequest) {
     if (!dashboardToken) {
       // API-Routen: 401 JSON
       if (pathname.startsWith("/api/dashboard")) {
-        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+        return applySecurityHeaders(
+          NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 }),
+          pathname
+        );
       }
       // Seiten: Weiterleitung zur Login-Fehlerseite
-      return NextResponse.redirect(new URL("/dashboard/login", req.url));
+      return applySecurityHeaders(
+        NextResponse.redirect(new URL("/dashboard/login", req.url)),
+        pathname
+      );
     }
     // Token als Header weiterreichen (fuer API-Routen zur Tenant-Aufloesung)
     const response = NextResponse.next();
     response.headers.set("x-dashboard-token", dashboardToken);
-    return response;
+    return applySecurityHeaders(response, pathname);
   }
 
   if (!isAdminPath(pathname)) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
   // 1. API-Routen: Bearer-Token oder Cookie pruefen (Session-Token, nicht Secret)
@@ -70,26 +106,29 @@ export async function middleware(req: NextRequest) {
 
     // Session-Token via Bearer-Header pruefen
     if (bearerToken && await validateAdminSession(bearerToken)) {
-      return NextResponse.next();
+      return applySecurityHeaders(NextResponse.next(), pathname);
     }
 
     // Fallback: Session-Cookie (Browser-Aufrufe aus dem Admin-Dashboard)
     const adminCookie = req.cookies.get("admin_token")?.value;
     if (adminCookie && await validateAdminSession(adminCookie)) {
-      return NextResponse.next();
+      return applySecurityHeaders(NextResponse.next(), pathname);
     }
 
-    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+    return applySecurityHeaders(
+      NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 }),
+      pathname
+    );
   }
 
   // 2. Admin-Seiten (/admin): Cookie-basierte Authentifizierung
   const adminCookie = req.cookies.get("admin_token")?.value;
   if (adminCookie && await validateAdminSession(adminCookie)) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
   // Nicht authentifiziert → Login-Seite anzeigen
-  return new NextResponse(
+  const loginResponse = new NextResponse(
     `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -156,13 +195,17 @@ export async function middleware(req: NextRequest) {
       headers: { "Content-Type": "text/html; charset=utf-8" },
     }
   );
+  return applySecurityHeaders(loginResponse, pathname);
 }
 
 export const config = {
   matcher: [
+    // Auth-geschuetzte Pfade
     "/admin/:path*",
     "/api/admin/:path*",
     "/dashboard/:path*",
     "/api/dashboard/:path*",
+    // Security-Headers fuer alle weiteren Routen (ohne Static-Assets)
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
