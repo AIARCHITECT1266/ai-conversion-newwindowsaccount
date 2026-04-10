@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-10
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** 3e1ac2d (Phase 3a Widget-API Fundament)
+**Letzter Commit:** 158c6ab (Tech-Debt FK-Cascades dokumentiert)
 
 ---
 
@@ -88,6 +88,16 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Curl-Smoke-Tests alle 3 grün
 - Tech-Debt: null-Caching im publicKey-Helper bewusst akzeptiert
   (siehe docs/tech-debt.md)
+
+### Phase 3a-cleanup — Test-Tenants entfernt (Commit 158c6ab)
+- 3 leere Test-Tenants gelöscht: handwerker2, wewee, sadas
+- internal-admin als Master-Tenant behalten
+- Inventur vor Löschung: alle drei waren komplett leer
+- Löschung via DELETE /api/admin/tenants/[id] (Cookie-Auth via
+  /api/admin/login), auditLog("admin.tenant_deleted") je Delete
+- Tech-Debt: 2 fehlende FK-Cascades dokumentiert
+  (CampaignTemplate, Broadcast — siehe docs/tech-debt.md)
+- DB-Stand: 1 Tenant (internal-admin)
 
 ---
 
