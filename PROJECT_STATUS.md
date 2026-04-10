@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-09
+**Letzte Aktualisierung:** 2026-04-10
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** 75ac832 (Phase 2f+2g cleanup)
+**Letzter Commit:** 36ca157 (CLAUDE.md PROJECT_STATUS-Regel)
 
 ---
 
@@ -73,6 +73,11 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   (Legacy, wird mit Widget-Launch entfernt)
 - Commit 3: Script-Umbenennung send-session → new-session
 - Tenant-Isolation vor Feature-Commit geprüft und gewahrt
+
+### Phase 3a-pre — CLAUDE.md PROJECT_STATUS-Regel (Commit 36ca157)
+- Pflicht zum PROJECT_STATUS-Update am Ende jeder Phase
+  als harte Regel in CLAUDE.md verankert
+- Vermeidet zukünftiges Vergessen unabhängig vom Prompt
 
 ---
 
