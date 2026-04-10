@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-10
-**Aktuelle Phase:** Phase 4c — Polishing + Mobile
-**Letzter Commit:** 49c2415 (Phase 4b — Live Chat mit Polling)
+**Letzte Aktualisierung:** 2026-04-11
+**Aktuelle Phase:** Phase 5 — Embed-Script (Floating Button)
+**Letzter Commit:** ed406d4 (Phase 4c — Polishing + Animationen + A11y)
 
 ---
 
@@ -187,6 +187,20 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - CSP-Dev-Mode-Fix für Next.js HMR (Production unverändert strikt)
 - End-to-End verifiziert: echte Multi-Turn-Konversation mit Claude
   funktioniert, Kontext bleibt erhalten, UX flüssig
+
+### Phase 4c — Polishing + Animationen + Accessibility (Commit ed406d4)
+- Modal Fade-in/Slide-up Animation 300ms
+- SendButton mit React-State-basiertem Hover/Press/Disabled
+  (Tailwind 4 enabled: Variant erwies sich als unzuverlässig)
+- Send-Button Icon von 16px auf 20px vergrößert (bessere Proportion)
+- Bot/User-Bubble subtile Doppel-Schatten für Tiefe
+- Typing-Indicator mit gestaffelter Pulse-Animation
+- Initial-Focus-Management für Modal und Input
+- ARIA-Basics für Dialog, Modal, Live-Regions
+- Network-Error-Handling im Polling mit Offline-Banner (5-Fail-Threshold)
+- Long-Message-Wrap mit break-words
+- Mobile-Touch-Targets 44x44, 16px Input-Font
+- Phase 4 ist damit komplett
 
 ---
 

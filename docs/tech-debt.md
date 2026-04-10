@@ -248,3 +248,29 @@ Erwartung: KEIN 'unsafe-eval' im script-src.
 ### Risiko
 Niedrig. Dev-Mode läuft nur lokal, nicht in Production.
 Standard-Next.js-Empfehlung.
+
+## Phase 4c — Tailwind 4 enabled: Variant unzuverlässig
+
+### Status
+Workaround mit React-State + Inline-Styles, keine offene
+Aktion nötig.
+
+### Hintergrund
+In Phase 4c versuchten wir, den Send-Button-Hover-Effekt mit
+Tailwinds enabled:hover:scale-110 etc. umzusetzen. Nach zwei
+Iterationen hat der Effekt visuell nicht gegriffen, obwohl der
+Code-Stack syntaktisch korrekt war. Vermutete Ursache: Tailwind 4
+hat die enabled:-Variant noch als experimentell, oder die
+Specificity-Auflösung gegen inline-styles ist nicht stabil.
+
+### Lösung
+SendButton-Komponente nutzt jetzt useState + onMouseEnter/Leave/
+Down/Up + Inline-Styles für Transform/Brightness. Vollständig
+kontrolliert, garantiert funktional, ~30 Zeilen statt ~10
+Tailwind-Klassen. Akzeptierter Trade-off.
+
+### Konsequenzen für andere Buttons
+Falls in Zukunft weitere Buttons Hover-Effekte brauchen
+(Phase 6 Dashboard z.B.), entscheiden wir pro Fall:
+- Wenn nur einfacher Hover (Brightness/Color): Pure CSS reicht
+- Wenn Transform oder komplexes Verhalten: React-State-Pattern
