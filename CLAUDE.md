@@ -10,10 +10,11 @@ exakt dieser Reihenfolge:
 3. **docs/README.md** — Inhaltsverzeichnis der gesamten Doku
 4. **docs/decisions/** — Alle getroffenen Entscheidungen
 5. **docs/tech-debt.md** — Eingegangene Schuld
-6. **docs/test-debt.md** — Nicht getestete Pfade
-7. **docs/migration-workflow.md** — Regeln für Prisma-Migrationen
+6. **docs/quality-roadmap.md** — Plan von 7/10 auf 9/10
+7. **docs/test-debt.md** — Nicht getestete Pfade
+8. **docs/migration-workflow.md** — Regeln für Prisma-Migrationen
 
-Erst wenn diese sieben Punkte gelesen sind, darf die eigentliche
+Erst wenn diese acht Punkte gelesen sind, darf die eigentliche
 Aufgabe beginnen.
 
 ## Automatische Aktualisierung
