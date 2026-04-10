@@ -69,6 +69,25 @@ Das Update erfolgt im selben Commit wie die Phase-Änderungen.
 - DSGVO: Keine personenbezogenen Daten loggen
 - Vor jedem Commit: npx next build ausführen
 
+### PROJECT_STATUS.md ist Pflicht
+Am Ende JEDER Phase (egal wie klein) muss PROJECT_STATUS.md
+aktualisiert werden:
+
+1. Feld "Letzte Aktualisierung" auf heutiges Datum
+2. Feld "Letzter Commit" auf den neuen Commit-Hash
+3. Neuer Eintrag unter "Abgeschlossene Phasen" mit:
+   - Phase-Nummer und Kurztitel
+   - Commit-Hash(es) der Phase
+   - 2-5 Stichpunkte was gemacht wurde
+   - Bei Tech-Debt-Eintrag: Verweis auf docs/tech-debt.md
+
+Dieser Update wird im selben oder einem direkt folgenden
+Commit eingespielt, niemals weggelassen oder "später nachgeholt".
+
+Begründung: PROJECT_STATUS.md ist die einzige Quelle der
+Wahrheit für "wo stehen wir gerade". Jede Lücke macht zukünftige
+Sessions blind.
+
 ## Projekt-Kontext
 - Produkt: AI Conversion – Multi-Tenant SaaS für WhatsApp KI-Bots
 - Ziel: Automatische Lead-Qualifizierung und Verkaufsgespräche via WhatsApp
