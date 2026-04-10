@@ -28,7 +28,8 @@ type AuditAction =
   | "cron.cleanup_completed"
   | "rate_limit.exceeded"
   | "gdpr.data_export"
-  | "gdpr.dpa_accepted";
+  | "gdpr.dpa_accepted"
+  | "widget.config_fetched";
 
 // DSGVO: Felder die nie in Details auftauchen duerfen
 const SENSITIVE_FIELDS = new Set([
