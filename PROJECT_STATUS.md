@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-10
-**Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** c8fc9f1 (Phase 3a.5 Schema-Migration)
+**Aktuelle Phase:** Phase 3b — Widget-API POST-Endpoints
+**Letzter Commit:** b75418b (Phase 3b.5 Consent-Persistenz-Fix)
 
 ---
 
@@ -108,6 +108,14 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Rollback-Skript prisma/rollback/003_*.sql vorbereitet
 - Verifikation: alle 5 Checks grün, 1 Tenant unverändert
 - Build fehlerfrei
+
+### Phase 3b.5 — processMessage Consent-Persistenz-Fix (Commit b75418b)
+- isNewConversation-Branch persistiert jetzt USER und ASSISTANT
+  Consent-Message via saveMessage-Helper
+- Macht Web-Widget-Polling-Flow funktional (kein sync Transport)
+- Verbessert DSGVO-Audit-Trail (Pre-Consent-Input wird geloggt)
+- WhatsApp-Pfad unverändert (responses[] weiterhin returned)
+- Test-Skript bestätigt: alle 6 Checks grün
 
 ---
 
