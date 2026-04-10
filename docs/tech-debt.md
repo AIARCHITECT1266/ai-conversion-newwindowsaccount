@@ -104,3 +104,35 @@ Dashboard auf webWidgetEnabled=true gesetzt wird, kann es bis zu
 ### Wann fixen
 Erst wenn ein Pilot-Kunde sich beschwert oder wir Cache-Invalidierung
 für andere Zwecke (Tenant-Update, Config-Change) ohnehin einbauen.
+
+## Phase 3a — Fehlende FK-Constraints auf tenantId
+
+### Status
+Strukturelle Lücke seit ursprünglichem Schema-Design.
+Bisher folgenlos, weil noch kein echter Tenant-Delete mit Daten lief.
+
+### Problem
+Zwei Models haben tenantId als String-Feld OHNE Prisma @relation
+und damit OHNE Datenbank-Foreign-Key:
+- CampaignTemplate.tenantId (String?, Schema Zeile 184)
+- Broadcast.tenantId (String, Schema Zeile 246)
+
+Bei einem Tenant-Delete entstehen Records mit toter tenantId
+("Waisen-Records"), die zwar logisch verloren sind, aber physisch
+in der DB bleiben.
+
+### Beim Phase-3a-Cleanup nicht akut
+Beide Tabellen waren für die drei gelöschten Test-Tenants leer
+(count=0). Inventur vor dem Delete bestätigt.
+
+### Wann fixen
+VOR dem ersten Pilot-Kunden, der CampaignTemplates oder Broadcasts
+nutzt. Eigene Schema-Migration "add_missing_tenant_cascades":
+1. CampaignTemplate.tenantId → mit Tenant @relation(onDelete: Cascade)
+2. Broadcast.tenantId → mit Tenant @relation(onDelete: Cascade)
+3. Migrationsskript prüft vorher auf existierende Waisen und
+   bricht ab falls welche existieren
+
+### Aufwand
+Ca. 30-45 Minuten: Schema-Edit, migrate dev (interaktiv durch Mensch
+wegen migration-workflow.md), Build-Test, Commit.
