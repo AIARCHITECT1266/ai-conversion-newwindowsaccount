@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-10
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** 36ca157 (CLAUDE.md PROJECT_STATUS-Regel)
+**Letzter Commit:** 3e1ac2d (Phase 3a Widget-API Fundament)
 
 ---
 
@@ -78,6 +78,16 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Pflicht zum PROJECT_STATUS-Update am Ende jeder Phase
   als harte Regel in CLAUDE.md verankert
 - Vermeidet zukünftiges Vergessen unabhängig vom Prompt
+
+### Phase 3a — Widget-API Fundament (Commit 3e1ac2d)
+- src/lib/widget/publicKey.ts mit 60s In-Memory-Cache
+- src/scripts/generate-widget-keys.ts (crypto.randomBytes, idempotent)
+- GET /api/widget/config mit Zod, Rate-Limit 100/h, CORS, Audit-Log
+- AuditAction widget.config_fetched ergänzt
+- 4 Tenants haben jetzt Public Keys (Cleanup folgt in 3a-cleanup)
+- Curl-Smoke-Tests alle 3 grün
+- Tech-Debt: null-Caching im publicKey-Helper bewusst akzeptiert
+  (siehe docs/tech-debt.md)
 
 ---
 

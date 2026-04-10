@@ -81,3 +81,26 @@ konsolidiert umsetzen.
 ### Aufwand
 Ca. 2-3 Stunden: Platzhalter definieren, fillTemplate erweitern,
 Fallbacks bauen, Tests.
+
+## Phase 3a — resolvePublicKey cached null-Ergebnisse
+
+### Status
+Bewusste Design-Entscheidung, kein Bug.
+
+### Verhalten
+Der In-Memory-Cache in src/lib/widget/publicKey.ts speichert auch
+null-Ergebnisse 60 Sekunden lang. Konsequenz: Wenn ein Tenant via
+Dashboard auf webWidgetEnabled=true gesetzt wird, kann es bis zu
+60 Sekunden dauern, bis das Widget antwortet.
+
+### Warum so
+- Schutz vor Public-Key-Bruteforce: ohne null-Caching könnte ein
+  Angreifer mit 100 Requests/h die DB mit Existenz-Probes belasten
+- 60-Sekunden-Verzögerung nach einer Aktivierung ist akzeptabel,
+  weil Tenant-Aktivierung kein Echtzeit-Vorgang ist
+- Cache-Invalidierung wäre möglich, aber teurer als der gewonnene
+  UX-Vorteil
+
+### Wann fixen
+Erst wenn ein Pilot-Kunde sich beschwert oder wir Cache-Invalidierung
+für andere Zwecke (Tenant-Update, Config-Change) ohnehin einbauen.
