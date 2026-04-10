@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-10
 **Aktuelle Phase:** Phase 4 — Widget iframe-UI
-**Letzter Commit:** 2087f4f (Block 1 — CSP-Nonce-Fix)
+**Letzter Commit:** ee9209c (Phase 4a — Widget iframe-Skelett)
 
 ---
 
@@ -160,6 +160,22 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   Nonce)
 - Vorbereitung für Phase 4 (iframe-UI) und Phase 5 (Embed-Script)
   abgeschlossen
+
+### Phase 4a — Widget iframe-Skelett (Commit ee9209c)
+- /embed/widget Route mit React Server Component
+- 10-Felder-Tenant-Config: backgroundColor, primaryColor,
+  accentColor, textColor, mutedTextColor, logoUrl, botName,
+  botSubtitle, welcomeMessage, avatarInitials
+- Defensive parseConfig in publicKey.ts (HEX-Validation,
+  String-Length-Bounds, URL-Format-Check)
+- DEFAULT_CONFIG für unkonfigurierte Tenants (neutral edel,
+  Anthrazit + Indigo)
+- Widget-Page voll dynamisch, null hardcoded Farbwerte außer
+  in DEFAULT_CONFIG
+- Tailwind-4-Bug: @source-Direktive in globals.css ergänzt,
+  weil Auto-Detection /embed/ nicht erfasst hatte
+- Visuelle Verifikation in Desktop und Mobile-Viewport bestanden
+- Phase 4b (Chat-Logik + Polling) als nächstes
 
 ---
 
