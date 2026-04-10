@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-10
 **Aktuelle Phase:** Phase 4 — Widget iframe-UI
-**Letzter Commit:** 39c6783 (Phase 4-pre CLAUDE.md Reading-Order)
+**Letzter Commit:** 2087f4f (Block 1 — CSP-Nonce-Fix)
 
 ---
 
@@ -147,6 +147,19 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   consentGiven=false/consentAt=null an, neuer Pfad
   (consentGiven=true) überspringt Consent-Dance, Bot liefert
   echte Claude-Antwort beim ersten Turn
+
+### Block 1 / Phase 4-pre+1 — CSP-Nonce-Fix (Commit 2087f4f)
+- src/middleware.ts: Per-Request-Nonce, dynamische CSP, x-nonce-Header
+  für Next.js SSR-Hydration, frame-ancestors */none je nach Route
+- vercel.json: X-Frame-Options auf Widget-Routen entfernt (Vercel
+  greift VOR Middleware, daher hier separat erforderlich)
+- docs/tech-debt.md: 3 neue Einträge (Inline-Styles, Google Fonts,
+  X-Frame-Options-Verifikation in Production)
+- Smoke-Test 5/5 grün (Nonce-Rotation, frame-ancestors Toggling,
+  Build, alle Bestandsseiten 200, Admin-Login-Inline-Script bekommt
+  Nonce)
+- Vorbereitung für Phase 4 (iframe-UI) und Phase 5 (Embed-Script)
+  abgeschlossen
 
 ---
 
