@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-10
 **Aktuelle Phase:** Phase 3a — Widget-API GET-Endpoints
-**Letzter Commit:** 158c6ab (Tech-Debt FK-Cascades dokumentiert)
+**Letzter Commit:** c8fc9f1 (Phase 3a.5 Schema-Migration)
 
 ---
 
@@ -98,6 +98,16 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Tech-Debt: 2 fehlende FK-Cascades dokumentiert
   (CampaignTemplate, Broadcast — siehe docs/tech-debt.md)
 - DB-Stand: 1 Tenant (internal-admin)
+
+### Phase 3a.5 — Schema-Migration Widget-Session-Felder (Commit c8fc9f1)
+- Conversation.externalId von NOT NULL auf NULL geändert
+- NEU: Conversation.widgetSessionToken (String?, unique)
+- NEU: Conversation.widgetVisitorMeta (Json?)
+- Status-Enum unverändert (Web nutzt ACTIVE statt OPEN)
+- Migration via prisma migrate diff + migrate deploy
+- Rollback-Skript prisma/rollback/003_*.sql vorbereitet
+- Verifikation: alle 5 Checks grün, 1 Tenant unverändert
+- Build fehlerfrei
 
 ---
 
