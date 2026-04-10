@@ -13,11 +13,24 @@
 
 import { db } from "@/shared/db";
 
-// Oeffentliche, fuer das Widget freigegebene Tenant-Config
+// Oeffentliche, fuer das Widget freigegebene Tenant-Config.
+// 10 Felder: 5 Farben, 3 Branding, 2 Verhalten.
+// Alles was das Widget visuell darstellt MUSS aus dieser Config
+// kommen - kein Hardcoding im Rendering.
 export interface ResolvedTenantConfig {
+  // Visuelle Farben (5)
+  backgroundColor: string;
   primaryColor: string;
+  accentColor: string;
+  textColor: string;
+  mutedTextColor: string;
+  // Branding (3)
   logoUrl: string | null;
+  botName: string;
+  botSubtitle: string;
+  // Verhalten (2)
   welcomeMessage: string;
+  avatarInitials: string;
 }
 
 // Ergebnis einer erfolgreichen Aufloesung.
@@ -30,10 +43,20 @@ export interface ResolvedTenant {
 
 // ---------- Defaults ----------
 
-const DEFAULT_CONFIG: ResolvedTenantConfig = {
-  primaryColor: "#000000",
+// Neutraler, edler Default-Look fuer unbekannte bzw. unkonfigurierte
+// Tenants. Bewusst NICHT brand-spezifisch. Wird auch vom
+// /embed/widget-Page als Fallback-UI-Farbquelle importiert.
+export const DEFAULT_CONFIG: ResolvedTenantConfig = {
+  backgroundColor: "#18181B",
+  primaryColor: "#6366F1",
+  accentColor: "#22D3EE",
+  textColor: "#F4F4F5",
+  mutedTextColor: "#A1A1AA",
   logoUrl: null,
+  botName: "Chat",
+  botSubtitle: "Antwortet sofort",
   welcomeMessage: "Hallo! Wie kann ich helfen?",
+  avatarInitials: "AI",
 };
 
 // ---------- In-Memory-Cache ----------
@@ -53,32 +76,71 @@ const cache = new Map<string, CacheEntry>();
 
 // ---------- Sichere Config-Parser ----------
 
+// ---------- Feld-Validatoren ----------
+
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
+
+function parseHexColor(raw: unknown, fallback: string): string {
+  return typeof raw === "string" && HEX_COLOR_RE.test(raw) ? raw : fallback;
+}
+
+function parseBoundedString(
+  raw: unknown,
+  minLen: number,
+  maxLen: number,
+  fallback: string,
+): string {
+  if (typeof raw !== "string") return fallback;
+  const trimmed = raw.trim();
+  if (trimmed.length < minLen || trimmed.length > maxLen) return fallback;
+  return trimmed;
+}
+
+function parseLogoUrl(raw: unknown): string | null {
+  if (typeof raw !== "string" || raw.length === 0) return null;
+  // Absolute HTTP(S) oder same-origin-Pfad erlauben, sonst null.
+  if (raw.startsWith("https://") || raw.startsWith("http://") || raw.startsWith("/")) {
+    return raw;
+  }
+  return null;
+}
+
 /**
  * Parst den in der DB gespeicherten webWidgetConfig (Prisma Json-Feld)
  * defensiv und fuellt Defaults auf. Niemals throw - immer ein
  * vollstaendiges ResolvedTenantConfig-Objekt zurueckgeben.
+ *
+ * Backward-kompatibel: alte Configs mit nur primaryColor/welcomeMessage/
+ * logoUrl werden korrekt gelesen, fehlende Felder aus DEFAULT_CONFIG
+ * gefuellt.
  */
 function parseConfig(raw: unknown): ResolvedTenantConfig {
   if (!raw || typeof raw !== "object") return DEFAULT_CONFIG;
 
   const obj = raw as Record<string, unknown>;
 
-  const primaryColor =
-    typeof obj.primaryColor === "string" && obj.primaryColor.length > 0
-      ? obj.primaryColor
-      : DEFAULT_CONFIG.primaryColor;
-
-  const logoUrl =
-    typeof obj.logoUrl === "string" && obj.logoUrl.length > 0
-      ? obj.logoUrl
-      : null;
-
-  const welcomeMessage =
-    typeof obj.welcomeMessage === "string" && obj.welcomeMessage.length > 0
-      ? obj.welcomeMessage
-      : DEFAULT_CONFIG.welcomeMessage;
-
-  return { primaryColor, logoUrl, welcomeMessage };
+  return {
+    backgroundColor: parseHexColor(obj.backgroundColor, DEFAULT_CONFIG.backgroundColor),
+    primaryColor: parseHexColor(obj.primaryColor, DEFAULT_CONFIG.primaryColor),
+    accentColor: parseHexColor(obj.accentColor, DEFAULT_CONFIG.accentColor),
+    textColor: parseHexColor(obj.textColor, DEFAULT_CONFIG.textColor),
+    mutedTextColor: parseHexColor(obj.mutedTextColor, DEFAULT_CONFIG.mutedTextColor),
+    logoUrl: parseLogoUrl(obj.logoUrl),
+    botName: parseBoundedString(obj.botName, 1, 50, DEFAULT_CONFIG.botName),
+    botSubtitle: parseBoundedString(obj.botSubtitle, 0, 100, DEFAULT_CONFIG.botSubtitle),
+    welcomeMessage: parseBoundedString(
+      obj.welcomeMessage,
+      1,
+      500,
+      DEFAULT_CONFIG.welcomeMessage,
+    ),
+    avatarInitials: parseBoundedString(
+      obj.avatarInitials,
+      1,
+      3,
+      DEFAULT_CONFIG.avatarInitials,
+    ),
+  };
 }
 
 // ---------- Oeffentliche API ----------

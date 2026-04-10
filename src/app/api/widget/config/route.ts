@@ -112,13 +112,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     details: { ipHash: hashIp(ip) },
   });
 
-  // Antwort: NUR nicht-sensitive Config, KEIN tenantId, keine internen Felder
+  // Antwort: NUR die 10 nicht-sensitiven Config-Felder,
+  // KEIN tenantId, keine internen Felder.
   return withCors(
     NextResponse.json(
       {
+        backgroundColor: resolved.config.backgroundColor,
         primaryColor: resolved.config.primaryColor,
+        accentColor: resolved.config.accentColor,
+        textColor: resolved.config.textColor,
+        mutedTextColor: resolved.config.mutedTextColor,
         logoUrl: resolved.config.logoUrl,
+        botName: resolved.config.botName,
+        botSubtitle: resolved.config.botSubtitle,
         welcomeMessage: resolved.config.welcomeMessage,
+        avatarInitials: resolved.config.avatarInitials,
       },
       { status: 200 },
     ),

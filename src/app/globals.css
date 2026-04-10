@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Phase 4a-Bug-Fix: Tailwind 4 Auto-Source-Detection greift
+   nicht zuverlaessig fuer nachtraeglich angelegte Verzeichnisse
+   wie /embed/. Diese explizite @source-Direktive sorgt dafuer,
+   dass jede .tsx-Datei unter src/ immer gescannt wird, auch
+   nach Hinzufuegen neuer Sub-Routes. */
+@source "../**/*.{js,ts,jsx,tsx,mdx}";
+
 @theme {
   --color-navy-950: #04040c;
   --color-navy-900: #08081a;
