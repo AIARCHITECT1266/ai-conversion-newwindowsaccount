@@ -136,3 +136,25 @@ nutzt. Eigene Schema-Migration "add_missing_tenant_cascades":
 ### Aufwand
 Ca. 30-45 Minuten: Schema-Edit, migrate dev (interaktiv durch Mensch
 wegen migration-workflow.md), Build-Test, Commit.
+
+## Phase 3b.5 — Widget-Consent-UX-Entscheidung offen
+
+### Status
+Frage für Phase 4 (Widget-UI) markiert.
+
+### Frage
+Soll /api/widget/session ein optionales consentGiven: true aus dem
+Request-Body akzeptieren, wenn das Widget-Frontend den Consent-
+Dialog UX-seitig vor dem Chat-Start anzeigt?
+
+### Optionen
+- (a) Server-Consent-Dance behalten: erster Turn ist immer
+  Consent-Anfrage. Frontend behandelt sie als normale Bot-Message.
+  Vorteil: einheitlich mit WhatsApp.
+- (b) Frontend zeigt Consent-Modal vor Session-Start. /session
+  bekommt consentGiven=true und legt Conversation mit
+  consentGiven=true an. Vorteil: ein Roundtrip weniger,
+  natürlichere UX im Web.
+
+### Entscheidung wann
+In Phase 4, sobald das Widget-UI-Konzept steht.
