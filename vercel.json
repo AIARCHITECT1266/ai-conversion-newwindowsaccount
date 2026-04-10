@@ -11,12 +11,28 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/widget/|embed/).*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "index, follow" },
         { "key": "Access-Control-Allow-Origin", "value": "https://ai-conversion.ai" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, HEAD, OPTIONS" },
         { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/api/widget/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/embed/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]

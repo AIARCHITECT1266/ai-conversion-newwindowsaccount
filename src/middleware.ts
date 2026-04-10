@@ -1,12 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { validateAdminSession } from "@/modules/auth/session-validate";
 
 export const runtime = "nodejs";
 
-// Security-Headers auf alle Responses setzen
-const SECURITY_HEADERS: Record<string, string> = {
-  "Content-Security-Policy":
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';",
+// Kryptographisch zufaelliger CSP-Nonce pro Request (128 bit)
+function generateNonce(): string {
+  return randomBytes(16).toString("base64");
+}
+
+// Widget- und spaetere /embed-Routen duerfen in fremde Seiten eingebettet werden
+function isWidgetRoute(pathname: string): boolean {
+  return pathname.startsWith("/api/widget") || pathname.startsWith("/embed");
+}
+
+// Baut den CSP-Header dynamisch pro Request mit injiziertem Nonce.
+// Hinweis: style-src/style-src-attr behalten bewusst 'unsafe-inline',
+// siehe docs/tech-debt.md (Phase 4-pre).
+function buildCspHeader(nonce: string, widgetRoute: boolean): string {
+  const frameAncestors = widgetRoute ? "*" : "'none'";
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "style-src-attr 'unsafe-inline'",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data:",
+    "connect-src 'self'",
+    `frame-ancestors ${frameAncestors}`,
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
+// Basis-Security-Headers (ohne CSP, die wird dynamisch ergaenzt)
+const BASE_SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -22,13 +50,27 @@ const WEBHOOK_ONLY_HEADERS: Record<string, string> = {
 
 function applySecurityHeaders(
   response: NextResponse,
-  pathname: string
+  pathname: string,
+  nonce: string
 ): NextResponse {
-  const headers = pathname.startsWith("/api/webhook/")
-    ? WEBHOOK_ONLY_HEADERS
-    : SECURITY_HEADERS;
-  for (const [key, value] of Object.entries(headers)) {
+  if (pathname.startsWith("/api/webhook/")) {
+    for (const [key, value] of Object.entries(WEBHOOK_ONLY_HEADERS)) {
+      response.headers.set(key, value);
+    }
+    return response;
+  }
+  for (const [key, value] of Object.entries(BASE_SECURITY_HEADERS)) {
     response.headers.set(key, value);
+  }
+  const widgetRoute = isWidgetRoute(pathname);
+  response.headers.set(
+    "Content-Security-Policy",
+    buildCspHeader(nonce, widgetRoute)
+  );
+  // X-Frame-Options: DENY wuerde frame-ancestors * auf Widget-Routen
+  // widersprechen. Auf Widget-Routen entfernen.
+  if (widgetRoute) {
+    response.headers.delete("X-Frame-Options");
   }
   return response;
 }
@@ -70,6 +112,15 @@ function isDashboardPath(pathname: string): boolean {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Nonce pro Request generieren. Wird gleichzeitig in die CSP und in
+  // den weitergereichten Request-Header x-nonce gesteckt, sodass
+  // Next.js SSR ihn in alle Inline-<script>-Tags injizieren kann.
+  const nonce = generateNonce();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+  const nextWithNonce = () =>
+    NextResponse.next({ request: { headers: requestHeaders } });
+
   // Dashboard-Schutz via Magic-Link Cookie
   if (isDashboardPath(pathname)) {
     const dashboardToken = req.cookies.get("dashboard_token")?.value;
@@ -78,23 +129,25 @@ export async function middleware(req: NextRequest) {
       if (pathname.startsWith("/api/dashboard")) {
         return applySecurityHeaders(
           NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 }),
-          pathname
+          pathname,
+          nonce
         );
       }
       // Seiten: Weiterleitung zur Login-Fehlerseite
       return applySecurityHeaders(
         NextResponse.redirect(new URL("/dashboard/login", req.url)),
-        pathname
+        pathname,
+        nonce
       );
     }
     // Token als Header weiterreichen (fuer API-Routen zur Tenant-Aufloesung)
-    const response = NextResponse.next();
+    const response = nextWithNonce();
     response.headers.set("x-dashboard-token", dashboardToken);
-    return applySecurityHeaders(response, pathname);
+    return applySecurityHeaders(response, pathname, nonce);
   }
 
   if (!isAdminPath(pathname)) {
-    return applySecurityHeaders(NextResponse.next(), pathname);
+    return applySecurityHeaders(nextWithNonce(), pathname, nonce);
   }
 
   // 1. API-Routen: Bearer-Token oder Cookie pruefen (Session-Token, nicht Secret)
@@ -106,25 +159,26 @@ export async function middleware(req: NextRequest) {
 
     // Session-Token via Bearer-Header pruefen
     if (bearerToken && await validateAdminSession(bearerToken)) {
-      return applySecurityHeaders(NextResponse.next(), pathname);
+      return applySecurityHeaders(nextWithNonce(), pathname, nonce);
     }
 
     // Fallback: Session-Cookie (Browser-Aufrufe aus dem Admin-Dashboard)
     const adminCookie = req.cookies.get("admin_token")?.value;
     if (adminCookie && await validateAdminSession(adminCookie)) {
-      return applySecurityHeaders(NextResponse.next(), pathname);
+      return applySecurityHeaders(nextWithNonce(), pathname, nonce);
     }
 
     return applySecurityHeaders(
       NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 }),
-      pathname
+      pathname,
+      nonce
     );
   }
 
   // 2. Admin-Seiten (/admin): Cookie-basierte Authentifizierung
   const adminCookie = req.cookies.get("admin_token")?.value;
   if (adminCookie && await validateAdminSession(adminCookie)) {
-    return applySecurityHeaders(NextResponse.next(), pathname);
+    return applySecurityHeaders(nextWithNonce(), pathname, nonce);
   }
 
   // Nicht authentifiziert → Login-Seite anzeigen
@@ -161,7 +215,7 @@ export async function middleware(req: NextRequest) {
       <button type="submit">Anmelden</button>
     </form>
   </div>
-  <script>
+  <script nonce="${nonce}">
     document.getElementById('form').addEventListener('submit', function(e) {
       e.preventDefault();
       var s = document.getElementById('secret').value.trim();
@@ -195,7 +249,7 @@ export async function middleware(req: NextRequest) {
       headers: { "Content-Type": "text/html; charset=utf-8" },
     }
   );
-  return applySecurityHeaders(loginResponse, pathname);
+  return applySecurityHeaders(loginResponse, pathname, nonce);
 }
 
 export const config = {

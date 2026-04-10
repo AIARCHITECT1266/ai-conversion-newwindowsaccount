@@ -158,3 +158,69 @@ Dialog UX-seitig vor dem Chat-Start anzeigt?
 
 ### Entscheidung wann
 In Phase 4, sobald das Widget-UI-Konzept steht.
+
+## Phase 4-pre — Inline-Styles in Components nicht refaktoriert
+
+### Status
+Bewusst aufgeschoben. style-src 'unsafe-inline' und
+style-src-attr 'unsafe-inline' bleiben in der CSP.
+
+### Hintergrund
+14 Inline-<style>-Tags in Components plus ~222 style={{}}-Props
+in 24 Dateien. Refactoring würde 4-6 Stunden dauern und hohes
+Bruchrisiko in Bestandsseiten haben. Nonce-basierte Lösung für
+style-src funktioniert außerdem nicht für style="..."-Attribute
+(die fallen unter style-src-attr, wo Nonces wirkungslos sind).
+
+### Risiko-Bewertung
+Niedrig. Inline-Styles sind kein realistischer XSS-Vektor
+(keine Code-Execution). Der gesamte Sicherheitsgewinn von
+CSP-Härtung liegt zu ~95% bei script-src, das jetzt vollständig
+nonce-basiert mit 'strict-dynamic' läuft.
+
+### Wann fixen
+Phase 7 oder später, evtl. zusammen mit Migration auf
+next/font und einer Tailwind-only-Style-Strategie.
+
+## Phase 4-pre — Google Fonts hardcoded auf 4 Stellen
+
+### Status
+Bewusst belassen. CSP erlaubt fonts.googleapis.com und
+fonts.gstatic.com als style-src- bzw. font-src-Quellen.
+
+### Stellen
+- src/middleware.ts:192 (Admin-Login-HTML, <link>-Tag)
+- src/app/admin/page.tsx:207 (@import url(...))
+- src/app/dashboard/conversations/[id]/page.tsx:133 (@import url(...))
+- src/app/dashboard/login/route.ts:92 (Dashboard-Login-Error-HTML, <link>-Tag)
+
+### Wann fixen
+Wenn ohnehin ein Refactor in den jeweiligen Files passiert.
+Migration auf next/font/google bringt Self-Hosting +
+bessere Performance und erlaubt die beiden externen CSP-
+Quellen wieder zu entfernen.
+
+## Phase 4-pre — vercel.json X-Frame-Options Ausnahme für Widget-Routen
+
+### Status
+Erledigt mit Block 1.
+
+### Hintergrund
+Vercel setzt X-Frame-Options: DENY via vercel.json header config.
+Dieser Header wird VOR der Next.js-Middleware angewendet und kann
+nicht von der Middleware via response.headers.delete() entfernt
+werden. Für Widget-iframe-Embedding muss der Header auf
+Widget-Routen abwesend sein.
+
+### Lösung
+vercel.json header-Block geteilt in globalen Block (mit
+X-Frame-Options DENY via Negative-Lookahead source
+/((?!api/widget/|embed/).*)) und Widget-/Embed-spezifische
+Blöcke ohne X-Frame-Options.
+
+### Verifikation in Production
+Nach erstem Vercel-Deploy mit Block 1: prüfen via
+  curl -i https://<deployment-url>/api/widget/config?key=foo
+  curl -i https://<deployment-url>/dashboard
+Erwartung: Widget-URL hat KEIN X-Frame-Options Header,
+Dashboard-URL hat X-Frame-Options: DENY.
