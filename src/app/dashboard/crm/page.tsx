@@ -62,7 +62,7 @@ interface CrmLead {
   predictiveScore: string | null;
   predictiveScoreAt: string | null;
   conversation: {
-    externalId: string;
+    externalId: string | null;
     status: string;
     updatedAt: string;
   };
@@ -119,7 +119,7 @@ interface LeadDetail {
   createdAt: string;
   conversation: {
     id: string;
-    externalId: string;
+    externalId: string | null;
     status: string;
     language: string;
     consentGiven: boolean;
@@ -175,8 +175,11 @@ const QUALIFICATION_COLORS: Record<string, string> = {
 
 /* ───────────────────────────── Hilfs-Funktionen ────────────────── */
 
-function maskId(externalId: string): string {
-  if (externalId.length <= 6) return "•••••";
+// Externe ID maskieren (DSGVO). Fuer WEB-Channel-Conversations ist
+// externalId seit Phase 3a.5 nullable - wir zeigen dann den generischen
+// Masken-Platzhalter.
+function maskId(externalId: string | null): string {
+  if (!externalId || externalId.length <= 6) return "•••••";
   return externalId.slice(0, 3) + " •••• " + externalId.slice(-2);
 }
 

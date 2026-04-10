@@ -44,7 +44,7 @@ interface DashboardStats {
   };
   conversations: {
     id: string;
-    externalId: string;
+    externalId: string | null;
     status: "ACTIVE" | "PAUSED" | "CLOSED" | "ARCHIVED";
     updatedAt: string;
     lastMessage: string | null;
@@ -75,9 +75,11 @@ function timeAgo(dateStr: string): string {
   return `vor ${days} Tag${days > 1 ? "en" : ""}`;
 }
 
-// Externe ID maskieren (DSGVO)
-function maskId(externalId: string): string {
-  if (externalId.length <= 6) return "•••••";
+// Externe ID maskieren (DSGVO). Fuer WEB-Channel-Conversations ist
+// externalId seit Phase 3a.5 nullable - wir zeigen dann den generischen
+// Masken-Platzhalter.
+function maskId(externalId: string | null): string {
+  if (!externalId || externalId.length <= 6) return "•••••";
   return externalId.slice(0, 3) + " •••• " + externalId.slice(-2);
 }
 
@@ -424,9 +426,12 @@ export default function TenantDashboard() {
       ]
     : [];
 
-  const totalLeads = stats
-    ? stats.pipeline.reduce((s, p) => s + p.count, 0)
-    : 0;
+  // Defensive ?? []-Guards: die API garantiert Arrays (siehe
+  // /api/dashboard/stats), aber ein zusaetzliches Sicherheitsnetz
+  // gegen zukuenftige Shape-Regressionen schadet nicht.
+  const conversations = stats?.conversations ?? [];
+  const pipeline = stats?.pipeline ?? [];
+  const totalLeads = pipeline.reduce((s, p) => s + p.count, 0);
 
   // Auth lädt noch
   if (authLoading) {
@@ -612,7 +617,7 @@ export default function TenantDashboard() {
                   <span className="text-[11px] text-slate-600 uppercase tracking-wider">Live</span>
                 </div>
                 <div className="space-y-3">
-                  {stats.conversations.length === 0 ? (
+                  {conversations.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 text-center py-6">
                       <p className="text-slate-500 text-sm">
                         Noch keine Gespraeche – starte jetzt deine erste Kampagne.
@@ -623,7 +628,7 @@ export default function TenantDashboard() {
                       </a>
                     </div>
                   ) : (
-                    stats.conversations.map((conv) => (
+                    conversations.map((conv) => (
                       <div
                         key={conv.id}
                         className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-colors hover:border-[rgba(201,168,76,0.15)] hover:bg-white/[0.03]"
@@ -667,7 +672,7 @@ export default function TenantDashboard() {
                 {/* Gestapelter Balken */}
                 <div className="mb-6 flex h-3 overflow-hidden rounded-full bg-white/[0.04]">
                   {totalLeads > 0 &&
-                    stats.pipeline.map((stage) => (
+                    pipeline.map((stage) => (
                       <div
                         key={stage.qualification}
                         className={`${pipelineColors[stage.qualification] ?? "bg-slate-500"} transition-all`}
@@ -678,7 +683,7 @@ export default function TenantDashboard() {
 
                 {/* Stufen-Details */}
                 <div className="space-y-3">
-                  {stats.pipeline.map((stage) => (
+                  {pipeline.map((stage) => (
                     <div key={stage.qualification} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`h-2.5 w-2.5 rounded-full ${pipelineColors[stage.qualification] ?? "bg-slate-500"}`} />

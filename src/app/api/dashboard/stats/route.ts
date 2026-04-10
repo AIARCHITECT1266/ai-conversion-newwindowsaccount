@@ -134,7 +134,9 @@ export async function GET() {
 
     return {
       id: c.id,
-      externalId: c.externalId,
+      // externalId kann seit Phase 3a.5 null sein (WEB-Channel). ?? null
+      // macht den API-Contract explizit und verhindert undefined-Drift.
+      externalId: c.externalId ?? null,
       status: c.status,
       updatedAt: c.updatedAt.toISOString(),
       lastMessage,
