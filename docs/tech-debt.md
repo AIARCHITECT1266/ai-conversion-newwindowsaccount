@@ -224,3 +224,27 @@ Nach erstem Vercel-Deploy mit Block 1: prüfen via
   curl -i https://<deployment-url>/dashboard
 Erwartung: Widget-URL hat KEIN X-Frame-Options Header,
 Dashboard-URL hat X-Frame-Options: DENY.
+
+## Phase 4b — unsafe-eval in Dev-Mode CSP
+
+### Status
+Erledigt mit Commit 9e134e4. Bewusste Trennung Dev/Prod.
+
+### Hintergrund
+Next.js React-Refresh-Runtime nutzt in Dev-Mode eval() für
+Hot Module Reload. Strikte CSP aus Block 1 ohne unsafe-eval
+hat das blockiert, ChatClient konnte nicht hydrated werden.
+
+### Lösung
+buildCspHeader prüft NODE_ENV. Development bekommt 'unsafe-eval',
+Production bleibt strikt.
+
+### Production-Verifikation
+Nach erstem Vercel-Deploy von Phase 4b: prüfen via
+  curl -i https://<deployment-url>/embed/widget?key=foo
+  | grep -i content-security
+Erwartung: KEIN 'unsafe-eval' im script-src.
+
+### Risiko
+Niedrig. Dev-Mode läuft nur lokal, nicht in Production.
+Standard-Next.js-Empfehlung.

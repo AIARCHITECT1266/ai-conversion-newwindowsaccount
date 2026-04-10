@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-10
-**Aktuelle Phase:** Phase 4 — Widget iframe-UI
-**Letzter Commit:** ee9209c (Phase 4a — Widget iframe-Skelett)
+**Aktuelle Phase:** Phase 4c — Polishing + Mobile
+**Letzter Commit:** 49c2415 (Phase 4b — Live Chat mit Polling)
 
 ---
 
@@ -176,6 +176,17 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   weil Auto-Detection /embed/ nicht erfasst hatte
 - Visuelle Verifikation in Desktop und Mobile-Viewport bestanden
 - Phase 4b (Chat-Logik + Polling) als nächstes
+
+### Phase 4b — Live Chat mit Consent-Modal + Polling (Commits 9e134e4 + 49c2415)
+- ChatClient Client Component mit allen interaktiven Zuständen
+- Consent-Modal vor Chat-Start (Akzeptieren/Ablehnen-Flow)
+- Optimistic UI für User-Messages mit Polling-Bestätigung
+- 2-Sekunden-Polling-Loop mit useEffect-Cleanup
+- Typing-Indicator und Auto-Scroll
+- Avatar + withAlpha Helper in eigene Dateien extrahiert
+- CSP-Dev-Mode-Fix für Next.js HMR (Production unverändert strikt)
+- End-to-End verifiziert: echte Multi-Turn-Konversation mit Claude
+  funktioniert, Kontext bleibt erhalten, UX flüssig
 
 ---
 
