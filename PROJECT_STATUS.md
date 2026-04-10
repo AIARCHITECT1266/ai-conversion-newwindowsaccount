@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-10
 **Aktuelle Phase:** Phase 4 — Widget iframe-UI
-**Letzter Commit:** 83e99d9 (Phase 3b Widget-API POST-Endpoints)
+**Letzter Commit:** 39c6783 (Phase 4-pre CLAUDE.md Reading-Order)
 
 ---
 
@@ -130,6 +130,23 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   widget.message_received erweitert
 - End-to-End Smoke-Test 4/4 grün
 - Token-Hashing schützt vor Klartext-Tokens in Upstash-Cache-Keys
+
+### Phase 4-pre — Consent-Erweiterung + Quality-Roadmap (3 Commits)
+- /api/widget/session akzeptiert optionalen consentGiven=true
+  (Commit 9626592)
+- /api/widget/message Logik: isNewConversation nur wenn
+  !conversation.consentGiven (überspringt Consent-Dance bei
+  pre-consented Sessions)
+- welcomeMessage-Default bestätigt (parseConfig in publicKey.ts
+  war bereits korrekt, keine Änderung nötig)
+- docs/quality-roadmap.md angelegt (7/10 → 9/10 Plan)
+  (Commit 2d98e80)
+- CLAUDE.md Reading-Order um quality-roadmap.md erweitert
+  (Commit 39c6783)
+- Smoke-Test bestätigt: alter Pfad (ohne consentGiven) legt
+  consentGiven=false/consentAt=null an, neuer Pfad
+  (consentGiven=true) überspringt Consent-Dance, Bot liefert
+  echte Claude-Antwort beim ersten Turn
 
 ---
 
