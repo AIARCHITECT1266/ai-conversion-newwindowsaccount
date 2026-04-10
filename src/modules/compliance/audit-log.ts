@@ -29,7 +29,9 @@ type AuditAction =
   | "rate_limit.exceeded"
   | "gdpr.data_export"
   | "gdpr.dpa_accepted"
-  | "widget.config_fetched";
+  | "widget.config_fetched"
+  | "widget.session_started"
+  | "widget.message_received";
 
 // DSGVO: Felder die nie in Details auftauchen duerfen
 const SENSITIVE_FIELDS = new Set([
