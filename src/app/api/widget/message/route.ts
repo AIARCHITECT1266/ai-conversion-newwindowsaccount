@@ -121,11 +121,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // isNewConversation: gibt es schon Messages in dieser Conversation?
+  // isNewConversation: erster Turn OHNE vorab erteilten Consent.
+  // Phase 4-pre: Wenn das Frontend consentGiven=true an /session geliefert
+  // hat, setzen wir isNewConversation=false, damit processMessage den
+  // Consent-Dance-Branch ueberspringt und direkt in die normale Bot-Logik
+  // geht (Nutzer-Input speichern, Claude aufrufen, Antwort persistieren).
   const messageCount = await db.message.count({
     where: { conversationId: conversation.id },
   });
-  const isNewConversation = messageCount === 0;
+  const isNewConversation = messageCount === 0 && !conversation.consentGiven;
 
   // senderIdentifier: opaquer String fuer processMessage.
   // Voller Session-Token, weil der Phase-3b.5-Consent-Fix darauf

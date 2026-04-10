@@ -53,6 +53,9 @@ const bodySchema = z.object({
     .regex(/^pub_[A-Za-z0-9_-]+$/, "Ungueltiges Key-Format"),
   // visitorMeta: beliebiges flaches Objekt, nicht tiefer typisiert
   visitorMeta: z.record(z.string(), z.unknown()).optional(),
+  // Phase 4-pre: Frontend-Modal kann consentGiven=true vorab senden,
+  // dann ueberspringt processMessage den Consent-Dance beim ersten Turn.
+  consentGiven: z.boolean().optional(),
 });
 
 // ---------- Hilfsfunktionen ----------
@@ -108,7 +111,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ),
     );
   }
-  const { publicKey, visitorMeta } = parseResult.data;
+  const { publicKey, visitorMeta, consentGiven: preConsented } = parseResult.data;
 
   // Tenant ueber Public Key aufloesen
   const resolved = await resolvePublicKey(publicKey);
@@ -123,7 +126,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Neue Conversation anlegen - externalId bleibt null (nur fuer Web erlaubt
   // seit Phase 3a.5), widgetSessionToken ist @unique.
+  // Phase 4-pre: Wenn das Frontend den Consent-Dialog UX-seitig vor dem
+  // Chat-Start eingeholt hat, sendet es consentGiven=true und wir koennen
+  // den Server-seitigen Consent-Dance beim ersten Turn ueberspringen.
   const sessionToken = generateSessionToken();
+  const now = new Date();
   const conversation = await db.conversation.create({
     data: {
       tenantId: resolved.tenantId,
@@ -132,7 +139,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       externalId: null,
       widgetSessionToken: sessionToken,
       widgetVisitorMeta: (visitorMeta ?? undefined) as Prisma.InputJsonValue | undefined,
-      consentGiven: false,
+      consentGiven: preConsented === true,
+      consentAt: preConsented === true ? now : null,
       language: "de",
     },
     select: { id: true },
