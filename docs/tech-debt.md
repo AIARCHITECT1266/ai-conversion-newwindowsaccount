@@ -274,3 +274,47 @@ Falls in Zukunft weitere Buttons Hover-Effekte brauchen
 (Phase 6 Dashboard z.B.), entscheiden wir pro Fall:
 - Wenn nur einfacher Hover (Brightness/Color): Pure CSS reicht
 - Wenn Transform oder komplexes Verhalten: React-State-Pattern
+
+## Phase 5-Pre — Lessons Learned: externalId-Nullability-Regression
+
+### Status
+Erledigt mit Hotfix-Commit (Hash folgt).
+
+### Was passiert ist
+Phase 3a.5 hat Conversation.externalId von NOT NULL auf nullable
+migriert, um WEB-Channel-Conversations zu unterstützen. Die
+Schema-Migration und die Conversation-Erzeugung wurden korrekt
+angepasst. Aber drei Dashboard-Dateien (dashboard/page.tsx,
+crm/page.tsx, conversations/[id]/page.tsx) hatten lokale
+maskId()-Helper, die externalId.length und externalId.slice()
+ohne Null-Check aufriefen. TypeScript fing den Bug nicht, weil
+die Interfaces fälschlich externalId: string statt string | null
+deklarierten.
+
+Beim Web-Widget-Testing am 11. April erzeugten wir 10 WEB-
+Conversations. Eine landete in der "Top-5 zuletzt aktualisiert"-
+Liste der Dashboard-Stats-API, und das Dashboard crashte mit
+"Cannot read properties of null (reading 'length')". Beim Cleanup
+verschwand der Bug "von selbst", weil keine WEB-Conversations
+mehr in der Top-5 waren.
+
+### Lessons Learned
+Bei jeder zukünftigen Schema-Migration MUSS ein "Konsument*innen-
+Audit" durchgeführt werden:
+1. grep nach allen Verwendungen des geänderten Felds
+2. Alle TypeScript-Interfaces aktualisieren
+3. Alle Dereference-Stellen prüfen, ob sie null-safe sind
+4. Optional: Alle gemeinsamen Helper (wie maskId) zentralisieren
+   statt 3-fach kopieren
+
+### Konkrete Aktion für die Zukunft
+Bei der nächsten Schema-Migration: Schritt 4 in der
+Migration-Workflow-Doku ergänzen: "Konsument*innen-Audit für
+nullable-gewordene Felder durchführen, bevor Migration applied
+wird."
+
+### Code-Hygiene-Hinweis
+maskId() existiert dreifach kopiert in drei Dateien. Sollte
+in src/lib/utils/maskId.ts zentralisiert werden, mit ts-strict
+Signatur (string | null). Phase 7 (Hardening) kann das
+zusammenfassen.
