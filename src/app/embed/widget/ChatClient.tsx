@@ -1,12 +1,13 @@
 "use client";
 
 // ============================================================
-// ChatClient (Phase 4b)
+// ChatClient (Phase 4c)
 //
 // Client Component mit allen interaktiven Zustaenden:
-// - Consent-Modal -> Session-Start mit consentGiven=true
+// - Consent-Modal mit Fade-in/Slide-up Animation
 // - Rejected-Screen
-// - Aktiver Chat: optimistic Send, Polling (2s), Typing-Indicator
+// - Aktiver Chat: optimistic Send, Polling (2s), Typing-Indicator,
+//   Offline-Banner bei >= 5 consecutive poll-fails, Fokus-Management
 //
 // Regel: Null hardcoded Farben. Alle visuellen Werte kommen aus
 // der uebergebenen Tenant-Config oder werden per withAlpha davon
@@ -35,19 +36,46 @@ interface ChatClientProps {
 }
 
 const POLL_INTERVAL_MS = 2000;
+const MODAL_FADE_MS = 200;
+const OFFLINE_THRESHOLD = 5;
 
 export function ChatClient({ config, publicKey }: ChatClientProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [showConsentModal, setShowConsentModal] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
   const [showRejectedScreen, setShowRejectedScreen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isStartingSession, setIsStartingSession] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [consecutiveFailedPolls, setConsecutiveFailedPolls] = useState(0);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const acceptButtonRef = useRef<HTMLButtonElement>(null);
   const lastPolledTimestampRef = useRef<number>(0);
+
+  // ----- Modal Fade-in beim ersten Render -----
+  useEffect(() => {
+    if (!showConsentModal) return;
+    const timer = setTimeout(() => setModalVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, [showConsentModal]);
+
+  // ----- Initial-Fokus im Modal (Accept-Button) -----
+  useEffect(() => {
+    if (showConsentModal && modalVisible) {
+      acceptButtonRef.current?.focus();
+    }
+  }, [showConsentModal, modalVisible]);
+
+  // ----- Fokus ins Input-Feld nach Modal-Close -----
+  useEffect(() => {
+    if (sessionToken && !showConsentModal) {
+      inputRef.current?.focus();
+    }
+  }, [sessionToken, showConsentModal]);
 
   // ----- Auto-Scroll auf neue Messages -----
   useEffect(() => {
@@ -70,7 +98,13 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
           (since > 0 ? `&since=${since}` : "");
 
         const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok || cancelled) return;
+        if (cancelled) return;
+
+        if (!res.ok) {
+          // HTTP-Fehler zaehlt auch als fehlgeschlagener Poll.
+          setConsecutiveFailedPolls((n) => n + 1);
+          return;
+        }
 
         const data = (await res.json()) as {
           messages: Array<{
@@ -82,7 +116,12 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
           conversationStatus: string;
         };
 
-        if (cancelled || data.messages.length === 0) return;
+        if (cancelled) return;
+
+        // Erfolgreicher Poll - Fail-Counter zuruecksetzen.
+        setConsecutiveFailedPolls(0);
+
+        if (data.messages.length === 0) return;
 
         setMessages((prev) => mergeMessages(prev, data.messages));
 
@@ -92,7 +131,10 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
         );
         lastPolledTimestampRef.current = maxTs;
       } catch {
-        // Einzelne Poll-Fehler ignorieren; naechste Iteration versucht es erneut.
+        // Network-Error oder JSON-Parse-Fail zaehlt auch.
+        if (!cancelled) {
+          setConsecutiveFailedPolls((n) => n + 1);
+        }
       }
     };
 
@@ -131,19 +173,22 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
         welcomeMessage: string;
       };
 
-      // welcomeMessage kommt aus der Tenant-Config, nicht aus der DB -
-      // sie wird also client-seitig als erste Pseudo-Bot-Message eingefuegt.
+      // Fade-Out starten, dann erst den State-Change durchfuehren,
+      // damit das Modal sauber ausfadet bevor der Chat erscheint.
+      setModalVisible(false);
       const now = Date.now();
-      setMessages([
-        {
-          id: `welcome-${now}`,
-          role: "assistant",
-          content: data.welcomeMessage,
-          timestamp: now,
-        },
-      ]);
-      setSessionToken(data.sessionToken);
-      setShowConsentModal(false);
+      setTimeout(() => {
+        setMessages([
+          {
+            id: `welcome-${now}`,
+            role: "assistant",
+            content: data.welcomeMessage,
+            timestamp: now,
+          },
+        ]);
+        setSessionToken(data.sessionToken);
+        setShowConsentModal(false);
+      }, MODAL_FADE_MS);
     } catch {
       setSessionError(
         "Verbindung konnte nicht aufgebaut werden. Bitte erneut versuchen.",
@@ -154,8 +199,11 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
   }, [publicKey, isStartingSession]);
 
   const handleRejectConsent = useCallback(() => {
-    setShowConsentModal(false);
-    setShowRejectedScreen(true);
+    setModalVisible(false);
+    setTimeout(() => {
+      setShowConsentModal(false);
+      setShowRejectedScreen(true);
+    }, MODAL_FADE_MS);
   }, []);
 
   const handleSendMessage = useCallback(async () => {
@@ -220,16 +268,19 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
   const lastMessage = messages[messages.length - 1];
   const showTypingIndicator = lastMessage?.role === "user" && !lastMessage.failed;
   const sendDisabled = !inputValue.trim() || isSending;
+  const showOfflineBanner = consecutiveFailedPolls >= OFFLINE_THRESHOLD;
 
   // ---------- Render: Consent-Modal ----------
   if (showConsentModal) {
     return (
       <ConsentModal
         config={config}
+        visible={modalVisible}
         onAccept={handleAcceptConsent}
         onReject={handleRejectConsent}
         isLoading={isStartingSession}
         errorMessage={sessionError}
+        acceptButtonRef={acceptButtonRef}
       />
     );
   }
@@ -285,20 +336,37 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
         {showTypingIndicator && <TypingIndicator config={config} />}
       </main>
 
+      {/* Offline-Banner (erscheint nach >= 5 fehlgeschlagenen Polls) */}
+      {showOfflineBanner && (
+        <div
+          className="shrink-0 px-4 py-2 text-center text-xs transition-opacity duration-300"
+          style={{
+            backgroundColor: withAlpha(config.mutedTextColor, "33"),
+            color: config.mutedTextColor,
+            borderTop: `1px solid ${withAlpha(config.primaryColor, "33")}`,
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          Verbindung wird wiederhergestellt...
+        </div>
+      )}
+
       {/* Input */}
       <footer
         className="flex shrink-0 items-end gap-2 px-4 py-3"
         style={{ borderTop: `1px solid ${withAlpha(config.primaryColor, "33")}` }}
       >
         <textarea
+          ref={inputRef}
           rows={1}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isSending}
-          aria-label="Nachricht schreiben"
+          aria-label="Nachricht eingeben"
           placeholder="Nachricht schreiben..."
-          className="flex-1 resize-none rounded-xl px-4 py-3 text-sm leading-relaxed focus:outline-none"
+          className="flex-1 resize-none rounded-xl px-4 py-3 text-base leading-relaxed focus:outline-none"
           style={{
             backgroundColor: withAlpha(config.textColor, "14"),
             border: `1px solid ${withAlpha(config.primaryColor, "4D")}`,
@@ -384,12 +452,14 @@ function MessageBubble({
     return (
       <div className="flex justify-end">
         <div
-          className="max-w-[80%] rounded-2xl rounded-br-sm px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap"
+          className="max-w-[80%] rounded-2xl rounded-br-sm px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words transition-opacity duration-200"
           style={{
             backgroundColor: config.primaryColor,
             color: config.backgroundColor,
             opacity,
+            boxShadow: `0 2px 8px ${withAlpha(config.primaryColor, "33")}`,
           }}
+          role="article"
         >
           {message.content}
           {message.failed && (
@@ -406,12 +476,14 @@ function MessageBubble({
     <div className="flex items-end gap-2">
       <Avatar size={32} config={config} />
       <div
-        className="max-w-[80%] rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap"
+        className="max-w-[80%] rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words"
         style={{
           backgroundColor: withAlpha(config.primaryColor, "1A"),
           border: `1px solid ${withAlpha(config.primaryColor, "33")}`,
           color: config.textColor,
+          boxShadow: `0 1px 3px ${withAlpha(config.primaryColor, "14")}, 0 1px 2px ${withAlpha("#000000", "1A")}`,
         }}
+        role="article"
       >
         {message.content}
       </div>
@@ -429,8 +501,9 @@ function TypingIndicator({ config }: { config: ResolvedTenantConfig }) {
           backgroundColor: withAlpha(config.primaryColor, "1A"),
           border: `1px solid ${withAlpha(config.primaryColor, "33")}`,
         }}
-        aria-label="Bot tippt"
+        aria-label="Bot antwortet"
         role="status"
+        aria-live="polite"
       >
         {[0, 200, 400].map((delay) => (
           <span
@@ -447,6 +520,13 @@ function TypingIndicator({ config }: { config: ResolvedTenantConfig }) {
   );
 }
 
+// SendButton mit React-State-basiertem Hover/Press/Disabled.
+// Begruendung: Tailwind 4 enabled:hover:* Variants haben sich in
+// Phase 4c als nicht zuverlaessig erwiesen (zwei Korrektur-Versuche
+// schlugen visuell fehl). Inline-styles via React-State sind hier
+// 100% kontrolliert, garantiert funktional und nicht mehr Code als
+// die fehlgeschlagene Tailwind-Variante. Siehe docs/tech-debt.md
+// "Phase 4c - Tailwind 4 enabled: Variant".
 function SendButton({
   config,
   disabled,
@@ -456,30 +536,66 @@ function SendButton({
   disabled: boolean;
   onClick: () => void;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+
+  // Skalierung berechnen - nur wenn nicht disabled
+  let scale = 1;
+  if (!disabled) {
+    if (isPressed) scale = 0.95;
+    else if (isHovered) scale = 1.1;
+  }
+
+  // Brightness nur bei Hover und nicht disabled
+  const brightness = !disabled && isHovered ? 1.15 : 1;
+
+  // Icon-Translation nur bei Hover und nicht disabled
+  const iconTranslateX = !disabled && isHovered ? 2 : 0;
+
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      aria-label="Senden"
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition hover:brightness-110 disabled:cursor-not-allowed"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setIsPressed(false);
+      }}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onBlur={() => {
+        setIsHovered(false);
+        setIsPressed(false);
+      }}
+      aria-label="Nachricht senden"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed"
       style={{
         backgroundColor: config.primaryColor,
         color: config.backgroundColor,
         opacity: disabled ? 0.5 : 1,
+        outlineColor: config.primaryColor,
+        transform: `scale(${scale})`,
+        filter: `brightness(${brightness})`,
+        transition:
+          "transform 200ms ease-out, filter 200ms ease-out, opacity 200ms ease-out",
       }}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
+        width="20"
+        height="20"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
+        style={{
+          transform: `translateX(${iconTranslateX}px)`,
+          transition: "transform 200ms ease-out",
+        }}
       >
         <line x1="22" y1="2" x2="11" y2="13" />
         <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -490,32 +606,53 @@ function SendButton({
 
 function ConsentModal({
   config,
+  visible,
   onAccept,
   onReject,
   isLoading,
   errorMessage,
+  acceptButtonRef,
 }: {
   config: ResolvedTenantConfig;
+  visible: boolean;
   onAccept: () => void;
   onReject: () => void;
   isLoading: boolean;
   errorMessage: string | null;
+  acceptButtonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
+  const cardTransition = visible
+    ? "opacity-100 translate-y-0 scale-100"
+    : "opacity-0 translate-y-4 scale-95";
+  const backdropTransition = visible ? "opacity-100" : "opacity-0";
+
   return (
     <div
-      className="flex h-screen w-full items-center justify-center p-6"
+      className="relative flex h-screen w-full items-center justify-center p-6"
       style={{ backgroundColor: config.backgroundColor }}
     >
+      {/* Backdrop */}
       <div
-        className="flex w-full max-w-sm flex-col gap-5 rounded-2xl p-6"
+        className={`absolute inset-0 transition-opacity duration-300 ${backdropTransition}`}
+        style={{ backgroundColor: withAlpha("#000000", "66"), backdropFilter: "blur(4px)" }}
+        aria-hidden="true"
+      />
+      {/* Modal-Karte */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="widget-consent-title"
+        className={`relative flex w-full max-w-sm flex-col gap-5 rounded-2xl p-6 transition-all duration-300 ease-out ${cardTransition}`}
         style={{
           backgroundColor: withAlpha(config.textColor, "14"),
           border: `1px solid ${withAlpha(config.primaryColor, "4D")}`,
+          boxShadow: `0 20px 40px ${withAlpha("#000000", "66")}`,
         }}
       >
         <div
           className="flex h-12 w-12 items-center justify-center rounded-full"
           style={{ backgroundColor: withAlpha(config.primaryColor, "1A") }}
+          aria-hidden="true"
         >
           <svg
             width="24"
@@ -526,7 +663,6 @@ function ConsentModal({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            aria-hidden="true"
           >
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             <path d="M9 12l2 2 4-4" />
@@ -534,6 +670,7 @@ function ConsentModal({
         </div>
         <div>
           <h2
+            id="widget-consent-title"
             className="text-lg font-semibold"
             style={{ color: config.textColor }}
           >
@@ -562,24 +699,27 @@ function ConsentModal({
             type="button"
             onClick={onReject}
             disabled={isLoading}
-            className="flex-1 rounded-xl px-4 py-2.5 text-sm font-medium transition hover:brightness-110 disabled:cursor-not-allowed"
+            className="flex-1 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-150 hover:brightness-110 active:scale-95 focus:outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed"
             style={{
               backgroundColor: "transparent",
               border: `1px solid ${withAlpha(config.primaryColor, "33")}`,
               color: config.textColor,
+              outlineColor: config.primaryColor,
             }}
           >
             Ablehnen
           </button>
           <button
+            ref={acceptButtonRef}
             type="button"
             onClick={onAccept}
             disabled={isLoading}
-            className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:brightness-110 disabled:cursor-not-allowed"
+            className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 hover:brightness-110 active:scale-95 focus:outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed"
             style={{
               backgroundColor: config.primaryColor,
               color: config.backgroundColor,
               opacity: isLoading ? 0.7 : 1,
+              outlineColor: config.primaryColor,
             }}
           >
             {isLoading ? "…" : "Akzeptieren"}
@@ -591,6 +731,14 @@ function ConsentModal({
 }
 
 function RejectedScreen({ config }: { config: ResolvedTenantConfig }) {
+  const headlineRef = useRef<HTMLHeadingElement>(null);
+
+  // Beim Mount Fokus auf die Headline legen, damit Screenreader
+  // den Kontext nicht verlieren (sie wuerden sonst auf body landen).
+  useEffect(() => {
+    headlineRef.current?.focus();
+  }, []);
+
   return (
     <div
       className="flex h-screen w-full items-center justify-center p-6"
@@ -626,7 +774,9 @@ function RejectedScreen({ config }: { config: ResolvedTenantConfig }) {
         </div>
         <div>
           <h2
-            className="text-lg font-semibold"
+            ref={headlineRef}
+            tabIndex={-1}
+            className="text-lg font-semibold focus:outline-none"
             style={{ color: config.textColor }}
           >
             Schade!
