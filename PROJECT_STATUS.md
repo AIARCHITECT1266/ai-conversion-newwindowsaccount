@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-11
-**Aktuelle Phase:** Phase 5 — Embed-Script (Floating Button)
-**Letzter Commit:** ed406d4 (Phase 4c — Polishing + Animationen + A11y)
+**Aktuelle Phase:** Phase 5 — Embed-Script (geplant)
+**Letzter Commit:** 90a18a0 (Phase 5-Pre Hotfix — externalId-Null-Bug)
 
 ---
 
@@ -202,9 +202,25 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Mobile-Touch-Targets 44x44, 16px Input-Font
 - Phase 4 ist damit komplett
 
+### Phase 5-Pre Hotfix — externalId-Null-Bug (Commits 90a18a0 + 9c25102)
+- Production-Hotfix für Dashboard-TypeError "Cannot read
+  properties of null reading length"
+- Root cause: Phase 3a.5 hat externalId nullable gemacht,
+  3 Dashboard-Dateien hatten lokale maskId() ohne Null-Check
+- TypeScript-Interfaces korrigiert (string | null)
+- maskId() in 3 Dateien null-safe gemacht
+- API-Handler mit explizitem ?? null
+- Defense-in-Depth ?? []-Guards in dashboard/page.tsx
+- Tech-Debt-Eintrag mit Lessons Learned und Migration-Workflow-Ergänzung
+- Code-Hygiene-Hinweis: maskId() sollte in Phase 7 zentralisiert werden
+
 ---
 
 ## Offene Arbeit / Blocker
+
+### Nächste Phasen
+- Phase 5: Embed-Script (Floating Button auf Pilot-Webseiten)
+- Architecture.md anlegen (User-Wunsch, Session morgen)
 
 ### Blocker: WhatsApp-Regression-Test
 - Status: Blockiert durch fehlende Meta Business Verification
