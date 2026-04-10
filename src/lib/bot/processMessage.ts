@@ -324,7 +324,11 @@ export async function processMessage(
   } = input;
 
   try {
-    // Neue Konversation: DSGVO-Consent anfordern, Nachricht NICHT speichern
+    // Neue Konversation: DSGVO-Consent anfordern.
+    // Phase 3b.5: User-Nachricht UND Consent-Antwort werden jetzt
+    // verschluesselt persistiert, damit der Web-Widget-Polling-Flow
+    // funktioniert und der Audit-Trail vollstaendig ist. Der
+    // WhatsApp-Transport bedient sich weiterhin an responses[].
     if (isNewConversation) {
       auditLog("bot.conversation_created", {
         tenantId,
@@ -334,6 +338,11 @@ export async function processMessage(
         tenantId,
         details: { conversationId, channel },
       });
+
+      // User-Nachricht (Roh-Eingabe) verschluesselt speichern
+      await saveMessage(conversationId, "USER", message);
+      // Consent-Anfrage als Bot-Antwort verschluesselt speichern
+      await saveMessage(conversationId, "ASSISTANT", CONSENT_MESSAGE);
 
       return {
         success: true,
