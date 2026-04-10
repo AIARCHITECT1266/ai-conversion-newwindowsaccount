@@ -19,9 +19,18 @@ function isWidgetRoute(pathname: string): boolean {
 // siehe docs/tech-debt.md (Phase 4-pre).
 function buildCspHeader(nonce: string, widgetRoute: boolean): string {
   const frameAncestors = widgetRoute ? "*" : "'none'";
+
+  // Dev-Mode: Next.js React-Refresh-Runtime nutzt eval() fuer
+  // Hot Module Reload. Production hat kein HMR und braucht
+  // daher kein 'unsafe-eval' - dort bleibt die CSP strikt.
+  const isDev = process.env.NODE_ENV === "development";
+  const scriptSrc = isDev
+    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    scriptSrc,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "style-src-attr 'unsafe-inline'",
     "font-src 'self' https://fonts.gstatic.com",
