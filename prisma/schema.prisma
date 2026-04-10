@@ -54,18 +54,20 @@ model Tenant {
 
 // ---------- Konversation / Chat-Session ----------
 model Conversation {
-  id             String             @id @default(cuid())
-  tenantId       String
-  externalId     String             // WhatsApp Chat-ID (gehashed für DSGVO)
-  consentGiven   Boolean            @default(false) // DSGVO: Einwilligung erteilt
-  consentAt      DateTime?          // Zeitpunkt der Einwilligung
-  language       String             @default("de") // Erkannte Sprache (ISO 639-1)
-  campaignSlug   String?            // Kampagnen-Tracking aus WhatsApp-Link
-  leadSource     String?            // "qr", "link", "organic", "web"
-  channel        Channel            @default(WHATSAPP) // Kanal: WhatsApp oder Web-Widget
-  status         ConversationStatus @default(ACTIVE)
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  id                 String             @id @default(cuid())
+  tenantId           String
+  externalId         String?            // WhatsApp Chat-ID (gehashed) - fuer Web-Sessions NULL
+  consentGiven       Boolean            @default(false) // DSGVO: Einwilligung erteilt
+  consentAt          DateTime?          // Zeitpunkt der Einwilligung
+  language           String             @default("de") // Erkannte Sprache (ISO 639-1)
+  campaignSlug       String?            // Kampagnen-Tracking aus WhatsApp-Link
+  leadSource         String?            // "qr", "link", "organic", "web"
+  channel            Channel            @default(WHATSAPP) // Kanal: WhatsApp oder Web-Widget
+  status             ConversationStatus @default(ACTIVE)
+  widgetSessionToken String?            @unique // Web-Widget Session-Token (ws_xxx)
+  widgetVisitorMeta  Json?              // Web-Widget: User-Agent, Referrer, Sprache
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   messages       Message[]
