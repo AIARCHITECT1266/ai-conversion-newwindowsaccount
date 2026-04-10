@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-10
-**Aktuelle Phase:** Phase 3b — Widget-API POST-Endpoints
-**Letzter Commit:** b75418b (Phase 3b.5 Consent-Persistenz-Fix)
+**Aktuelle Phase:** Phase 4 — Widget iframe-UI
+**Letzter Commit:** 83e99d9 (Phase 3b Widget-API POST-Endpoints)
 
 ---
 
@@ -116,6 +116,20 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Verbessert DSGVO-Audit-Trail (Pre-Consent-Input wird geloggt)
 - WhatsApp-Pfad unverändert (responses[] weiterhin returned)
 - Test-Skript bestätigt: alle 6 Checks grün
+
+### Phase 3b — Widget-API POST-Endpoints (Commit 83e99d9)
+- src/lib/widget/sessionToken.ts: generateSessionToken +
+  verifySessionToken + hashTokenForRateLimit
+- POST /api/widget/session (Rate-Limit 30/h IP, Zod, CORS,
+  Audit-Log)
+- POST /api/widget/message (Rate-Limit 60/h Token-Hash, ruft
+  processMessage mit channel=WEB, 202 Accepted)
+- GET /api/widget/poll (Rate-Limit 3600/h Token-Hash, kein Audit,
+  liefert messages array)
+- AuditAction-Union um widget.session_started und
+  widget.message_received erweitert
+- End-to-End Smoke-Test 4/4 grün
+- Token-Hashing schützt vor Klartext-Tokens in Upstash-Cache-Keys
 
 ---
 
