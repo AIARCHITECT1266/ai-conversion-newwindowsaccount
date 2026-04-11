@@ -51,5 +51,10 @@ dashboard-links.txt
 .tmp_UPSTASH_*
 *.tmp.env
 
-# Lokale Claude-Code-Einstellungen (persoenlich, nicht teilen)
-.claude/settings.local.json
+# Lokale Claude-Code-Einstellungen und Scratch-State (persoenlich, nicht teilen)
+# Umfasst settings.local.json, scheduled_tasks.lock und alle weiteren
+# Session-lokalen Dateien, die Claude Code erzeugt.
+.claude/
+
+# Next.js Dev-Server-Log (entsteht durch lokale Dev-Runs via `next dev > .next-dev.log`)
+.next-dev.log
