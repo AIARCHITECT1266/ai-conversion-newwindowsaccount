@@ -236,3 +236,120 @@ gesetzt und bleiben es auch nicht.
 - **Review-Trigger**: Falls Chrome in einer zukuenftigen Version
   die Warnung zu einem Error hochstuft oder die Semantik von
   `allow-same-origin` aendert, diese Sektion neu bewerten
+
+---
+
+## CSP-Hotfix (Option D) — 2026-04-12
+
+**Status:** Umgesetzt im unmittelbar folgenden Commit
+`fix(middleware): add route-specific CSP for widget demo page`.
+
+### Problem
+
+Nach der ersten Phase-5-Integration (`705007b`) stellte sich
+beim lokalen Test heraus, dass `public/widget-demo.html` die
+`widget.js`-Datei nicht laden konnte. Browser-Console zeigte
+CSP-Violation:
+
+> Refused to load the script 'http://localhost:3000/widget.js'
+> because it violates the following Content Security Policy
+> directive: "script-src 'self' 'nonce-...' 'strict-dynamic'
+> 'unsafe-eval'".
+
+### Root-Cause-Analyse (Regel 3)
+
+Die Middleware setzt auf **allen** von Next.js servierten Routen
+einen strikten CSP-Header mit `'strict-dynamic'`. Per CSP Level 3
+Spezifikation bewirkt `'strict-dynamic'`, dass `'self'`, Whitelist-
+URLs und Hash-Quellen fuer externe `<script src="...">`-Tags
+ignoriert werden — nur Scripts mit gueltigem Nonce (oder transitiv
+durch einen nonced Script geladen) sind erlaubt.
+
+`public/widget-demo.html` ist eine **statische Datei** und
+durchlaeuft kein SSR, sodass Next.js keinen Nonce in den
+`<script src="/widget.js">`-Tag injizieren kann. Ergebnis:
+blockiert.
+
+Die zunaechst gleichartig formulierte Sorge "Pilot-Kunden mit
+strikten CSPs werden dasselbe Problem haben" ist **keine gueltige
+Generalisierung dieses Fehlers**: Pilot-Kunden-Seiten liegen auf
+Kunden-Servern und unterliegen Kunden-CSPs — unsere Middleware
+sieht diese Seiten nicht. Deren CSP-Allowlist ist eine
+Doku-Aufgabe (Integration-Guide), nicht ein Middleware-Fix auf
+unserer Seite. Siehe `docs/tech-debt.md` -> "Pilot-Kunden-
+Integration-Guide".
+
+### Drei Optionen, drei Verwerfungen
+
+| Option | Kern | Verdict |
+|---|---|---|
+| **A** — `/widget.js` von CSP ausnehmen | Antwort-Header auf `widget.js` loeschen | Falsches Ziel: blockierende CSP liegt auf der ladenden HTML-Seite, nicht auf dem geladenen Script |
+| **B** — Spezielle CSP auf `/widget.js`-Response | Identisches Problem wie A | Gleiche Fehlframierung |
+| **C** — Hash-basierte Allowlist fuer `widget.js` | SHA-256 zu `script-src` hinzufuegen | Inkompatibel mit `'strict-dynamic'`: Hashes greifen dort nur fuer Inline-Scripts, nicht fuer externe `<script src>` |
+
+### Gewaehlte Option D — Route-spezifische CSP ohne `'strict-dynamic'`
+
+Die Middleware bekommt eine neue Route-Check-Funktion
+`isDemoRoute(pathname)`, analog zur bestehenden `isWidgetRoute`.
+Auf Demo-Routen baut `buildCspHeader` den `script-src` **ohne
+`'strict-dynamic'`** — `'self'` wird dadurch wieder wirksam und
+der Widget-Loader kann geladen werden.
+
+**Pro:**
+- Minimal-invasive Aenderung, ~15 LOC in einer Datei
+- Keine Security-Degradation auf Dashboard, Admin, Marketing,
+  `/embed/widget` — dort bleibt `'strict-dynamic'`
+- Konsistent mit bestehendem Pattern (`frame-ancestors` ist
+  bereits route-spezifisch fuer Widget-Routen)
+- Keine Datei-Verschiebung, `public/widget-demo.html` unveraendert
+- Demo-Seite enthaelt keine User-Daten, keine Auth, keinen
+  sensitiven Endpoint — das Lockern hier ist risiko-minimal
+
+**Contra:**
+- Weiterer Route-Fork im CSP-Aufbau (geringe mentale
+  Komplexitaet)
+
+### Alternative Option E (verworfen)
+
+Demo-Seite als Next.js Server Component nach
+`src/app/widget-demo/page.tsx` migrieren und den Nonce per
+`headers().get('x-nonce')` injizieren. Technisch sauberer, aber:
+
+- Erfordert Route-Group mit eigener `layout.tsx` fuer
+  Atelier-Hoffmann-Branding
+- ~300 Zeilen JSX-Port der HTML-Struktur
+- 5-10x mehr Aenderungsflaeche fuer eine reine Demo-Seite
+
+Nicht gewaehlt, weil Aufwand/Wert-Verhaeltnis schlecht. Falls
+die Demo-Seite jemals dynamische Inhalte braucht (Live-Config-
+Preview, A/B-Test-Vorschau), wird Option E zum dann noetigen
+Refactor — siehe `docs/tech-debt.md` -> "Demo-Route-CSP-Lockerung".
+
+### Betroffene Zeilen
+
+- `src/middleware.ts`:
+  - Neue Funktion `isDemoRoute(pathname)` direkt nach `isWidgetRoute`
+  - `buildCspHeader(nonce, widgetRoute, demoRoute)` — dritter Parameter
+  - `scriptSrc`-Branch: demoRoute=true entfernt `'strict-dynamic'`
+  - `applySecurityHeaders` reicht `demoRoute` durch
+  - Kommentarblock ueber `buildCspHeader` um Demo-Route-Hinweis
+    ergaenzt
+
+Nicht angefasst: `public/widget.js`, `public/widget-demo.html`,
+`src/app/embed/widget/*`, alle anderen Routen.
+
+### Verifikations-Ergebnis
+
+`npx next build` gruen. Live-Curl-Tests gegen lokalen Dev-Server
+(NODE_ENV=development):
+
+| Route | `strict-dynamic`? | `frame-ancestors` | Erwartung | Ergebnis |
+|---|---|---|---|---|
+| `/widget-demo.html` | abwesend | `'none'` | gelockert, keine Widget-Route | OK |
+| `/dashboard` | vorhanden | `'none'` | Regression: unveraendert | OK |
+| `/api/widget/config` | vorhanden | `*` | Widget-Route-Verhalten erhalten | OK |
+
+Browser-Test: Demo-Seite laedt, DevTools-Console sauber (bis
+auf die bereits dokumentierte Sandbox-Warnung), Widget-Bubble
+mit soliden Dots erscheint. Vom Project Owner manuell
+verifiziert vor Commit.

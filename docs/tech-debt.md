@@ -318,3 +318,82 @@ maskId() existiert dreifach kopiert in drei Dateien. Sollte
 in src/lib/utils/maskId.ts zentralisiert werden, mit ts-strict
 Signatur (string | null). Phase 7 (Hardening) kann das
 zusammenfassen.
+
+## Phase 5 — Pilot-Kunden-Integration-Guide fehlt
+
+### Status
+Offen. Trigger: vor dem ersten Pilot-Kunden.
+
+### Problem
+Das Phase-5-Embed-Script (`public/widget.js`) wird von
+Pilot-Kunden per `<script src="https://ai-conversion.ai/widget.js"
+data-key="pub_xxx" async>` eingebunden. Kunden-Webseiten mit
+striktem CSP (insbesondere solche mit `script-src 'self'` oder
+Nonce-basierten Policies) werden den Loader blockieren.
+
+Wichtig zur Abgrenzung: Das ist NICHT dasselbe Problem wie der
+CSP-Hotfix Option D (der nur unsere lokale Demo-Seite betrifft).
+Pilot-Kunden-Seiten liegen auf Kunden-Servern und unterliegen
+Kunden-CSPs — unsere Middleware ist fuer diese Seiten
+irrelevant. Wir koennen das NICHT server-seitig fixen, nur
+dokumentieren.
+
+### Was der Integration-Guide enthalten muss
+- Das empfohlene Snippet inklusive aller Varianten:
+  - Simple (keine CSP): `<script src=".../widget.js" data-key=...>`
+  - Strict CSP mit Nonce: Snippet zeigt den Nonce-Platzhalter,
+    Kunde muss ihn in seiner SSR-Pipeline einsetzen
+  - CSP-Allowlist-Variante: Kunde muss `https://ai-conversion.ai`
+    in seinen `script-src` eintragen
+- Welche `connect-src`-Erweiterung gebraucht wird
+  (fuer `/api/widget/config` + `/api/widget/session|message|poll`)
+- Welche `frame-src`-Erweiterung gebraucht wird
+  (fuer `/embed/widget`)
+- Troubleshooting-Sektion fuer die haeufigsten CSP-Fehler
+- Copy-Paste-faehige Konfigurationen fuer Next.js, Rails,
+  Django, plain HTML
+
+### Wann fixen
+VOR dem ersten echten Pilot-Kunden, nicht davor. Kein Blocker
+fuer weitere Phasen. Kann als eigener Doku-Commit oder Bestandteil
+von Phase 6 (Dashboard) umgesetzt werden — im Dashboard koennte
+der Embed-Code-Generator die Snippet-Variante direkt anhand der
+Kunden-CSP-Situation ausspielen.
+
+### Aufwand
+Ca. 1-2 Stunden Doku (`docs/integration-guide.md`), plus
+optional 2-3 Stunden fuer Dashboard-Integration.
+
+## Phase 5 — Demo-Route-CSP-Lockerung (Option D Nachsorge)
+
+### Status
+Akzeptierter Trade-off, kein aktueller Bug. Trigger: wenn
+`/widget-demo*` jemals dynamische Inhalte bekommt.
+
+### Hintergrund
+Der Phase-5-CSP-Hotfix (Option D) entfernt `'strict-dynamic'`
+aus dem `script-src` fuer Routen, die mit `/widget-demo`
+beginnen. Dadurch kann `public/widget-demo.html` den
+`widget.js`-Loader ueber `'self'` laden.
+
+Die Demo-Seite enthaelt heute **keine dynamischen Inhalte,
+keine User-Daten, keine Auth und keinen sensitiven Endpoint** —
+das Lockern ist risiko-minimal. Siehe ADR
+`docs/decisions/phase-5-embed-script.md` -> "CSP-Hotfix".
+
+### Wann fixen
+Wenn die Demo-Seite jemals eines der folgenden bekommt:
+- Dynamische Inhalte (Live-Config-Preview, A/B-Vorschau)
+- User-Eingabefelder, die Payload an unseren Server senden
+- Auth oder Sessions
+- Verlinkung zu internen Dashboard-Bereichen
+
+Dann greift Option E aus dem ADR: `/widget-demo*` als
+Next.js Server Component migrieren, Nonce per `headers()
+.get('x-nonce')` auf den Script-Tag injizieren, Route-Override
+im `buildCspHeader` wieder entfernen.
+
+### Aufwand
+Ca. 2-3 Stunden: JSX-Port der HTML-Struktur, Route-Group mit
+eigener `layout.tsx` fuer das Atelier-Hoffmann-Branding,
+Middleware-Override zurueckbauen, Curl-Regression.

@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 5 — Embed-Script (committed)
-**Letzter Commit:** [SHA folgt — feat(widget): add embed script with shadow dom loader (phase 5)]
+**Aktuelle Phase:** Phase 5 Hotfix — CSP Route-Override für Demo-Seite
+**Letzter Commit:** (dieser Commit) fix(middleware): add route-specific CSP for widget demo page
 
 ---
 
@@ -233,19 +233,47 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   (CLAUDE.md Regel 1)
 - Ab sofort Pflicht-Lektüre bei jedem Phase-Prompt
 
-### Phase 5 — Embed-Script (Commit [SHA folgt])
+### Phase 5 — Embed-Script (Commit 705007b)
 - public/widget.js: Vanilla-JS-Loader mit closed Shadow DOM,
   Floating-Bubble unten rechts, Lazy-Config-Fetch, Morph-
   Animation Bubble ↔ X, 12.5 KB
 - public/widget-bubble-icon.svg: Premium-Standard-Icon
-  (asymmetrische Sprechblase + 3 gradierende Dots)
+  (asymmetrische Sprechblase + 3 solide Dots)
 - public/widget-demo.html: Premium-gestaltete Demo-Seite
-  "Atelier Hoffmann" mit Cormorant+Inter-Typography
+  "Atelier Hoffmann" mit Cormorant+Inter-Typography,
+  Demo-Key als Placeholder (pub_DEMO_REPLACE_ME)
 - ResolvedTenantConfig um bubbleIconUrl (string | null) erweitert
 - API /api/widget/config liefert bubbleIconUrl im Response
 - Konsumenten-Audit durchgeführt (Regel 2): 3 Stellen angepasst
 - docs/decisions/phase-5-embed-script.md: ADR mit 3
-  Architektur-Entscheidungen + Trade-offs + Reversibilität
+  Architektur-Entscheidungen + Trade-offs + Reversibilität +
+  Akzeptierte Browser-Warnung (Sandbox-Eskalations-Hinweis)
+
+### Phase 5 Hotfix — CSP Route-Override für Demo-Seite (dieser Commit)
+- Datum: 2026-04-12
+- Root-Cause: widget-demo.html ist statisch, bekommt
+  strict-dynamic-CSP, blockiert widget.js (kein Nonce-Inject
+  möglich ohne SSR)
+- Drei vom User ursprünglich vorgeschlagene Optionen (A/B/C)
+  nach Regel-3-Diagnose verworfen (falsches Ziel bzw.
+  inkompatibel mit strict-dynamic)
+- Option D umgesetzt: neue isDemoRoute()-Funktion in
+  middleware.ts, script-src ohne strict-dynamic für
+  /widget-demo*, alle anderen Routen unverändert
+- Verifikation: Build grün, Curl-Tests für /widget-demo.html
+  (ohne strict-dynamic), /dashboard (mit strict-dynamic
+  Regression), /api/widget/config (mit strict-dynamic +
+  frame-ancestors *) alle wie erwartet
+- Browser-Test verifiziert: Demo-Seite lädt, Bubble sichtbar
+  mit soliden Dots, Console sauber abgesehen von der
+  akzeptierten Sandbox-Warnung (dokumentiert im ADR)
+- Pilot-Kunden-CSP-Thema als separates Tech-Debt-Ticket
+  angelegt (Doku-only, kein Middleware-Fix möglich)
+- docs/decisions/phase-5-embed-script.md um "CSP-Hotfix
+  (Option D)"-Sektion erweitert
+- docs/tech-debt.md um zwei Einträge ergänzt:
+  "Pilot-Kunden-Integration-Guide" und
+  "Demo-Route-CSP-Lockerung"
 
 ---
 

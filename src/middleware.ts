@@ -14,19 +14,53 @@ function isWidgetRoute(pathname: string): boolean {
   return pathname.startsWith("/api/widget") || pathname.startsWith("/embed");
 }
 
+// Demo-/Test-Seite fuer das Embed-Widget. Diese Seite muss den
+// statischen Widget-Loader (public/widget.js) per <script src> laden
+// koennen. Mit der strikten 'strict-dynamic'-CSP ist das nicht moeglich,
+// weil 'self' dann ignoriert wird. Die Demo-Route bekommt daher einen
+// gelockerten script-src OHNE 'strict-dynamic' (siehe buildCspHeader).
+// Phase 5 Hotfix Option D, docs/decisions/phase-5-embed-script.md.
+function isDemoRoute(pathname: string): boolean {
+  return pathname === "/widget-demo.html" || pathname.startsWith("/widget-demo");
+}
+
 // Baut den CSP-Header dynamisch pro Request mit injiziertem Nonce.
 // Hinweis: style-src/style-src-attr behalten bewusst 'unsafe-inline',
 // siehe docs/tech-debt.md (Phase 4-pre).
-function buildCspHeader(nonce: string, widgetRoute: boolean): string {
+//
+// Route-spezifische Abweichungen:
+// - Widget-/Embed-Routen (isWidgetRoute): frame-ancestors '*' statt 'none',
+//   damit das iframe in fremde Kundenseiten eingebettet werden kann.
+// - Demo-Route (isDemoRoute): 'strict-dynamic' aus script-src entfernt,
+//   damit widget.js ueber 'self' geladen werden kann. Nonce bleibt Pflicht
+//   fuer SSR-Inline-Scripts, 'self' wird wieder wirksam. Nur fuer die
+//   statische Marketing-/Test-Seite, kein User-Kontext, kein Auth.
+//   Siehe ADR docs/decisions/phase-5-embed-script.md (CSP-Hotfix).
+function buildCspHeader(
+  nonce: string,
+  widgetRoute: boolean,
+  demoRoute: boolean,
+): string {
   const frameAncestors = widgetRoute ? "*" : "'none'";
 
   // Dev-Mode: Next.js React-Refresh-Runtime nutzt eval() fuer
   // Hot Module Reload. Production hat kein HMR und braucht
   // daher kein 'unsafe-eval' - dort bleibt die CSP strikt.
   const isDev = process.env.NODE_ENV === "development";
-  const scriptSrc = isDev
-    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+
+  // Demo-Route: 'strict-dynamic' entfernt, damit 'self' wieder greift
+  // und der Widget-Loader ueber <script src="/widget.js"> geladen werden
+  // kann. Alle anderen Routen behalten 'strict-dynamic'.
+  let scriptSrc: string;
+  if (demoRoute) {
+    scriptSrc = isDev
+      ? `script-src 'self' 'nonce-${nonce}' 'unsafe-eval'`
+      : `script-src 'self' 'nonce-${nonce}'`;
+  } else {
+    scriptSrc = isDev
+      ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
+      : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+  }
 
   return [
     "default-src 'self'",
@@ -72,9 +106,10 @@ function applySecurityHeaders(
     response.headers.set(key, value);
   }
   const widgetRoute = isWidgetRoute(pathname);
+  const demoRoute = isDemoRoute(pathname);
   response.headers.set(
     "Content-Security-Policy",
-    buildCspHeader(nonce, widgetRoute)
+    buildCspHeader(nonce, widgetRoute, demoRoute)
   );
   // X-Frame-Options: DENY wuerde frame-ancestors * auf Widget-Routen
   // widersprechen. Auf Widget-Routen entfernen.
