@@ -506,6 +506,14 @@ export default function TenantDashboard() {
               { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone },
               { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send },
               { href: "/dashboard/clients", label: "Clients", icon: Users },
+              // Phase 6.5: Settings-Einstieg. active-State bleibt false,
+              // weil dieser Tab-Bar-Code nur im Kontext von
+              // dashboard/page.tsx (/dashboard) rendert — auf den
+              // Settings-Seiten selbst gibt es die eigene Sidebar-
+              // Navigation. Ein dynamischer Active-Check via
+              // usePathname() waere hier immer false, deshalb
+              // statisch weggelassen.
+              { href: "/dashboard/settings", label: "Einstellungen", icon: Settings },
             ].map((item) => {
               const Icon = item.icon;
               return (

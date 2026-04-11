@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 6 abgeschlossen. Bereit für Phase 7 (Hardening + 10 Test-Szenarien + Pilot-Integration-Guide)
-**Letzter Commit:** (dieser Commit) docs(phase-6): mark phase 6 complete after successful e2e smoke test
+**Aktuelle Phase:** Phase 6.5 — Settings-Sidebar (Navigation-Polish, committed)
+**Letzter Commit:** (dieser Commit) feat(dashboard): add settings sidebar with mobile hamburger (phase 6.5)
 
 ---
 
@@ -428,7 +428,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   docs/decisions/phase-3b-spec-reconciliation.md
 - Phase 6.4 (E2E-Smoke-Test durch Project Owner) steht noch aus
 
-### Phase 6.4 — E2E-Smoke-Test verifiziert (dieser Commit)
+### Phase 6.4 — E2E-Smoke-Test verifiziert (Commit b3b113a)
 - Datum: 2026-04-12
 - Tester: Project Owner
 - Test-Setup: internal-admin-Tenant temporär auf paddlePlan
@@ -467,6 +467,43 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - **Phase 6 final abgeschlossen.** Nächster Schritt: Phase 7
   (Hardening, 10 Test-Szenarien aus WEB_WIDGET_INTEGRATION.md,
   Pilot-Kunden-Integration-Guide aus tech-debt.md)
+
+### Phase 6.5 — Settings-Sidebar (Navigation-Polish, dieser Commit)
+- Datum: 2026-04-12
+- Scope: Navigation-Polish nach dem E2E-Abschluss. Die Settings-
+  Bereiche (Widget aus 6.2, Prompt aus Phase 4-pre) saßen bis
+  hierher als isolierte Einzel-Seiten ohne Einstiegspunkt vom
+  Haupt-Dashboard — 6.5 macht sie zu einem dedizierten Bereich
+  mit eigener linker Sidebar
+- Drei Architektur-Entscheidungen:
+  1. Sidebar-Pattern statt Tab/Dropdown (Notion/Linear/Stripe-
+     Standard, skaliert auf 6+ Settings-Bereiche)
+  2. Coming-Soon-Items sichtbar aber disabled: signalisiert
+     Pilot-Kunden Produkt-Roadmap ohne versprechenden Link
+  3. Mobile-Hamburger direkt mitgebaut (<640px, sm:-Breakpoint),
+     kein späterer Responsive-Refactor nötig
+- 3 neue Files:
+  * src/app/dashboard/settings/layout.tsx (Server Component,
+    flex-Container mit Sidebar + main, min-h-screen bg[#07070d])
+  * src/app/dashboard/settings/SettingsSidebar.tsx (Client
+    Component mit useState für Mobile-Open + usePathname für
+    Active-State, responsive fixed→static via sm:-Klassen)
+  * src/app/dashboard/settings/page.tsx (Server Component,
+    Settings-Übersicht mit 2 aktiven + 4 Coming-Soon-Cards)
+- 1 modifiziertes File:
+  * src/app/dashboard/page.tsx — neuer "Einstellungen"-Tab
+    in der Haupt-Nav nach "Clients". Active-State bleibt
+    statisch false, Kommentar erklärt warum dynamischer Check
+    hier immer false wäre (Tab-Bar ist auf dashboard/page.tsx
+    scoped, nicht auf einem geteilten Dashboard-Layout)
+- Existing settings/widget/page.tsx und settings/prompt/page.tsx
+  bleiben unverändert. Ihre eigenen min-h-screen-Wrapper werden
+  durch das neue Layout doppelt gesetzt, aber visuell harmlos
+  (gleiche Farbe, gleiche Semantik). Refactor ist Phase-7-Scope
+- Tailwind sm:-Breakpoint (640px) für Mobile/Desktop-Switch,
+  nicht md: — per User-Briefing "Mobile <640px"
+- Build grün, neue Route /dashboard/settings (Static, 175 B)
+  erscheint im Route-Manifest
 
 ---
 

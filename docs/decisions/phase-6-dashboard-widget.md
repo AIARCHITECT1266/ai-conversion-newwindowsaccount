@@ -686,3 +686,147 @@ existiert bereits.
   aus `phase-5-embed-script.md` pruefen (Migration zu
   `src/app/widget-demo/page.tsx` + Server-Component-Nonce-
   Injection, Demo-Route-CSP-Lockerung rueckbauen)
+
+---
+
+## Sub-Phase 6.5 — Settings-Navigation (Sidebar-Pattern)
+
+**Status:** Umgesetzt im Commit dieser Sub-Phase.
+
+### Kontext
+
+Phase 6.2 hat die Widget-Settings-Page erstellt, Phase 4-pre
+hatte schon die Bot-Prompt-Settings. Beide sassen bis dahin als
+isolierte Einzel-Seiten unter `/dashboard/settings/*` ohne
+Einstiegspunkt vom Haupt-Dashboard — der User musste die URLs
+direkt kennen oder via Browser-History zurueckfinden. Zusaetzlich
+gab es keinen visuellen Anhaltspunkt, welche Einstellungen
+ueberhaupt existieren und welche noch kommen.
+
+Sub-Phase 6.5 macht die Einstellungen zu einem **dedizierten
+Bereich** mit eigener Navigation — konsistent mit dem Pattern
+von Notion, Linear und Stripe.
+
+### Drei Architektur-Entscheidungen
+
+**(a) Sidebar statt Tab/Dropdown im Header**
+
+Gewaehlt: dedizierte linke Sidebar unter `/dashboard/settings`.
+Verworfen: ein Einzel-Dropdown im Haupt-Header oder ein Tab-
+Submenue.
+
+Begruendung:
+- Sidebar skaliert sauber auf N Einstellungs-Bereiche (wir
+  haben heute 2, planen 6+). Tab-Bars werden ab ca. 5 Tabs
+  visuell ueberfrachtet
+- Notion/Linear/Stripe-Pattern ist der heute akzeptierte
+  Industry-Standard fuer Settings-Bereiche in SaaS-Dashboards.
+  User erwarten diese Struktur
+- Konsistente Permanent-Navigation innerhalb Settings, kein
+  Ruecksprung-Zwang auf eine Uebersicht
+- Ermoeglicht "Bald verfuegbar"-Placeholder als sichtbares,
+  aber deaktiviertes Nav-Item
+
+**(b) Coming-Soon-Items sichtbar, aber disabled**
+
+Gewaehlt: die 4 noch nicht existierenden Settings-Bereiche
+(*Profil & Account*, *Plan & Billing*, *HubSpot Integration*,
+*Team & Mitglieder*) erscheinen in der Sidebar unter einem
+"Bald verfuegbar"-Heading, mit reduziertem Kontrast,
+`cursor-not-allowed`-Style und `aria-disabled="true"`-
+Attribut.
+
+Begruendung:
+- Signalisiert dem Pilot-Kunden sofort *"da kommt mehr"* —
+  Produkt-Reife wird wahrnehmbar gemacht, ohne Features zu
+  versprechen, die noch nicht laufen
+- Vermeidet den "toter Bereich"-Eindruck, den ein Kunde haette,
+  wenn die Sidebar nur zwei Items zeigte
+- Macht die Settings-Roadmap fuer den Kunden sichtbar, ohne
+  einen separaten Changelog/Roadmap-Link
+- Risiko-Bewertung: sollte Product-Management sich spaeter
+  gegen ein angekuendigtes Feature entscheiden, waere das ein
+  "broken promise". Fuer die 4 geplanten Features ist die
+  Entscheidung aber bereits gefallen (HubSpot-Feature existiert
+  bereits rudimentaer in `HubSpotSettings`-Component in
+  `dashboard/page.tsx`, wird nur noch nicht in eine eigene
+  Settings-Seite extrahiert)
+
+**(c) Mobile-Hamburger direkt mitbauen**
+
+Gewaehlt: responsive Sidebar mit Hamburger-Menue fuer
+Viewports unter 640px (Tailwind `sm:`-Breakpoint). Verworfen:
+*"Mobile-Support in einer spaeteren Phase nachruesten"*.
+
+Begruendung:
+- Der Dashboard-Zugang wird aus Pilot-Kunden-Feedback heraus
+  auch mobil genutzt (QR-Code-Scan vor Ort, schneller Check
+  der Leads auf dem Smartphone). Eine permanent sichtbare
+  Sidebar ist auf Mobile unbenutzbar
+- Nachruesten-Aufwand haette sich durch eine spaetere Phase
+  doppelt: erst die Sidebar bauen ohne Mobile, dann spaeter
+  den kompletten Responsive-Refactor hinterherziehen. Mit
+  Tailwind ist der Mobile-Support praktisch kein Zusatzaufwand
+  (ein paar `sm:`-Klassen mehr)
+- Hamburger-Pattern ist standard mobile UX, User erwarten es
+
+### Umsetzung (3 neue + 1 modifizierte Datei)
+
+**Neu:**
+
+- `src/app/dashboard/settings/layout.tsx` — Server Component,
+  wrappt alle Settings-Routen in einen flex-Container mit
+  linker Sidebar und `<main className="min-w-0 flex-1">`. Liefert
+  das `bg-[#07070d] min-h-screen` auf Layout-Ebene.
+- `src/app/dashboard/settings/SettingsSidebar.tsx` — Client
+  Component mit `useState` fuer das Mobile-Hamburger-Open-State
+  und `usePathname()` fuer den Active-State auf den aktiven
+  Nav-Items. Enthaelt Hamburger-Button, Backdrop und die
+  Sidebar selbst in **einer** Komponente. Auf `sm:` wird aus
+  `fixed -translate-x-full` ein `static translate-x-0`.
+- `src/app/dashboard/settings/page.tsx` — Server Component,
+  neue Uebersichts-Landing-Page unter `/dashboard/settings`.
+  Zeigt 2 aktive Settings-Cards + 4 Coming-Soon-Cards, plus
+  Zurueck-Link zum Haupt-Dashboard.
+
+**Modifiziert:**
+
+- `src/app/dashboard/page.tsx` — neuer Tab-Eintrag
+  *"Einstellungen"* in der Haupt-Nav des Dashboards (nach
+  *Clients*, vor dem AI-Studio-Dropdown). `active`-State ist
+  hardcoded `false` bzw. weggelassen, mit Kommentar der
+  erklaert warum ein dynamischer `usePathname()`-Check hier
+  immer `false` zurueckgeben wuerde (die Tab-Bar ist in
+  `dashboard/page.tsx` eingebettet und rendert nur im Kontext
+  von `/dashboard`). Ein echter, uebergreifender Active-State
+  braeuchte ein `src/app/dashboard/layout.tsx`, das existiert
+  heute nicht und ist Phase-7-oder-spaeter-Scope.
+
+### Nicht angefasst
+
+- `src/app/dashboard/settings/widget/page.tsx` (Phase 6.2) —
+  unveraendert. Die existierenden `<div min-h-screen bg-[#07070d]>`-
+  Wrapper werden durch das neue Layout doppelt gesetzt, sind
+  aber visuell harmlos (gleiche Farbe, gleiche Semantik).
+  Ein Refactor zur Layout-Integration ist Phase-7-Scope.
+- `src/app/dashboard/settings/prompt/page.tsx` — dito.
+- Keine existierende Dashboard-Top-Level-Page (crm, campaigns,
+  broadcasts, clients) wurde angefasst. Diese sehen den neuen
+  Settings-Tab erst, wenn sie sich selbst ein gemeinsames
+  Dashboard-Layout teilen — das ist explizit nicht Teil von
+  Phase 6.5
+
+### Reversibilitaet
+
+Alle Aenderungen sind Two-Way-Door:
+
+- Sidebar loeschen = zurueck zu freistehenden Settings-Pages
+- Layout.tsx loeschen = Pages funktionieren weiter (ihre
+  eigenen Wrapper uebernehmen wieder)
+- "Einstellungen"-Tab aus `dashboard/page.tsx` entfernen = eine
+  Zeile weg
+- Coming-Soon-Items zu realen Nav-Items upgraden = Array-Move
+  vom `COMING_SOON_ITEMS` zum `ACTIVE_ITEMS` in
+  `SettingsSidebar.tsx`, plus neue Settings-Page schreiben
+
+Keine One-Way-Doors.
