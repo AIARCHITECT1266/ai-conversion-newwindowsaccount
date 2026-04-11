@@ -13,7 +13,7 @@ exakt dieser Reihenfolge:
 6. **docs/quality-roadmap.md** — Plan von 7/10 auf 9/10
 7. **docs/test-debt.md** — Nicht getestete Pfade
 8. **docs/migration-workflow.md** — Regeln für Prisma-Migrationen
-9. **docs/architecture.md** — System-Übersicht (sobald angelegt)
+9. **docs/architecture.md** — System-Übersicht
 10. **docs/data-model.md** — Datenmodell-Übersicht (sobald angelegt)
 11. **docs/changelog.md** — Feature-Historie (sobald angelegt)
 
