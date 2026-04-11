@@ -77,6 +77,7 @@ export async function GET(
     conversation: {
       id: conversation.id,
       externalId: conversation.externalId,
+      channel: conversation.channel, // Phase 6.3: Channel fuer das Badge in der Detail-View
       status: conversation.status,
       language: conversation.language,
       consentGiven: conversation.consentGiven,

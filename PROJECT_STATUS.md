@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 6.2 — Widget-Settings-Page (committed, 6.3 + 6.4 offen)
-**Letzter Commit:** (dieser Commit) feat(dashboard): add web widget settings page (phase 6.2)
+**Aktuelle Phase:** Phase 6.3 — Conversations-List-View + Channel-Filter (committed, 6.4 offen)
+**Letzter Commit:** (dieser Commit) feat(dashboard): add conversations list view with channel filter (phase 6.3)
 
 ---
 
@@ -331,7 +331,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   Poll-Audit-Log ADR)
 - Phase 6 ist aus Doku-Sicht freigegeben
 
-### Phase 6.2 — Widget-Settings-Page (dieser Commit)
+### Phase 6.2 — Widget-Settings-Page (Commit 029f2a1)
 - Datum: 2026-04-12
 - Sub-Phase 6.1 (Pre-Analyse): 5 Verifikations-Punkte
   geprüft, zwei offene Entscheidungen (E1, E2) vom User
@@ -384,6 +384,49 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   Punkte für 6.3/6.4
 - Phase 6.3 (Channel-Filter) und 6.4 (E2E-Smoke-Test) stehen
   noch aus
+
+### Phase 6.3 — Conversations-List-View + Channel-Filter (dieser Commit)
+- Datum: 2026-04-12
+- Entscheidung E2 aus 6.1-Pre-Analyse umgesetzt: Ansatz Y
+  (dedizierte List-View statt verstreute Filter in 3 bestehenden
+  Views)
+- Neue Server-Component-Page /dashboard/conversations mit
+  Prisma-Direct-Load, URL-Query-Filter ?channel=WHATSAPP|WEB
+  und ?page=N Paginierung (20/Seite), Channel-Badge pro Eintrag,
+  Empty-State mit Filter-Reset-Link
+- ConversationsFilter Client-Component mit useTransition für
+  smooth Filter-Wechsel ohne Full-Page-Flash
+- ChannelBadge als wiederverwendbare Komponente in eigener
+  Datei extrahiert, wird in 3 Views konsumiert (List, Detail,
+  CRM) — DRY mit technisch unmöglichem Drift
+- Channel-Badge-Farbwahl: Emerald (WhatsApp) + Sky (Web)
+  statt Briefing-Wortlaut Primary/Accent. Begründung:
+  Dashboard-Gold = PAUSED, Dashboard-Purple = ACTIVE, Kollision
+  mit Status-Pills wäre unvermeidbar gewesen. Als bewusste
+  Briefing-Abweichung nach CLAUDE.md Regel 5 in ChannelBadge.tsx
+  kommentiert + im ADR phase-6-dashboard-widget.md ausführlich
+  begründet
+- API /api/dashboard/conversations erweitert um channel-Filter
+  (Zod-validiert) und channel im Response-Shape
+- API /api/dashboard/conversations/[id] liefert channel mit
+- API /api/dashboard/leads nested Select erweitert um
+  conversation.channel für CRM-Kanban-Karten
+- dashboard/page.tsx: "Alle anzeigen →"-Link im "Letzte
+  Gespräche"-Block unten rechts, öffnet /dashboard/conversations
+- KPI-Kachel "Aktive Gespräche": verifiziert dass der zugrunde
+  liegende DB-Query bereits kanal-agnostisch ist (nur tenantId +
+  status, kein channel-Filter), summiert automatisch WhatsApp +
+  Web. Kein Fix nötig
+- Cosmetic: lokale URLSearchParams-Variable in buildPageUrl
+  von params auf qp umbenannt, vermeidet Verwechslung mit
+  Next.js-searchParams-Prop
+- Phase-6.1-Hydration-Failure-Eintrag in docs/tech-debt.md
+  (pre-existing dirty aus Debug-Vorfall vor 6.2) im selben
+  Commit mitgenommen — nicht als separater Commit
+- Read-only GET-Endpoints (List, Detail) loggen weiterhin
+  kein auditLog, konsistent mit Poll-Endpoint-Präzedenz aus
+  docs/decisions/phase-3b-spec-reconciliation.md
+- Phase 6.4 (E2E-Smoke-Test durch Project Owner) steht noch aus
 
 ---
 

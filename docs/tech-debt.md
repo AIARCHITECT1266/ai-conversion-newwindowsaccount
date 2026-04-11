@@ -436,3 +436,72 @@ internal-admin-Tenant erreichbar, Compliance-Risiko ist Null.
 ### Aufwand
 5-10 Minuten. Ein `auditLog`-Aufruf, eine `AuditAction`-Union-
 Erweiterung, ein Build-Check, ein Commit.
+
+## Phase 6.1 — Hydration-Failure nach Middleware-Aenderung
+
+### Status
+Aufgetreten 2026-04-12 waehrend Sub-Phase 6.2 Browser-Test.
+Geloest durch `rm -rf .next` plus Dev-Server-Neustart. Keine
+Code-Aenderung noetig, kein Commit zum Fix.
+
+### Symptom
+`/dashboard` lieferte HTTP 200 (SSR-Initial-HTML), aber die
+Client-Side-Hydration scheiterte komplett — React-Bundle lud
+nicht, keine `useEffect`-Hooks feuerten, API-Routen
+`/api/dashboard/me` und `/api/dashboard/stats` wurden nie
+aufgerufen (deshalb tauchten sie nicht im Dev-Server-Compile-Log
+auf). Ergebnis: weisse Seite nach Login.
+
+Im Log sichtbar: vier aufeinanderfolgende `ENOENT: no such
+file or directory, open '.next/server/app/dashboard/login/
+route.js'` Errors, obwohl die Source-Datei
+`src/app/dashboard/login/route.ts` existiert.
+
+### Vermutete Ursache (nicht empirisch isoliert)
+Korrupter `.next/`-Incremental-Compile-Cache nach mehreren
+Middleware-Aenderungen im laufenden Dev-Server. Next.js 15
+Hot-Reload hat bekannte Edge-Cases bei `src/middleware.ts`-
+Aenderungen, bei denen neue Middleware-Logik aktiv ist aber
+alte SSR-Artefakte weiter referenziert werden. Zwischen der
+letzten Middleware-Aenderung (Phase-5-CSP-Hotfix Commit
+`865843b`) und dem Auftritt des Bugs lagen mehrere
+zwischenzeitliche Commits mit Incremental-Kompilierungen —
+die Wahrscheinlichkeit einer Cache-Inkonsistenz war hoch.
+
+**Ob ein reiner Prozess-Restart ohne `.next/`-Reset gereicht
+haette, ist nicht experimentell belegbar — wir haben beide
+Schritte gleichzeitig ausgefuehrt.** Die Evidenz der vier
+ENOENT-Errors ueber vier Requests spricht gegen
+Self-Recovery eines purenen Restarts.
+
+### Trigger fuer Wiederholung (Praevention)
+Nach jeder Aenderung an `src/middleware.ts` im laufenden
+Dev-Server:
+
+1. Dev-Server stoppen (`Strg+C` oder Background-Task killen)
+2. `rm -rf .next`
+3. `npx next dev` neu starten
+
+**Hot-Reload alleine reicht bei Middleware-Aenderungen nicht
+zuverlaessig.** Der Cache-Reset ist billig (Next.js kompiliert
+in ~1.5s neu) und schliesst diese Drift-Klasse garantiert aus.
+
+Aufwand der Praevention: 30 Sekunden pro Middleware-Aenderung.
+Aufwand des Debuggings wenn nicht praeventiert: ~90 Minuten
+(dieser Fall, inklusive Log-Analyse, Hypothesen-Bildung,
+alternative Ursachen-Pruefungen).
+
+### Latente, nicht-handelnde Hypothese
+Waehrend des Debuggings wurde zusaetzlich vermutet, dass
+`src/app/layout.tsx` einen `await headers()`-Aufruf braucht,
+um Next.js 15 die Nonce-Injection-Pipeline fuer SSR-Scripts
+zu aktivieren. Diese Hypothese wurde **nicht verifiziert** —
+das Problem loeste sich durch den Cache-Reset, bevor ein
+Browser-Console-Check der CSP-Violations stattfinden konnte.
+
+**Kein Layout-Fix aktuell umgesetzt.** Falls dieselbe weisse-
+Seite-nach-Login jemals wieder ohne Middleware-Aenderung
+auftritt, ist diese Hypothese der erste Verdacht — dann
+Browser-DevTools-Console oeffnen, nach CSP-Violations suchen,
+im SSR-HTML-Output pruefen ob `<script>`-Tags `nonce="..."`-
+Attribute tragen.

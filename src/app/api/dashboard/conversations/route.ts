@@ -6,8 +6,13 @@ import { decryptText } from "@/modules/encryption/aes";
 
 // Zod-Schema fuer Query-Parameter
 const statusSchema = z.enum(["ACTIVE", "PAUSED", "CLOSED", "ARCHIVED"]).optional();
+const channelSchema = z.enum(["WHATSAPP", "WEB"]).optional();
 
-// GET /api/dashboard/conversations?status=ACTIVE&limit=20
+// GET /api/dashboard/conversations?status=ACTIVE&channel=WEB&limit=20
+//
+// Kein auditLog() auf diesem Endpoint: Read-only Listen-Abfrage, analog
+// zur Poll-Endpoint-Ausnahme in docs/decisions/phase-3b-spec-reconciliation.md
+// (semantisch keine "Aktion", nur ein Lese-Heartbeat vom Dashboard).
 export async function GET(req: NextRequest) {
   const tenant = await getDashboardTenant();
   if (!tenant) {
@@ -26,6 +31,17 @@ export async function GET(req: NextRequest) {
   }
   const status = statusResult.data;
 
+  // Channel-Parameter validieren (Phase 6.3)
+  const rawChannel = req.nextUrl.searchParams.get("channel");
+  const channelResult = channelSchema.safeParse(rawChannel || undefined);
+  if (!channelResult.success) {
+    return NextResponse.json(
+      { error: "Ungültiger Channel. Erlaubt: WHATSAPP, WEB" },
+      { status: 400 }
+    );
+  }
+  const channel = channelResult.data;
+
   const limit = Math.min(
     parseInt(req.nextUrl.searchParams.get("limit") ?? "20", 10) || 20,
     50
@@ -35,6 +51,7 @@ export async function GET(req: NextRequest) {
     where: {
       tenantId,
       ...(status ? { status } : {}),
+      ...(channel ? { channel } : {}),
     },
     orderBy: { updatedAt: "desc" },
     take: limit,
@@ -77,6 +94,7 @@ export async function GET(req: NextRequest) {
     return {
       id: c.id,
       externalId: c.externalId,
+      channel: c.channel, // Phase 6.3: Channel im Response-Shape
       status: c.status,
       language: c.language,
       consentGiven: c.consentGiven,

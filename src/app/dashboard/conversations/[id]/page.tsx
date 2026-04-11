@@ -15,6 +15,7 @@ import {
   Clock,
   Tag,
 } from "lucide-react";
+import { ChannelBadge } from "../ChannelBadge";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -41,6 +42,10 @@ interface Lead {
 interface ConversationDetail {
   id: string;
   externalId: string | null;
+  // Phase 6.3: Channel-Herkunft (WHATSAPP oder WEB). optional im
+  // Interface weil alte API-Versionen das Feld moeglicherweise
+  // nicht zurueckgeben — defensive Rueckfall-Sicherheit.
+  channel?: "WHATSAPP" | "WEB";
   status: string;
   language: string;
   consentGiven: boolean;
@@ -163,9 +168,14 @@ export default function ConversationDetailPage() {
             Konversation
           </h1>
           {conversation && (
-            <p className="mt-0.5 font-mono text-xs text-gray-500">
-              {maskId(conversation.externalId)}
-            </p>
+            <div className="mt-0.5 flex items-center gap-2">
+              <p className="font-mono text-xs text-gray-500">
+                {maskId(conversation.externalId)}
+              </p>
+              {conversation.channel && (
+                <ChannelBadge channel={conversation.channel} />
+              )}
+            </div>
           )}
         </div>
       </div>

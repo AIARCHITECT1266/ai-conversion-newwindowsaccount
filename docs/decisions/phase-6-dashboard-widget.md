@@ -329,3 +329,198 @@ Keine One-Way-Doors.
 - E2E-Smoke-Test durch Project Owner.
 - Dokumentation des Test-Befundes in diesem ADR oder als Ergaenzung.
 - Phase-6-Abschluss-Commit.
+
+---
+
+## Sub-Phase 6.3 — Conversations-List-View + Channel-Filter (Ansatz Y)
+
+**Status:** Umgesetzt im Commit dieser Sub-Phase.
+
+### Kontext
+
+Die urspruengliche Spec (`WEB_WIDGET_INTEGRATION.md` Phase 6)
+verlangte: *"Channel-Filter in Conversations-View (Alle /
+WhatsApp / Web)"*. Bei der Pre-Analyse in Sub-Phase 6.1 stellte
+sich heraus, dass **keine dedizierte Conversations-List-View
+existierte** — Conversations wurden verstreut im Haupt-Dashboard
+(`dashboard/page.tsx` Top-5-Block), in der CRM-Kanban und in
+der Detail-View gezeigt, ohne zentralen Listen-Einstiegspunkt.
+
+Entscheidung E2 aus dem 6.1-Briefing: **Ansatz Y gewaehlt** —
+eine neue dedizierte List-View unter `/dashboard/conversations`
+bauen, statt den Channel-Filter in die drei bestehenden
+verstreuten Displays zu injizieren.
+
+### Begruendung Ansatz Y
+
+| Kriterium | Ansatz X (verteilt) | Ansatz Y (dediziert) |
+|---|---|---|
+| Filter-Logik | 3x dupliziert | 1x an einem Ort |
+| Deeplink-Faehigkeit | Schwierig (mehrere Routen) | Natuerlich (`?channel=X` in einer Route) |
+| UX-Erwartung "Conversations Tab" | Fehlt | Vorhanden |
+| Aufwand Phase 6.3 | ~4h verteilte Edits | ~5h fuer neue Seite + 3 Mini-Edits |
+| Aufwand kuenftige Filter-Erweiterungen | Exponentiell | Linear |
+| E2E-Smoke-Test (Phase 6.4) | Mehrere Eingangspunkte zu pruefen | Ein Eingangspunkt |
+
+Ansatz Y zahlt sich beim ersten Pilot-Kunden aus, der eine
+"Zeige mir alle Web-Chats der letzten Woche"-Frage hat — das
+ist in Ansatz Y ein Link, in Ansatz X ein Bug-Report.
+
+### Architektur-Entscheidungen innerhalb 6.3
+
+**(a) Server Component + Prisma-Direct-Load**
+
+Die neue `src/app/dashboard/conversations/page.tsx` ist eine
+reine Server Component und laedt Daten direkt ueber Prisma,
+nicht ueber die parallele API-Route
+`/api/dashboard/conversations`. Begruendung:
+
+- Identisches Pattern zu `dashboard/page.tsx` und
+  `dashboard/crm/page.tsx` — beide laden ihre Server-Side-
+  Daten ebenfalls direkt
+- Null Netzwerk-Roundtrip zwischen SSR und API-Layer
+- Tenant-Isolation und Decryption bleiben serverseitig,
+  kein Client kann die entschluesselten Nachrichten ueber
+  den Frontend-State leaken
+- Der parallele API-Endpoint
+  `/api/dashboard/conversations?channel=X` bleibt erhalten
+  und wurde im selben Commit ebenfalls um den Channel-Filter
+  erweitert — fuer kuenftige SPA- oder External-API-
+  Konsumenten (Mobile-App, Zapier, etc.)
+
+**(b) URL-Query-Parameter fuer Filter-State**
+
+Der Channel-Filter wird als `?channel=WHATSAPP|WEB` in die
+URL geschrieben, die Paginierung als `?page=N`. Begruendung:
+
+- Deeplink-Faehigkeit: jeder Filter-Zustand ist per Link
+  teilbar
+- Browser-Back funktioniert natuerlich
+- Server Component kann den State serverseitig lesen ohne
+  Cookie-oder-Session-State
+- `ConversationsFilter` Client-Component nutzt `useRouter`
+  plus `useTransition` fuer optimistisches UI-Feedback
+  waehrend die Server-Component-Remount-Request laeuft
+
+**(c) Kein `auditLog` auf den Read-Endpoints**
+
+`/api/dashboard/conversations` (Liste) und
+`/api/dashboard/conversations/[id]` (Detail) sind Read-only
+und loggen **nicht** via `auditLog`. Begruendung folgt exakt
+der in `docs/decisions/phase-3b-spec-reconciliation.md` Drift 2
+etablierten Praezedenz fuer den Poll-Endpoint: Read-only-
+Listen-/Detail-Abfragen sind semantisch keine "Aktionen" im
+Spec-Sinne, und ein auditLog pro Dashboard-Page-Refresh wuerde
+das Log-Volumen ohne Compliance-Gewinn aufblaehen.
+
+**(d) ChannelBadge als extrahierte Komponente**
+
+Der ChannelBadge wird in **drei** Views verwendet:
+
+1. `src/app/dashboard/conversations/page.tsx` (neue List-View)
+2. `src/app/dashboard/conversations/[id]/page.tsx` (bestehende Detail-View)
+3. `src/app/dashboard/crm/page.tsx` (LeadCard im Kanban)
+
+Statt den Badge-Markup in drei Dateien inline zu duplizieren,
+wurde er in `src/app/dashboard/conversations/ChannelBadge.tsx`
+extrahiert. Eine einzige Quelle fuer Markup und Farb-Logik,
+Drift zwischen den drei Views ist technisch unmoeglich. Wenn
+in Phase 7+ ein dritter Kanal dazukommt (z.B. Instagram-DM),
+ist die Aenderung an **einer** Datei zu machen.
+
+**(e) Bewusste Briefing-Abweichung: Channel-Badge-Farbwahl**
+
+Das 6.3-Briefing schrieb *"primary-Color fuer WhatsApp,
+accent-Color fuer Web — das CSS fuer die Badges kann simpel
+sein"*. Die tatsaechliche Umsetzung verwendet **Emerald**
+(WhatsApp-Brand-Gruen) und **Sky** (Web-Browser-Semantik),
+**nicht** die Dashboard-Primary-Gold und Dashboard-Accent-
+Purple.
+
+Begruendung:
+
+- Dashboard-Gold `#c9a84c` ist bereits fuer Status **PAUSED**
+  in den Status-Pills vergeben
+- Dashboard-Purple `#8b5cf6` ist bereits fuer Status **ACTIVE**
+  in den Status-Pills vergeben
+- Status-Pills und Channel-Badges stehen im selben flex-Row
+  (gleiche Zeile, gleiche Shape, gleiche Groesse) im
+  List-View-LeadCard, im CRM-LeadCard und im Detail-View-
+  Header
+- Eine wortlaut-treue Umsetzung haette die Status-Information
+  visuell ueberschrieben und Nutzer in 50% der Faelle
+  falsch interpretieren lassen
+
+Emerald + Sky ist die **kollisionsfreie Lesart**, die plus
+den semantisch vertrauten Brand-/Medium-Cue fuer WhatsApp
+(Green) und Web (Blue) mitbringt.
+
+**Spec-Bezug (CLAUDE.md Regel 5):** Die Abweichung ist in
+`src/app/dashboard/conversations/ChannelBadge.tsx` mit einem
+expliziten Kommentar-Block versehen, der die Spec-Stelle
+zitiert (*"primary-Color fuer WhatsApp, accent-Color fuer Web"*)
+und die Begruendung (*"Dashboard-Gold = PAUSED, Dashboard-
+Purple = ACTIVE, Kollision unvermeidbar"*) wortlaut-genau
+ausformuliert. Die Regel ist erfuellt: der Leser der
+`ChannelBadge.tsx` sieht **beide** — den Spec-Wortlaut und
+die Begruendung fuer die Abweichung — ohne diesen ADR
+oeffnen zu muessen.
+
+### Umfang Sub-Phase 6.3
+
+Insgesamt 11 Dateien betroffen:
+
+**Neu (3):**
+- `src/app/dashboard/conversations/page.tsx` — Server Component List-View
+- `src/app/dashboard/conversations/ConversationsFilter.tsx` — Client Filter-Tabs
+- `src/app/dashboard/conversations/ChannelBadge.tsx` — Wiederverwendbare Badge-Komponente
+
+**Modifiziert (8):**
+- `src/app/api/dashboard/conversations/route.ts` — channel-Filter + channel im Response
+- `src/app/api/dashboard/conversations/[id]/route.ts` — channel im Response
+- `src/app/api/dashboard/leads/route.ts` — nested channel im Select
+- `src/app/dashboard/page.tsx` — "Alle anzeigen →"-Link im "Letzte Gespraeche"-Block
+- `src/app/dashboard/conversations/[id]/page.tsx` — ConversationDetail-Interface + ChannelBadge-Import + Render im Header
+- `src/app/dashboard/crm/page.tsx` — CrmLead-Interface + ChannelBadge-Import + Render in LeadCard
+- `docs/decisions/phase-6-dashboard-widget.md` — dieser Eintrag
+- `PROJECT_STATUS.md` — Phase-6.3-Historie
+
+Plus: `docs/tech-debt.md` war bereits dirty mit dem
+Phase-6.1-Hydration-Failure-Eintrag aus dem Debug-Vorfall
+vor 6.2 — wurde im selben 6.3-Commit mitgenommen.
+
+### Verifikation der KPI "Aktive Gespraeche"
+
+Das 6.3-Briefing verlangte eine Verifikation, dass die
+KPI-Kachel "AKTIVE GESPRÄCHE" auf dem Haupt-Dashboard
+WhatsApp **und** Web summiert. Ergebnis der Pruefung in
+`src/app/api/dashboard/stats/route.ts` Z. 35-37:
+
+```typescript
+db.conversation.count({
+  where: { tenantId, status: "ACTIVE" },
+}),
+```
+
+Der Query filtert **ausschliesslich auf `tenantId` und
+`status`**, **nicht** auf `channel`. Damit zaehlt die KPI
+**automatisch beide Kanaele** — seit Phase 2 (Schema-Migration
+mit `channel`-Enum-Default WHATSAPP) und seit Phase 3
+(processMessage mit `channel: "WEB"` fuer das Widget). **Kein
+Fix noetig.** Der Query ist seit Phase 2 kanal-agnostisch.
+
+### Reversibilitaet
+
+Alle sechs Aenderungen sind Two-Way-Door:
+
+- Neue `/dashboard/conversations`-Route loeschen = zurueck zu
+  verteilten Displays
+- ChannelBadge-Extraktion rueckgaengig = inline in drei Files
+- URL-Query-Parameter → Cookie/State moeglich ohne
+  Frontend-Breakage
+- Prisma-Direct-Load → API-Fetch moeglich ohne
+  Schema-Aenderung
+- Channel-Filter in der API rueckgaengig = das optionale
+  Parameter wird einfach ignoriert
+
+Keine One-Way-Doors.

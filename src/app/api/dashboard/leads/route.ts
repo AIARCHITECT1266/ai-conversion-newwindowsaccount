@@ -29,6 +29,9 @@ export async function GET() {
       conversation: {
         select: {
           externalId: true,
+          // Phase 6.3: channel wird fuer das Channel-Badge
+          // in der CRM-Kanban-View benoetigt.
+          channel: true,
           status: true,
           updatedAt: true,
         },

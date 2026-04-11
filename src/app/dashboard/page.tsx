@@ -654,6 +654,17 @@ export default function TenantDashboard() {
                     ))
                   )}
                 </div>
+                {/* Footer-Link zur dedizierten List-View (Phase 6.3) */}
+                {conversations.length > 0 && (
+                  <div className="mt-4 flex justify-end border-t border-white/[0.06] pt-3">
+                    <a
+                      href="/dashboard/conversations"
+                      className="text-xs text-[#c9a84c] underline underline-offset-4 transition-colors hover:text-[#d4b85c]"
+                    >
+                      Alle anzeigen &rarr;
+                    </a>
+                  </div>
+                )}
               </motion.div>
 
               {/* Lead-Pipeline */}
