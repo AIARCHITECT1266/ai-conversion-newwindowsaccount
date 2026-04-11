@@ -524,3 +524,165 @@ Alle sechs Aenderungen sind Two-Way-Door:
   Parameter wird einfach ignoriert
 
 Keine One-Way-Doors.
+
+---
+
+## Sub-Phase 6.4 — E2E-Smoke-Test-Ergebnis
+
+**Datum:** 2026-04-12
+**Tester:** Project Owner (manueller Browser-Durchlauf)
+**Befund:** Alle 7 End-to-End-Kriterien verifiziert, Phase 6
+als abgeschlossen markiert.
+
+### Test-Setup
+
+- **Dev-Server:** Port 3000, `.next/` wurde vor dem Test frisch
+  neu kompiliert (`rm -rf .next && npx next dev`) — Phase-6.1-
+  Lesson-Learned angewandt, dass Multi-File-Commits im laufenden
+  Dev-Server Tailwind-4-Hot-Reload-Korruption ausloesen koennen
+- **Tenant:** internal-admin (`cmnpufc400000poldrd72wdu5`)
+- **Plan-Override:** `paddlePlan` temporaer auf `"growth_monthly"`
+  gesetzt via `src/scripts/upgrade-test-tenant.ts`. Idempotent,
+  nicht-destruktiv, aktualisiert ausschliesslich das `paddlePlan`-
+  Feld. Dadurch `hasPlanFeature(..., "web_widget") = true`, und
+  die Widget-Settings-Page zeigt die vollstaendige UI statt des
+  `UpgradePrompt`-Banners
+- **Login:** ueber `dashboard-links.txt`-Magic-Link nach
+  Token-Rotation via `src/scripts/rotate-dashboard-token.ts`
+- **Widget-Demo:** `public/widget-demo.html` als Mockup einer
+  Kunden-Webseite (Atelier Hoffmann), von Phase 5 uebernommen
+
+### Die 7 verifizierten Punkte
+
+1. **Widget-Loader laedt auf Host-Seite.** Der Floating-Bubble-
+   Button erscheint unten rechts auf der Demo-Seite, der
+   Phase-5-Embed-Script-Flow funktioniert. DSGVO-Consent-Modal
+   oeffnet sich beim ersten Klick. Nach Consent laeuft die
+   Konversation mit echtem Bot-Response-Pfad (kein Mock).
+
+2. **Conversation-Persistenz mit Channel-Marker.** Die neue
+   Web-Session wird in der DB als `Conversation` mit
+   `channel: "WEB"` angelegt. Dies bestaetigt den Phase-2-
+   Schema-Enum und den Phase-1-processMessage-Aufruf mit
+   `channel: "WEB"` im Widget-Message-Handler.
+
+3. **Dashboard-List-View zeigt neue Session.**
+   `/dashboard/conversations` zeigt die neue Conversation mit
+   dem **ChannelBadge "Web" (Sky-Blau)**, Status `Aktiv`, und
+   Lead-Score 30. Die Sub-Phase-6.3-UI-Arbeit funktioniert
+   end-to-end.
+
+4. **Detail-View mit entschluesselten Messages + Channel-Badge.**
+   Klick auf die Conversation oeffnet
+   `/dashboard/conversations/[id]`. Der komplette Chat-Verlauf
+   ist sichtbar, alle Messages sind **korrekt AES-256-GCM-
+   entschluesselt** (Phase-1-Verschluesselungs-Pipeline via
+   `decryptText()`), der Channel-Badge ist im Header neben der
+   maskierten ID sichtbar (Sub-Phase-6.3-Integration).
+
+5. **Lead-Scoring-Pipeline auto-triggered.** Ein Lead wird
+   mit Score 30/100, Qualification MQL, Pipeline NEU automatisch
+   angelegt. Das bestaetigt die Phase-1-`runScoringPipeline`-
+   Async-Pipeline (GPT-4o-basiertes Scoring), die jetzt auch
+   fuer Web-Channel-Conversations laeuft — kanal-agnostisch
+   wie in Phase 1 designed.
+
+6. **Sprach-Erkennung DE.** Die Conversation hat
+   `language: "de"` im DB-Record, was dem Default-Wert aus
+   Phase 2 entspricht. Das Phase-2-Schema-Migration-Default
+   (`language String @default("de")`) funktioniert fuer Web-
+   Sessions unveraendert.
+
+7. **Kanal-agnostische Bot-Logik bestaetigt.** Der Bot-Response-
+   Pfad (System-Prompt-Loading via `loadSystemPrompt`,
+   Claude-Call via `generateReply`, Lead-Scoring via
+   `scoreLeadFromConversation`) ist identisch mit dem
+   WhatsApp-Pfad. Phase 1 hat den Kern korrekt extrahiert —
+   das Web-Widget ist damit technisch das **zweite konsumierende
+   Transport-Layer** einer unveraenderten Business-Logik.
+
+### Klarstellung: "Bot antwortet auf Möbel-Frage ueber AI Conversion"
+
+Waehrend des Tests ergab sich eine Beobachtung, die auf den
+ersten Blick wie ein Bug aussieht: Der User stellte eine
+Frage ueber Moebel (passend zur "Atelier Hoffmann"-Demo-Seite),
+und der Bot antwortete **mit Informationen ueber AI Conversion**
+(die SaaS-Plattform selbst), nicht ueber Moebel.
+
+**Das ist KEIN Bug, sondern die erwartete Konfiguration des
+Test-Setups.** Begruendung:
+
+- **Demo-Seite ist ein Mockup:** `public/widget-demo.html`
+  ist ein **Template** fuer die Visualisierung eines
+  hypothetischen Pilot-Kunden "Atelier Hoffmann" (Moebel-
+  Werkstatt). Es ist **keine echte Kunden-Website**. Das
+  Widget laedt nur die Demo-Page-Grafik — den Bot-
+  System-Prompt liefert der Tenant, nicht die Host-Seite.
+- **Tenant ist internal-admin:** Der eingebettete `data-key`
+  zeigt auf den internal-admin-Tenant der AI Conversion
+  Plattform selbst. Dessen `systemPrompt`-Feld ist leer
+  (aus `seed-internal-admin.ts:59` `systemPrompt: ""`),
+  sodass der Default-System-Prompt aus
+  `src/modules/bot/system-prompts/` genutzt wird. Dieser
+  Default-Prompt ist auf die Qualifizierung von Leads fuer
+  **AI Conversion selbst** kalibriert (das Produkt, das wir
+  hier bauen) — nicht auf Moebelberatung
+- **Erwartungs-Semantik:** Ein echter Pilot-Kunde "Moebel-
+  Werkstatt Hoffmann" wuerde einen **eigenen Tenant** haben,
+  dessen `systemPrompt` auf Moebel-Beratung und
+  Moebel-Lead-Qualifizierung konfiguriert ist. Dessen
+  `webWidgetPublicKey` wuerde in das `data-key`-Attribut
+  eingebettet, nicht der internal-admin-Key
+
+Die Beobachtung ist also ein **Artefakt der Test-Setup-
+Verkettung**, kein Verhaltensfehler. Aus Sicht der Phase-6-
+Kriterien (Dashboard-Integration funktioniert, Widget laedt,
+Bot antwortet, Lead wird angelegt, Channel-Tracking greift)
+**ist alles erfuellt** — die inhaltliche Passung des
+System-Prompts zum Mockup-Branding der Demo-Seite ist
+ausserhalb des Test-Scopes.
+
+Fuer Phase 7 relevant: falls ein Pilot-Kunde sich wuenscht,
+**sein** Widget auf einer Test-Seite auszuprobieren, braucht
+er einen eigenen Tenant + eigenen System-Prompt + eigenen
+Public-Key. Das Onboarding-Dashboard-Skelett (`/onboarding`)
+existiert bereits.
+
+### Test-Setup-Cleanup nach 6.4
+
+- `src/scripts/upgrade-test-tenant.ts`: liegt nach 6.4 als
+  untracked im Working Tree. Entscheidung ueber Aufbewahrung
+  (eigener `chore(scripts)`-Commit) oder Loeschung ist separat
+  zu treffen, kein Teil des Phase-6-Abschluss-Commits
+- `internal-admin.paddlePlan`: weiterhin auf `"growth_monthly"`
+  gesetzt (lokale DB, nicht in Git getrackt). Das DB-Rollback
+  auf `null` ist nicht noetig, weil die lokale Entwicklungs-DB
+  nicht in Production abgebildet ist
+- `public/widget-demo.html`: kann lokal mit echtem Public-Key
+  belassen oder wieder auf den Placeholder zurueckgesetzt
+  werden. Sub-Phase-6.2-Commit hat die Placeholder-Variante
+  persistiert; jede lokale Anpassung fuer Tests bleibt
+  gitignored-aehnlich durch bewusste User-Entscheidung
+
+### Phase-6-Status
+
+**Alle 4 Sub-Phasen abgeschlossen:**
+
+| Sub-Phase | Scope | Status |
+|---|---|---|
+| 6.1 | Pre-Analyse + Verifikation | ✅ |
+| 6.2 | Widget-Settings-Page + API + Helper | ✅ (Commit `029f2a1`) |
+| 6.3 | Channel-Filter in neuer Conversations-List-View | ✅ (Commit `018a9cb`) |
+| 6.4 | E2E-Smoke-Test | ✅ (dieser Commit) |
+
+**Naechster Schritt:** Phase 7 — Hardening.
+- 10 Test-Szenarien aus `WEB_WIDGET_INTEGRATION.md` § "Phase 7:
+  Testing & Hardening"
+- Pilot-Kunden-Integration-Guide (siehe `docs/tech-debt.md`
+  "Phase 5 — Pilot-Kunden-Integration-Guide fehlt")
+- Security-Checkliste final durchgehen (siehe
+  `WEB_WIDGET_INTEGRATION.md` § "Sicherheits-Checkliste")
+- Falls `/widget-demo*` in Phase 7 dynamisch wird: Option E
+  aus `phase-5-embed-script.md` pruefen (Migration zu
+  `src/app/widget-demo/page.tsx` + Server-Component-Nonce-
+  Injection, Demo-Route-CSP-Lockerung rueckbauen)

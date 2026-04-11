@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 6.3 — Conversations-List-View + Channel-Filter (committed, 6.4 offen)
-**Letzter Commit:** (dieser Commit) feat(dashboard): add conversations list view with channel filter (phase 6.3)
+**Aktuelle Phase:** Phase 6 abgeschlossen. Bereit für Phase 7 (Hardening + 10 Test-Szenarien + Pilot-Integration-Guide)
+**Letzter Commit:** (dieser Commit) docs(phase-6): mark phase 6 complete after successful e2e smoke test
 
 ---
 
@@ -385,7 +385,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Phase 6.3 (Channel-Filter) und 6.4 (E2E-Smoke-Test) stehen
   noch aus
 
-### Phase 6.3 — Conversations-List-View + Channel-Filter (dieser Commit)
+### Phase 6.3 — Conversations-List-View + Channel-Filter (Commit 018a9cb)
 - Datum: 2026-04-12
 - Entscheidung E2 aus 6.1-Pre-Analyse umgesetzt: Ansatz Y
   (dedizierte List-View statt verstreute Filter in 3 bestehenden
@@ -427,6 +427,46 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   kein auditLog, konsistent mit Poll-Endpoint-Präzedenz aus
   docs/decisions/phase-3b-spec-reconciliation.md
 - Phase 6.4 (E2E-Smoke-Test durch Project Owner) steht noch aus
+
+### Phase 6.4 — E2E-Smoke-Test verifiziert (dieser Commit)
+- Datum: 2026-04-12
+- Tester: Project Owner
+- Test-Setup: internal-admin-Tenant temporär auf paddlePlan
+  "growth_monthly" gesetzt via src/scripts/upgrade-test-tenant.ts
+  (hasPlanFeature(..., "web_widget") = true, Widget-Settings-Page
+  zeigt Settings statt UpgradePrompt)
+- Dev-Server: Port 3000, .next/ frisch nach Cache-Reset
+  (Phase-6.1-Lesson-Learned angewandt)
+- Befund: ALLE 7 End-to-End-Kriterien grün
+  1. Widget lädt auf public/widget-demo.html, Bubble
+     erscheint, DSGVO-Consent-Modal funktioniert, Konversation
+     läuft mit echtem Bot-Response-Pfad
+  2. Conversation wird in DB persistiert mit channel: WEB
+  3. /dashboard/conversations zeigt neue Web-Session mit
+     ChannelBadge "Web" (Sky-Blau), Score 30, Status Aktiv
+  4. Detail-View /dashboard/conversations/[id] zeigt kompletten
+     Chat-Verlauf, alle Messages korrekt AES-256-GCM-
+     entschlüsselt, ChannelBadge im Header neben maskierter ID
+  5. Lead wird mit Score 30/100, Stage MQL, Pipeline NEU
+     automatisch angelegt (GPT-4o-Scoring-Pipeline via
+     processMessage.runScoringPipeline async)
+  6. Sprache automatisch als DE erkannt (language="de" default)
+  7. Bot-Logik (System-Prompt, Lead-Scoring) funktioniert
+     kanal-agnostisch — exakt dieselbe processMessage-
+     Pipeline wie für WhatsApp (Phase 1 Extraktion bestätigt)
+- Alle Phase-6-Done-Kriterien aus WEB_WIDGET_INTEGRATION.md
+  § "Phase 6: Dashboard-Integration" erfüllt:
+  * Nutzer kann Widget im Dashboard konfigurieren ✓
+  * Embed-Code kopieren + in Host-Webseite einbetten ✓
+  * Live-Preview des Widgets ✓
+  * Channel-Filter funktioniert in der neuen List-View ✓
+  * Plan-Gating greift (STARTER → 403, GROWTH+ → Settings) ✓
+- docs/decisions/phase-6-dashboard-widget.md um Sub-Phase-6.4-
+  Sektion erweitert mit Befund, Test-Setup-Notiz und Klarstellung
+  zur Bot-Antwort-Beobachtung (siehe dort)
+- **Phase 6 final abgeschlossen.** Nächster Schritt: Phase 7
+  (Hardening, 10 Test-Szenarien aus WEB_WIDGET_INTEGRATION.md,
+  Pilot-Kunden-Integration-Guide aus tech-debt.md)
 
 ---
 
