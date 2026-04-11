@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-11
-**Aktuelle Phase:** Phase 5 — Embed-Script (geplant)
-**Letzter Commit:** 90a18a0 (Phase 5-Pre Hotfix — externalId-Null-Bug)
+**Letzte Aktualisierung:** 2026-04-12
+**Aktuelle Phase:** Phase 5 Pre — Doku-Härtung
+**Letzter Commit:** 70b18ed (CLAUDE.md gehärtet — vier Pflicht-Regeln verankert)
 
 ---
 
@@ -213,6 +213,17 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Defense-in-Depth ?? []-Guards in dashboard/page.tsx
 - Tech-Debt-Eintrag mit Lessons Learned und Migration-Workflow-Ergänzung
 - Code-Hygiene-Hinweis: maskId() sollte in Phase 7 zentralisiert werden
+
+### Phase 5 Pre — CLAUDE.md gehärtet (Commit 70b18ed)
+- Vier nicht-verhandelbare Pflicht-Regeln verankert:
+  Auto-Doku, Schema-Konsumenten-Audit, Diagnose-vor-Fix,
+  Premium-SaaS-Look
+- Mandatory reading list erweitert um architecture.md,
+  data-model.md, changelog.md (sobald angelegt)
+- Kollisions-Klausel für Eskalationspfad hinzugefügt
+- Security/DSGVO bleibt hart über Premium-Look
+- Bestehende Sektionen unberührt
+- Vorher: 206 Zeilen → Nachher: ca. 400 Zeilen
 
 ---
 
