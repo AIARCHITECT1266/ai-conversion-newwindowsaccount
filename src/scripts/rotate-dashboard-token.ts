@@ -91,12 +91,21 @@ async function main(): Promise<void> {
       },
     });
 
-    // Link-Eintrag an dashboard-links.txt appenden. Port 3001
-    // fuer den Lokal-Link wie vom User fuer Phase-6.2-Testing
-    // gewuenscht (Production-Dev-Server kann auf jedem Port
-    // laufen, der Link wird manuell geoeffnet).
+    // Link-Eintrag an dashboard-links.txt appenden. Der Lokal-Link
+    // respektiert NEXT_PUBLIC_APP_URL aus .env.local (falls gesetzt),
+    // sonst Fallback auf http://localhost:3000 (Next.js Dev-Mode-
+    // Standard-Port). Trailing-Slashes werden defensiv entfernt.
+    //
+    // Spec-Bezug (CLAUDE.md Regel 5): Port 3001 aus dem ersten Wurf
+    // dieses Skripts war eine falsche Port-Annahme — der Dev-Server
+    // laeuft standardmaessig auf 3000, nicht auf 3001. Dieser Fix
+    // stellt den Standard wieder her und macht die Port-Annahme
+    // via ENV ueberschreibbar.
+    const localBaseUrl = (
+      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    ).replace(/\/+$/, "");
     const prodLink = `https://ai-conversion.ai/dashboard/login?token=${rawToken}`;
-    const localLink = `http://localhost:3001/dashboard/login?token=${rawToken}`;
+    const localLink = `${localBaseUrl}/dashboard/login?token=${rawToken}`;
     const timestamp = new Date().toISOString();
 
     const entry = [
