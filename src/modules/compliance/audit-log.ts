@@ -31,7 +31,10 @@ type AuditAction =
   | "gdpr.dpa_accepted"
   | "widget.config_fetched"
   | "widget.session_started"
-  | "widget.message_received";
+  | "widget.message_received"
+  | "widget.config_updated"
+  | "widget.public_key_generated"
+  | "widget.toggled";
 
 // DSGVO: Felder die nie in Details auftauchen duerfen
 const SENSITIVE_FIELDS = new Set([

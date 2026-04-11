@@ -42,3 +42,38 @@ export async function checkLimit(
 
   return { allowed: current < limit, current, limit };
 }
+
+// ============================================================
+// Feature-Flags pro Plan
+//
+// Plan-Gating fuer Features, die entweder verfuegbar oder nicht
+// verfuegbar sind (ja/nein-Entscheidung), im Gegensatz zu
+// checkLimit() das Kontingente zaehlt (wie viele?).
+//
+// Spec-Bezug (CLAUDE.md Regel 5):
+// WEB_WIDGET_INTEGRATION.md Phase 6 schrieb wortlich vor:
+//   "await checkLimit(tenantId, paddlePlan, 'web_widget');"
+// Das haette checkLimit zu einem polymorphen Count/Feature-Hybrid
+// gemacht, was die Count-Semantik verwaessert. hasPlanFeature ist
+// die saubere Trennung: reiner Feature-Check, kein DB-Call, kein
+// current/limit-Ballast im Return-Shape. Die Abweichung von der
+// wortlauts-Spec ist in docs/decisions/phase-6-dashboard-widget.md
+// unter "Feature-Flag-Helper-Split" begruendet.
+// ============================================================
+
+export function hasPlanFeature(
+  paddlePlan: string | null,
+  feature: "web_widget",
+): boolean {
+  const plan = detectPlanType(paddlePlan);
+
+  if (feature === "web_widget") {
+    // STARTER hat kein Web-Widget. GROWTH, PROFESSIONAL und
+    // ENTERPRISE haben es inkludiert.
+    return plan !== "STARTER";
+  }
+
+  // Unerreichbar bei gueltiger feature-Union, aber TS will
+  // einen return-Pfad fuer alle Code-Wege.
+  return false;
+}

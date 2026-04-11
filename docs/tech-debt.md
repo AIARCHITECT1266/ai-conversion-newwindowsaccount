@@ -397,3 +397,42 @@ im `buildCspHeader` wieder entfernen.
 Ca. 2-3 Stunden: JSX-Port der HTML-Struktur, Route-Group mit
 eigener `layout.tsx` fuer das Atelier-Hoffmann-Branding,
 Middleware-Override zurueckbauen, Curl-Regression.
+
+## Phase 4-pre — prompt/route.ts ohne auditLog()
+
+### Status
+Pre-existing Drift, in Phase 6.1 Pattern-Referenz-Lesung
+entdeckt. Nicht in Phase 6 gefixt.
+
+### Problem
+`src/app/api/dashboard/settings/prompt/route.ts` aendert via
+POST den `systemPrompt` eines Tenants (`db.tenant.update` auf
+Z. 51-54), ohne einen `auditLog()`-Aufruf auszuloesen. Laut
+Spec-Regel "`auditLog()` fuer mutierende Aktionen mit IP-Hash"
+ist das eine Luecke — und aus Compliance-Sicht relevant, weil
+der System-Prompt das Bot-Verhalten signifikant aendern kann
+(inkl. moeglichem Missbrauch).
+
+Die Phase-6.2-Widget-Config-Routes (neuer `widget-config/route.ts`,
+`generate-key/route.ts`, `toggle/route.ts`) loggen alle korrekt
+via `auditLog()` mit IP-Hash — der Drift beschraenkt sich auf
+die aeltere Prompt-Route und wird dort nicht vererbt.
+
+### Warum nicht jetzt fixen
+Phase 6.2 hat einen klar abgegrenzten Scope (Widget-Dashboard).
+Ein Fix an einer unrelated Route waere Scope-Kreepp gegen die
+"Don't add features beyond what was asked"-Regel. Der Fix selbst
+ist trivial (5-10 Minuten: `auditLog("dashboard.prompt_updated",
+{ tenantId, ip: hashIp(getClientIp(req)), details: { length:
+systemPrompt.length } })` im POST-Handler ergaenzen, plus die
+`AuditAction`-Union um `"dashboard.prompt_updated"` erweitern),
+aber er gehoert in einen eigenen Commit.
+
+### Wann fixen
+VOR dem ersten echten Pilot-Kunden, der das Prompt-Feature
+produktiv nutzt. Bis dahin ist der System-Prompt nur vom
+internal-admin-Tenant erreichbar, Compliance-Risiko ist Null.
+
+### Aufwand
+5-10 Minuten. Ein `auditLog`-Aufruf, eine `AuditAction`-Union-
+Erweiterung, ein Build-Check, ein Commit.

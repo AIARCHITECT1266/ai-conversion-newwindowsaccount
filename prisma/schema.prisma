@@ -39,7 +39,7 @@ model Tenant {
 
   webWidgetEnabled    Boolean    @default(false) // Web-Widget aktiviert
   webWidgetPublicKey  String?    @unique          // Oeffentlicher Key (pub_xxx)
-  webWidgetConfig     Json?                       // { primaryColor, logoUrl, welcomeMessage }
+  webWidgetConfig     Json?                       // Widget-Config-Felder, siehe docs/decisions/phase-3b-spec-reconciliation.md
 
   conversations    Conversation[]
   leads            Lead[]

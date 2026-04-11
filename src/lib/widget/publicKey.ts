@@ -11,6 +11,7 @@
 // - Pruefte zusaetzlich isActive UND webWidgetEnabled
 // ============================================================
 
+import { randomBytes } from "crypto";
 import { db } from "@/shared/db";
 
 // Oeffentliche, fuer das Widget freigegebene Tenant-Config.
@@ -118,8 +119,12 @@ function parseLogoUrl(raw: unknown): string | null {
  * Backward-kompatibel: alte Configs mit nur primaryColor/welcomeMessage/
  * logoUrl werden korrekt gelesen, fehlende Felder aus DEFAULT_CONFIG
  * gefuellt.
+ *
+ * Ab Phase 6 auch vom Dashboard-Widget-Config-API genutzt (GET-Handler
+ * liefert dem Settings-Editor die aufgefuellte Config, damit der
+ * Editor bei leeren Feldern nicht "null" oder "undefined" zeigt).
  */
-function parseConfig(raw: unknown): ResolvedTenantConfig {
+export function parseConfig(raw: unknown): ResolvedTenantConfig {
   if (!raw || typeof raw !== "object") return DEFAULT_CONFIG;
 
   const obj = raw as Record<string, unknown>;
@@ -151,6 +156,21 @@ function parseConfig(raw: unknown): ResolvedTenantConfig {
     // alles andere faellt auf null zurueck (-> Standard-Icon).
     bubbleIconUrl: parseLogoUrl(obj.bubbleIconUrl),
   };
+}
+
+// ---------- Public-Key-Generierung ----------
+
+/**
+ * Generiert einen neuen Widget-Public-Key im Format pub_<base64url(12)>.
+ *
+ * Spec-Konformitaet: Format identisch zu src/scripts/generate-widget-keys.ts
+ * (Entscheidung 1 aus docs/decisions/phase-0-decisions.md - crypto.randomBytes
+ * statt nanoid, 96 Bit Entropie). Wird ab Phase 6 vom Dashboard-API
+ * genutzt, damit ein Tenant sich selbst einen Key generieren kann, ohne
+ * das CLI-Skript manuell auszufuehren.
+ */
+export function generatePublicKey(): string {
+  return `pub_${randomBytes(12).toString("base64url")}`;
 }
 
 // ---------- Oeffentliche API ----------

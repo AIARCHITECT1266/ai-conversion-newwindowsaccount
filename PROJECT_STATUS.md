@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 3b Doku-Reconciliation (Spec-Drifts dokumentiert, Regel 5 in CLAUDE.md)
-**Letzter Commit:** (dieser Commit) docs(phase-3b): reconcile spec drifts and add spec-reference rule
+**Aktuelle Phase:** Phase 6.2 — Widget-Settings-Page (committed, 6.3 + 6.4 offen)
+**Letzter Commit:** (dieser Commit) feat(dashboard): add web widget settings page (phase 6.2)
 
 ---
 
@@ -297,7 +297,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   Code-Kommentare ohne Spec-Bezug"
 - Kein Tech-Debt-Eintrag, weil der Drift unmittelbar gefixt ist
 
-### Phase 3b Doku-Reconciliation — Spec-Drifts dokumentiert + Regel 5 (dieser Commit)
+### Phase 3b Doku-Reconciliation — Spec-Drifts dokumentiert + Regel 5 (Commit 7c632f2)
 - Datum: 2026-04-12
 - Auslöser: Phase-3b-Vollaudit nach Session-Rate-Limit-Fix
   hat zwei weitere Soft-Drifts identifiziert (funktional
@@ -330,6 +330,60 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   (Session-Rate-Limit code-fix + Config-Felder ADR +
   Poll-Audit-Log ADR)
 - Phase 6 ist aus Doku-Sicht freigegeben
+
+### Phase 6.2 — Widget-Settings-Page (dieser Commit)
+- Datum: 2026-04-12
+- Sub-Phase 6.1 (Pre-Analyse): 5 Verifikations-Punkte
+  geprüft, zwei offene Entscheidungen (E1, E2) vom User
+  beantwortet
+- E1: hasPlanFeature() als neuer Helper statt
+  checkLimit(..., 'web_widget'), saubere Quota-vs-Feature-
+  Flag-Trennung
+- E2: neue dedizierte /dashboard/conversations/page.tsx
+  List-View in 6.3 statt bestehende Views zu erweitern
+- Neuer Helper: src/lib/plan-limits.ts hasPlanFeature(paddlePlan,
+  feature) mit spec-referenziertem Kommentar nach CLAUDE.md
+  Regel 5
+- 3 neue API-Endpoints unter /api/dashboard/widget-config:
+  * GET: lädt Config mit aufgefüllten Defaults, Plan-Check via
+    hasPlanFeature → 403 für Starter
+  * PATCH: partielles Update der 10 editierbaren Felder,
+    Zod-Validierung (Hex-Colors + String-Bounds), Merge-Semantik,
+    auditLog "widget.config_updated"
+  * generate-key POST: idempotenter Key-Gen mit 3×-Retry bei
+    Unique-Kollision, auditLog "widget.public_key_generated"
+  * toggle POST: enable/disable, bei Auto-Aktivierung ohne
+    bestehenden Key wird Key automatisch erzeugt, auditLog
+    "widget.toggled"
+- Settings-Page /dashboard/settings/widget/page.tsx:
+  * "use client" Client Component, 538 Zeilen, Pattern-Referenz
+    settings/prompt/page.tsx
+  * Toggle-Card, Public-Key-Display mit Copy-Button, Embed-Code-
+    Generator mit kollapsierbaren Plattform-Tabs (HTML/WordPress/
+    Shopify/GTM — pure Anleitungs-Texte, kein duplizierter Code)
+  * Config-Editor: 5 Color-Pickers + 5 Text-Inputs,
+    Merge-Update-Semantik, inline PreviewNonce für
+    iframe-Reload nach Save
+  * Live-Preview: iframe gegen /embed/widget?key=... (Preview ==
+    Production garantiert, kein Drift-Risiko)
+  * Upgrade-Prompt für Starter-Plan mit Link zu /pricing
+- 3 neue AuditAction-Values: widget.config_updated,
+  widget.public_key_generated, widget.toggled
+- src/lib/widget/publicKey.ts: parseConfig() exportiert + neuer
+  generatePublicKey()-Helper (Konsistenz mit
+  src/scripts/generate-widget-keys.ts Format)
+- Z1: prisma/schema.prisma Zeile 42 Schema-Kommentar auf
+  Verweis zu phase-3b-spec-reconciliation.md aktualisiert
+  (out-of-date 3-Felder-Liste entfernt)
+- Z2: docs/tech-debt.md neuer Eintrag "Phase 4-pre —
+  prompt/route.ts ohne auditLog()" (Pre-existing Drift,
+  in 6.1 Pattern-Referenz-Lesung entdeckt, Fix trivial
+  aber out-of-scope für Phase 6)
+- ADR docs/decisions/phase-6-dashboard-widget.md: 4
+  Architektur-Entscheidungen + technische Details + offene
+  Punkte für 6.3/6.4
+- Phase 6.3 (Channel-Filter) und 6.4 (E2E-Smoke-Test) stehen
+  noch aus
 
 ---
 
