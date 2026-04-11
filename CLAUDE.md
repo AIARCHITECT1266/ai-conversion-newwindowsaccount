@@ -221,6 +221,78 @@ disqualifiziert. Bei unklarer Design-Entscheidung fragt
 Claude Code den User, statt eine generische Lösung zu
 wählen.
 
+### Regel 5 — Spec-Bezug in Code-Kommentaren bei Abweichungen
+
+Jede Code-Zeile, die von einem in `WEB_WIDGET_INTEGRATION.md`
+oder einer anderen Spec wörtlich genannten Wert oder Verhalten
+abweicht, MUSS einen Code-Kommentar tragen, der die Abweichung
+explizit gegen die Spec referenziert. Plausibel klingende
+Kommentare ohne Spec-Referenz sind verboten — sie machen
+Spec-Drift unsichtbar.
+
+Ein spec-referenzierter Kommentar enthält drei Elemente:
+
+- **(a) Spec-Pfad und Sektion/§ wörtlich**: Datei-Name der Spec
+  plus Abschnitts-/Paragraphen-Referenz (z.B. *"laut
+  WEB_WIDGET_INTEGRATION.md Phase 3 § 3.3"*). Ohne diese
+  Referenz kann ein zukünftiger Reviewer die Abweichung nicht
+  gegen die Spec verifizieren
+- **(b) Begründung des abweichenden Wertes**: warum der Wert
+  anders ist. Nicht *"strenger als X"*, sondern *"Grund Y,
+  weil Spec-Kontext Z gilt"*
+- **(c) ADR-Verweis** bei Begründungen, die mehr als zwei
+  Kommentar-Zeilen benötigen. Dann wandert die Langfassung
+  in `docs/decisions/` und der Kommentar verweist auf den
+  ADR-Pfad
+
+**Beispiel korrekt:**
+
+```typescript
+// Rate-Limit STRENG laut WEB_WIDGET_INTEGRATION.md Phase 3 § 3.3:
+// 10 Sessions/IP/h. Verhindert Session-Flooding durch anonyme
+// Web-Besucher. Strenger als Config (100/h), weil Session-Erstellung
+// mehr Server-Ressourcen kostet (DB-Insert + Token-Generierung).
+const limit = await checkRateLimit(`widget-session:${ip}`, {
+  max: 10,
+  windowMs: 60 * 60 * 1000,
+});
+```
+
+**Beispiel verboten** (unsichtbare Spec-Drift):
+
+```typescript
+// 30 Sessions pro Stunde pro IP (strenger als Config)
+const limit = await checkRateLimit(`widget-session:${ip}`, {
+  max: 30,
+  windowMs: 60 * 60 * 1000,
+});
+```
+
+Der verbotene Kommentar klingt plausibel, nennt einen relativen
+Vergleich zu einer anderen Route, und verschleiert gleichzeitig
+die 3-fache Spec-Abweichung. Exakt dieser Kommentar-Stil hat
+am 11. April 2026 den Session-Rate-Limit-Drift bis zum
+Phase-5-Audit unsichtbar gehalten.
+
+Begründung: Code-Kommentare sind die erste Verteidigungslinie
+gegen Spec-Drift. Wenn sie plausibel klingen, aber keinen
+Spec-Bezug herstellen, bestätigen sie dem nächsten Reviewer
+stillschweigend die Abweichung als "offenbar gewollt" — ohne
+dass irgendwer die Spec noch einmal gegengelesen hat.
+Spec-Referenzen in Kommentaren sind keine Bürokratie, sie sind
+die Bauchschmerz-Vermeidung für zukünftige Audits.
+
+WICHTIG: Diese Regel gilt auch für neue Entscheidungen, die
+die Spec bewusst weiterentwickeln (z.B. Phase-4a-Erweiterung
+der Config-Felder von 3 auf 10). In diesem Fall ist die
+richtige Reaktion: ADR schreiben, der die Erweiterung begründet,
+und im Code-Kommentar darauf verweisen — nicht die Erweiterung
+stillschweigend durchführen. Siehe
+`docs/decisions/phase-3b-spec-reconciliation.md` als
+Referenz-Beispiel für den retroaktiven Fall und
+`docs/decisions/phase-3b-rate-limit-correction.md` für die
+Pathologie-Analyse.
+
 ---
 
 # AI Conversion – Claude CLI Regeln

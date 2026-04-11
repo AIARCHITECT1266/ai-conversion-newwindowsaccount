@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 3b Spec-Drift-Korrektur (Session-Rate-Limit)
-**Letzter Commit:** (dieser Commit) fix(widget): correct session rate-limit to spec value (10/h)
+**Aktuelle Phase:** Phase 3b Doku-Reconciliation (Spec-Drifts dokumentiert, Regel 5 in CLAUDE.md)
+**Letzter Commit:** (dieser Commit) docs(phase-3b): reconcile spec drifts and add spec-reference rule
 
 ---
 
@@ -275,7 +275,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   "Pilot-Kunden-Integration-Guide" und
   "Demo-Route-CSP-Lockerung"
 
-### Phase 3b Spec-Drift-Korrektur — Session-Rate-Limit (dieser Commit)
+### Phase 3b Spec-Drift-Korrektur — Session-Rate-Limit (Commit a26977d)
 - Datum: 2026-04-12
 - Befund: /api/widget/session hatte max: 30 Sessions/IP/h
   konfiguriert, Spec WEB_WIDGET_INTEGRATION.md § 3.3 verlangt
@@ -296,6 +296,40 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   zum Thema "unsichtbare Spec-Drift durch plausibel klingende
   Code-Kommentare ohne Spec-Bezug"
 - Kein Tech-Debt-Eintrag, weil der Drift unmittelbar gefixt ist
+
+### Phase 3b Doku-Reconciliation — Spec-Drifts dokumentiert + Regel 5 (dieser Commit)
+- Datum: 2026-04-12
+- Auslöser: Phase-3b-Vollaudit nach Session-Rate-Limit-Fix
+  hat zwei weitere Soft-Drifts identifiziert (funktional
+  korrekt, aber nicht spec-referenziert dokumentiert)
+- Drift 1 dokumentiert: Config-Response-Felder 3 (Spec) → 11
+  (Code). Erweiterung erfolgte in Phase 4a (10 Felder) und
+  Phase 5 (bubbleIconUrl). Alle 11 Felder verifiziert
+  nicht-sensitiv. Begründung: Premium-Branding-Direktive,
+  Dark-Mode-Fähigkeit, Bot-Identitäts-Customization,
+  WCAG-AA-Accessibility
+- Drift 2 dokumentiert: Poll-Endpoint ohne auditLog().
+  Begründung: Read-only-Heartbeat alle 2s würde Log-Volumen
+  um ~4M Zeilen/Tag bei 100 Pilot-Sessions aufblähen, ohne
+  kompensatorischen Compliance-Wert — alle zustandsändernden
+  Events sind in den anderen 3 Endpoints bereits auditiert
+- docs/decisions/phase-3b-spec-reconciliation.md: neuer
+  konsolidierter ADR mit Sensitivitäts-Verifikation jedes
+  Config-Felds, Log-Volume-Rechnung für Poll-Ausnahme,
+  Konsistenz-Tabelle aller 4 Widget-Endpoints mit
+  Audit-Log-Status, geprüften Alternativen und
+  Reversibilitäts-Check
+- CLAUDE.md um Regel 5 erweitert: "Spec-Bezug in
+  Code-Kommentaren bei Abweichungen". Verbietet plausibel
+  klingende Kommentare ohne Spec-Referenz. Fordert drei
+  Elemente: (a) Spec-Pfad + §, (b) Begründung des Wertes,
+  (c) ADR-Verweis bei >2 Zeilen. Mit korrektem und
+  verbotenem Beispiel
+- Phase 3b damit final spec-konform UND vollständig
+  dokumentiert. Drei Drifts in einem Tag geschlossen
+  (Session-Rate-Limit code-fix + Config-Felder ADR +
+  Poll-Audit-Log ADR)
+- Phase 6 ist aus Doku-Sicht freigegeben
 
 ---
 
