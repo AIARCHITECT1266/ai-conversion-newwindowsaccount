@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 5 Pre — Doku-Härtung
-**Letzter Commit:** 70b18ed (CLAUDE.md gehärtet — vier Pflicht-Regeln verankert)
+**Aktuelle Phase:** Phase 5 — Embed-Script (bereit)
+**Letzter Commit:** ef3dc36 (docs/architecture.md angelegt — lebendes System-Dokument)
 
 ---
 
@@ -224,6 +224,14 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Security/DSGVO bleibt hart über Premium-Look
 - Bestehende Sektionen unberührt
 - Vorher: 206 Zeilen → Nachher: ca. 400 Zeilen
+
+### Phase 5 Pre 2 — docs/architecture.md (Commit ef3dc36)
+- Lebendes Architektur-Dokument angelegt
+- 11 Sektionen, ~400 Zeilen, ~12 Minuten Lesezeit
+- Basis für alle zukünftigen System-Änderungen
+- Bei jeder System-Änderung automatisch zu aktualisieren
+  (CLAUDE.md Regel 1)
+- Ab sofort Pflicht-Lektüre bei jedem Phase-Prompt
 
 ---
 
