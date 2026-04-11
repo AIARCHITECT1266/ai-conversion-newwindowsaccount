@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 5 Hotfix — CSP Route-Override für Demo-Seite
-**Letzter Commit:** (dieser Commit) fix(middleware): add route-specific CSP for widget demo page
+**Aktuelle Phase:** Phase 3b Spec-Drift-Korrektur (Session-Rate-Limit)
+**Letzter Commit:** (dieser Commit) fix(widget): correct session rate-limit to spec value (10/h)
 
 ---
 
@@ -249,7 +249,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   Architektur-Entscheidungen + Trade-offs + Reversibilität +
   Akzeptierte Browser-Warnung (Sandbox-Eskalations-Hinweis)
 
-### Phase 5 Hotfix — CSP Route-Override für Demo-Seite (dieser Commit)
+### Phase 5 Hotfix — CSP Route-Override für Demo-Seite (Commit 865843b)
 - Datum: 2026-04-12
 - Root-Cause: widget-demo.html ist statisch, bekommt
   strict-dynamic-CSP, blockiert widget.js (kein Nonce-Inject
@@ -274,6 +274,28 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - docs/tech-debt.md um zwei Einträge ergänzt:
   "Pilot-Kunden-Integration-Guide" und
   "Demo-Route-CSP-Lockerung"
+
+### Phase 3b Spec-Drift-Korrektur — Session-Rate-Limit (dieser Commit)
+- Datum: 2026-04-12
+- Befund: /api/widget/session hatte max: 30 Sessions/IP/h
+  konfiguriert, Spec WEB_WIDGET_INTEGRATION.md § 3.3 verlangt
+  wörtlich "Rate-Limit STRENG: 10 Sessions/IP/h"
+- Entdeckt im Phase-5-Done-Kriterien-Audit (Spec-vs-Code-
+  Tabelle), nicht im Code-Review von Phase 3b
+- Root-Cause: irreführender Code-Kommentar ("30 Sessions pro
+  Stunde pro IP (strenger als Config)") ohne Spec-Bezug, plus
+  fehlendes Phase-3b-ADR, plus nicht durchgesetzter Pre-
+  Analyse-Wert aus ARCHITECTURE_REPORT.md § 3c
+- Korrektur: max: 30 → max: 10, Kommentar ersetzt durch
+  spec-referenzierten Block (Datei + § + wörtliches
+  Security-Argument)
+- Alle 3 anderen Widget-Rate-Limits (config, message, poll)
+  sind spec-konform und wurden nicht angefasst
+- docs/decisions/phase-3b-rate-limit-correction.md: neuer
+  ADR mit Befund, Root-Cause, Korrektur und Lessons Learned
+  zum Thema "unsichtbare Spec-Drift durch plausibel klingende
+  Code-Kommentare ohne Spec-Bezug"
+- Kein Tech-Debt-Eintrag, weil der Drift unmittelbar gefixt ist
 
 ---
 

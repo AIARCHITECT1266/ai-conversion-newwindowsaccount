@@ -75,9 +75,12 @@ export async function OPTIONS(): Promise<NextResponse> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const ip = getClientIp(request);
 
-  // Rate-Limit: 30 Sessions pro Stunde pro IP (strenger als Config)
+  // Rate-Limit STRENG laut WEB_WIDGET_INTEGRATION.md Phase 3 § 3.3:
+  // 10 Sessions/IP/h. Verhindert Session-Flooding durch anonyme
+  // Web-Besucher. Strenger als Config (100/h), weil Session-Erstellung
+  // mehr Server-Ressourcen kostet (DB-Insert + Token-Generierung).
   const limit = await checkRateLimit(`widget-session:${ip}`, {
-    max: 30,
+    max: 10,
     windowMs: 60 * 60 * 1000,
   });
   if (!limit.allowed) {
