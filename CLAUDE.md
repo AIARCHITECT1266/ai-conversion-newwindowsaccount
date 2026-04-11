@@ -13,9 +13,21 @@ exakt dieser Reihenfolge:
 6. **docs/quality-roadmap.md** — Plan von 7/10 auf 9/10
 7. **docs/test-debt.md** — Nicht getestete Pfade
 8. **docs/migration-workflow.md** — Regeln für Prisma-Migrationen
+9. **docs/architecture.md** — System-Übersicht (sobald angelegt)
+10. **docs/data-model.md** — Datenmodell-Übersicht (sobald angelegt)
+11. **docs/changelog.md** — Feature-Historie (sobald angelegt)
 
-Erst wenn diese acht Punkte gelesen sind, darf die eigentliche
-Aufgabe beginnen.
+Erst wenn diese Punkte gelesen sind, darf die eigentliche
+Aufgabe beginnen. Dateien mit "(sobald angelegt)" werden
+übersprungen solange sie nicht existieren, und sind ab dem
+Moment ihrer erstmaligen Erstellung automatisch Pflicht-Lektüre.
+
+**Diese Liste wird vor JEDEM Phase-Prompt gelesen, nicht nur
+einmal pro Session.** Jeder neue Phase-Prompt beginnt mit einem
+frischen Check dieser Dateien — der Stand von gestern ist nicht
+der Stand von heute, und das Überspringen dieses Checks ist
+keine Zeitersparnis, sondern eine Quelle für Cross-Phase-
+Regressionen.
 
 ## Automatische Aktualisierung
 
@@ -25,6 +37,189 @@ Am Ende jeder Phase MUSS PROJECT_STATUS.md mit aktualisiert werden:
 - Nächster Schritt eingetragen
 
 Das Update erfolgt im selben Commit wie die Phase-Änderungen.
+
+## Pflicht-Regeln (nicht verhandelbar)
+
+Diese vier Regeln gelten ohne Ausnahme und ohne erneute
+Aufforderung. Sie müssen auch dann befolgt werden, wenn der
+aktuelle Prompt sie nicht explizit erwähnt. Wenn eine Regel
+mit einer konkreten Anforderung des aktuellen Prompts kollidiert,
+meldet Claude Code den Konflikt, bevor gehandelt wird — keine
+Regel wird stillschweigend umgangen.
+
+### Regel 1 — Automatische Doku-Pflicht
+
+Am Ende jeder Phase aktualisiert Claude Code ohne Aufforderung
+alle relevanten Dokumente. Eine Phase ohne Doku-Update ist
+keine abgeschlossene Phase, egal wie klein die Änderung war.
+
+Pflicht-Prüfung am Phasenende (selbstständig, ohne Erinnerung
+im Prompt):
+
+- **PROJECT_STATUS.md** — IMMER aktualisieren (Datum, Commit-Hash,
+  Phase-Historie, nächster Schritt)
+- **docs/tech-debt.md** — bei jedem neuen Workaround, jeder
+  Lessons-Learned, jedem bewusst aufgeschobenen Fix
+- **docs/decisions/** — bei jeder neuen Architektur-Entscheidung
+  als eigene .md-Datei (nicht in bestehende Datei quetschen)
+- **docs/architecture.md** — bei jeder System-Änderung
+  (sobald angelegt)
+- **docs/data-model.md** — bei jeder Prisma-Schema-Änderung
+  (sobald angelegt)
+- **docs/changelog.md** — bei jedem neuen Feature (sobald angelegt)
+
+Siehe auch `### PROJECT_STATUS.md ist Pflicht` weiter unten —
+diese Sektion bleibt die verbindliche Detail-Spezifikation für
+den PROJECT_STATUS.md-Teil.
+
+Begründung: Dokumentation ist nicht optional. Sie ist die
+einzige Möglichkeit, dass zukünftige Sessions auf demselben
+Stand starten. Implizite Erwartungen ("Claude Code wird das
+schon richtig machen") reichen nicht — der externalId-Bug
+vom 11. April 2026 entstand exakt aus so einer impliziten
+Erwartung.
+
+WICHTIG: Diese Regel gilt OHNE dass User oder ConvArch im
+Prompt explizit darauf hinweisen müssen. Am Ende jeder Phase
+prüft Claude Code selbständig, welche der obigen Dokumente
+relevant sind, und aktualisiert sie im selben Commit wie die
+Phase-Änderungen — niemals "später nachholen". Dateien mit
+"(sobald angelegt)" werden übersprungen solange sie nicht
+existieren, sind aber ab ihrer Erstellung sofort Teil der
+Pflicht-Prüfung.
+
+### Regel 2 — Konsumenten-Audit bei Schema-Migrationen
+
+Bei jeder Prisma-Schema-Änderung, die ein Feld nullable macht,
+seinen Typ ändert, ein Feld entfernt oder umbenennt, führt
+Claude Code VOR dem Applyen der Migration einen vollständigen
+Konsumenten-Audit durch.
+
+Audit-Schritte (Pflicht, in dieser Reihenfolge):
+
+1. Grep nach allen Verwendungen des geänderten Felds im
+   gesamten `src/`-Baum (Handler, Components, Lib, Scripts,
+   Tests)
+2. Alle TypeScript-Interfaces, Types und Zod-Schemas
+   aktualisieren, die das Feld deklarieren — sowohl
+   API-Response-Types als auch interne Shape-Types und
+   lokale Helper-Signaturen
+3. Alle Dereferenzierungen auf Null-Safety prüfen
+   (`.length`, `.slice`, `.toLowerCase`, Index-Access,
+   String-Template-Literale, JSX-Ausgaben)
+4. Alle gefundenen Stellen entweder sofort anpassen oder
+   explizit im Migrations-Plan als "bewusst aufgeschoben"
+   dokumentieren — kein "das fängt TypeScript schon"-
+   Blindvertrauen
+5. Erst dann Migration applyen
+
+Begründung: Cross-Phase-Regressionen wie der externalId-Bug
+vom 11. April 2026 entstehen durch fehlende Konsumenten-Audits.
+TypeScript fängt sie NICHT, wenn die Interface-Deklarationen
+selbst falsch sind — der Compiler prüft nur Konsistenz
+innerhalb der deklarierten Types, nicht gegen den echten
+DB-Zustand. Manuelle Suche ist Pflicht. Referenz:
+docs/tech-debt.md → "Phase 5-Pre — Lessons Learned:
+externalId-Nullability-Regression".
+
+WICHTIG: Dieser Audit passiert BEVOR `prisma migrate deploy`
+oder `prisma migrate diff --apply` ausgeführt wird — nicht
+danach. Wenn der Audit zeigt dass mehr Stellen betroffen
+sind als erwartet, ist das kein Grund die Migration trotzdem
+durchzuziehen, sondern ein Grund den Scope der Phase zu
+erweitern und mit dem User abzustimmen.
+
+### Regel 3 — Diagnose vor Code-Change
+
+Bei jedem Bug-Fix arbeitet Claude Code strikt in der
+Reihenfolge Diagnose → Hypothesen-Verifikation →
+User-Bestätigung → Fix. Spontane Fixes auf Basis einer
+ungeprüften Hypothese sind verboten.
+
+Arbeits-Reihenfolge (Pflicht):
+
+1. Die ursprüngliche Hypothese (egal ob von User, ConvArch
+   oder eigener Intuition) durch **Lesen des tatsächlich
+   betroffenen Codes** verifizieren: API-Handler, DB-Schema,
+   Aufrufer, Consumer-Komponenten
+2. Melden, ob die Hypothese stimmt oder eine bessere
+   Root-Cause gefunden wurde — inkl. Datei-Pfad und
+   Zeilen-Nummer
+3. Bei abweichender Root-Cause: den vorgeschlagenen
+   Fix-Pfad kurz skizzieren
+4. Auf User-Bestätigung warten
+5. Erst dann den Fix umsetzen
+
+Begründung: Spontane Fixes ohne Diagnose verursachen mehr
+Bugs als sie lösen. Diagnose vor Code-Change ist die
+einzige Möglichkeit, Root-Causes statt Symptome zu fixen.
+Referenz-Fall: externalId-Bug vom 11. April 2026 — ConvArch
+stellte die Hypothese "API liefert null für conversations",
+Claude Code las den API-Handler, identifizierte die
+Hypothese als falsch, fand die echte Root-Cause (lokale
+maskId-Helper ohne Null-Check in drei Dashboard-Dateien),
+meldete den Befund, wartete auf Bestätigung, und fixte
+dann. Das ist das Zielverhalten für jeden zukünftigen
+Bug-Fix.
+
+WICHTIG: Diese Regel gilt auch für "offensichtliche" Bugs
+und auch wenn der User Zeitdruck signalisiert. Ein falscher
+Fix unter Zeitdruck kostet mehr Zeit als eine 5-Minuten-
+Diagnose. Einzige Ausnahme: Wenn Claude Code beim ersten
+Code-Lesen SOFORT erkennt, dass Hypothese und Root-Cause
+identisch sind (z.B. Typo in gerade neu geschriebenem
+Code), darf nach expliziter Meldung dieser Identität
+direkt gefixt werden — die Verifikation und die Meldung
+selbst bleiben Pflicht. Kein Fix darf ohne vorherige
+Meldung stattfinden, auch wenn er nur eine Zeile umfasst.
+
+### Regel 4 — Premium-SaaS-Look als oberste UI-Direktive
+
+Bei jeder UI-Entscheidung hat Premium-SaaS-Look Vorrang
+über alle anderen Kriterien (ausgenommen Security,
+Tenant-Isolation und DSGVO — die bleiben hart oberhalb).
+Die Direktive gilt nicht nur für Widget und Dashboard,
+sondern für jeden User-touchenden Output des Systems.
+
+UI-Konkret:
+
+- Dunkle, edle Farb-Paletten statt Bootstrap-Look
+- Reduzierte Akzentfarben (eine Action-Farbe, nicht fünf)
+- Großzügiges Whitespace — nichts gequetscht
+- Subtile Schatten und Tiefe statt harter Linien
+- Smooth Animationen mit Easing, kein abruptes Snap
+- Typografie mit Charakter (gerne Serif für Headlines,
+  Sans-Serif für Body)
+- Mikro-Interaktionen (kleine Hover-States, sanfte
+  Übergänge)
+- Konsistenz mit der Brand, nicht mit Standard-Chat-Widgets
+- Keine Cookie-Cutter-Komponenten
+- Mobile-First-Mindset (Touch-Targets mind. 44x44px)
+
+Geltungsbereich über UI hinaus: Diese Direktive gilt
+analog für API-Design (klare, konsistente Endpoint-Namen,
+saubere Error-Responses), Onboarding-Flows, Error-Messages,
+Email-Texte (Resend), Dashboard-UX, Doku-Outputs
+(Markdown-Layout, Überschriften-Hierarchie), CLI-Outputs
+und jede andere User-touchende Oberfläche. Kurz: alles,
+was ein User oder Tenant jemals zu Gesicht bekommt.
+
+Begründung: User-Direktive vom 11. April 2026, wörtlich:
+"Maximaler Erfolg, maximales Premium-Feeling. Nicht nur
+Themen die User Interface betreffen, sondern wirklich alle
+Prozesse an denen wir hier arbeiten. Die Leute sollen nicht
+mehr von meinen Produkten wegwollen, weil sie einfach so
+geil sind."
+
+WICHTIG: Im Zweifel zwischen "funktional ausreichend" und
+"premium" wählt Claude Code immer premium — auch wenn das
+mehr Zeilen Code, eine zusätzliche Design-Iteration oder
+einen zusätzlichen Review-Schritt kostet. Standard-Chat-
+Widget-Styles, Default-Bootstrap-Farben und Cookie-Cutter-
+Komponenten aus Snippet-Galerien sind automatisch
+disqualifiziert. Bei unklarer Design-Entscheidung fragt
+Claude Code den User, statt eine generische Lösung zu
+wählen.
 
 ---
 
