@@ -112,7 +112,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     details: { ipHash: hashIp(ip) },
   });
 
-  // Antwort: NUR die 10 nicht-sensitiven Config-Felder,
+  // Antwort: NUR die 11 nicht-sensitiven Config-Felder,
   // KEIN tenantId, keine internen Felder.
   return withCors(
     NextResponse.json(
@@ -127,6 +127,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         botSubtitle: resolved.config.botSubtitle,
         welcomeMessage: resolved.config.welcomeMessage,
         avatarInitials: resolved.config.avatarInitials,
+        // Phase 5: Embed-Loader Tenant-Override fuer das Bubble-Icon
+        bubbleIconUrl: resolved.config.bubbleIconUrl,
       },
       { status: 200 },
     ),

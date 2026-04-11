@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+  <!-- Asymmetrische Sprechblase mit schraeg auslaufendem Fuss links unten -->
+  <path d="M24 8C15.163 8 8 14.268 8 22c0 3.322 1.314 6.377 3.518 8.824L8.6 38.9c-.26.725.44 1.423 1.163 1.164l8.04-2.88C19.35 37.723 21.597 38 24 38c8.837 0 16-6.268 16-14S32.837 8 24 8Z"
+        stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Drei Dots - alle solide, gleich kraeftig wie die Outline -->
+  <circle cx="17" cy="22" r="1.8" fill="currentColor"/>
+  <circle cx="24" cy="22" r="1.8" fill="currentColor"/>
+  <circle cx="31" cy="22" r="1.8" fill="currentColor"/>
+</svg>

@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 5 — Embed-Script (bereit)
-**Letzter Commit:** ef3dc36 (docs/architecture.md angelegt — lebendes System-Dokument)
+**Aktuelle Phase:** Phase 5 — Embed-Script (committed)
+**Letzter Commit:** [SHA folgt — feat(widget): add embed script with shadow dom loader (phase 5)]
 
 ---
 
@@ -232,6 +232,20 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
 - Bei jeder System-Änderung automatisch zu aktualisieren
   (CLAUDE.md Regel 1)
 - Ab sofort Pflicht-Lektüre bei jedem Phase-Prompt
+
+### Phase 5 — Embed-Script (Commit [SHA folgt])
+- public/widget.js: Vanilla-JS-Loader mit closed Shadow DOM,
+  Floating-Bubble unten rechts, Lazy-Config-Fetch, Morph-
+  Animation Bubble ↔ X, 12.5 KB
+- public/widget-bubble-icon.svg: Premium-Standard-Icon
+  (asymmetrische Sprechblase + 3 gradierende Dots)
+- public/widget-demo.html: Premium-gestaltete Demo-Seite
+  "Atelier Hoffmann" mit Cormorant+Inter-Typography
+- ResolvedTenantConfig um bubbleIconUrl (string | null) erweitert
+- API /api/widget/config liefert bubbleIconUrl im Response
+- Konsumenten-Audit durchgeführt (Regel 2): 3 Stellen angepasst
+- docs/decisions/phase-5-embed-script.md: ADR mit 3
+  Architektur-Entscheidungen + Trade-offs + Reversibilität
 
 ---
 

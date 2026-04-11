@@ -14,7 +14,7 @@
 import { db } from "@/shared/db";
 
 // Oeffentliche, fuer das Widget freigegebene Tenant-Config.
-// 10 Felder: 5 Farben, 3 Branding, 2 Verhalten.
+// 11 Felder: 5 Farben, 3 Branding, 2 Verhalten, 1 Embed-Loader.
 // Alles was das Widget visuell darstellt MUSS aus dieser Config
 // kommen - kein Hardcoding im Rendering.
 export interface ResolvedTenantConfig {
@@ -31,6 +31,10 @@ export interface ResolvedTenantConfig {
   // Verhalten (2)
   welcomeMessage: string;
   avatarInitials: string;
+  // Embed-Loader (1, Phase 5)
+  // Optionaler Tenant-Override fuer das Floating-Bubble-Icon.
+  // null = Standard-Icon aus public/widget.js verwenden.
+  bubbleIconUrl: string | null;
 }
 
 // Ergebnis einer erfolgreichen Aufloesung.
@@ -57,6 +61,7 @@ export const DEFAULT_CONFIG: ResolvedTenantConfig = {
   botSubtitle: "Antwortet sofort",
   welcomeMessage: "Hallo! Wie kann ich helfen?",
   avatarInitials: "AI",
+  bubbleIconUrl: null,
 };
 
 // ---------- In-Memory-Cache ----------
@@ -140,6 +145,11 @@ function parseConfig(raw: unknown): ResolvedTenantConfig {
       3,
       DEFAULT_CONFIG.avatarInitials,
     ),
+    // Phase 5: Embed-Loader Tenant-Override fuer das Bubble-Icon.
+    // Gleiche URL-Validierung wie logoUrl (parseLogoUrl):
+    // nur https://, http:// oder same-origin-Pfade werden akzeptiert,
+    // alles andere faellt auf null zurueck (-> Standard-Icon).
+    bubbleIconUrl: parseLogoUrl(obj.bubbleIconUrl),
   };
 }
 
