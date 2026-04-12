@@ -111,6 +111,31 @@ Funktionalitaet unveraendert, Token-Leak-Vektor geschlossen.
 
 ---
 
+## Audit-Hotfix High #1: Fallback-Persistierung (12.04.2026 spaet abends)
+
+### Problem
+Bei Claude-API-Fehler wurde RETRY_FALLBACK_MESSAGE in `responses[]`
+zurueckgegeben, aber nicht via `saveMessage()` persistiert. Web-Widget-
+User sah nie eine Antwort, weil Poll nur aus DB liest. Aeusserer
+Catch-Block gab sogar `responses: []` zurueck.
+
+### Fix
+Commit `4e05e8c` — `saveMessage()` + `auditLog()` in beiden Catch-
+Bloecken. Kanal-agnostisch: beide Widget- und WhatsApp-Flows
+profitieren.
+
+### Verification
+- H.3: Lokaler Test mit invalidem ANTHROPIC_API_KEY — Fallback
+  erscheint im Poll
+- H.5: Production-Smoke-Test — Happy-Path unveraendert
+
+### Status
+**Production laeuft stabil auf Commit 4e05e8c.** Beide High-Befunde
+aus Audit vom 12.04. sind gefixt. Widget ist vollumfaenglich
+Pilot-Ready.
+
+---
+
 ## Was ist das Ziel?
 
 Erweiterung der bestehenden WhatsApp-Plattform um einen zweiten Kanal:

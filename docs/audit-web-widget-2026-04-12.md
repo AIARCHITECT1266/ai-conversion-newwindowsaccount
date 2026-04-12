@@ -72,6 +72,25 @@ Accessibility-Anforderungen wuerden das bemerken. Fix-Aufwand:
 - **Empfehlung:** `saveMessage(conversationId, "ASSISTANT",
   RETRY_FALLBACK_MESSAGE)` vor dem Return ergaenzen. Eine Zeile.
 
+### Status: ERLEDIGT (12.04.2026 spaet abends)
+
+**Fix-Commit:** `4e05e8c` — `fix(bot): persist fallback message
+when claude fails`
+**Deployed:** Production ai-conversion.ai
+**Verifikation:**
+- H.3 lokaler Test mit simuliertem Claude-Fehler: Fallback
+  erscheint im Poll
+- H.5 Production-Smoke-Test: Happy-Path unveraendert funktional
+
+**Fix-Zusammenfassung:** `saveMessage()` +
+`auditLog('bot.reply_failed')` in beiden Catch-Bloecken (innerer
+Claude-Fehler + aeusserer Exception-Handler) von
+`processMessage.ts`. Aeusserer Catch liefert jetzt
+`responses: [RETRY_FALLBACK_MESSAGE]` statt leerem Array.
+
+Beide Kanaele profitieren: Web-Widget-User bekommt Fallback via
+Poll, WhatsApp erhaelt sie zusaetzlich im DB-Audit-Trail.
+
 **H2 — Raw Session-Token als senderIdentifier**
 - **Datei:** `src/app/api/widget/message/route.ts:137`
 - **Beobachtung:** Der geheime `sessionToken` (`ws_xxx`) wird
@@ -518,3 +537,232 @@ gespeichert wurde.
 **GO. High #2 ist in Production gefixt und verifiziert.**
 Keine Regression. Alle Widget-Endpoints funktional. Kein
 Token-Leak. CSP-Nonce intakt.
+
+---
+
+## Fix-Planung High #1: Fallback-Message-Persistierung (Pre-Analyse H.1)
+
+### Ist-Zustand
+
+**Claude-Fehler-Pfad (`processMessage.ts:433-448`):**
+```typescript
+// Claude fehlgeschlagen → Fallback-Nachricht (NICHT persistiert)
+if (!claudeResult || !claudeResult.success || !claudeResult.reply) {
+  console.error("[processMessage] Claude fehlgeschlagen nach allen Retries", {
+    conversationId,
+    error: claudeResult?.error ?? "Timeout oder null",
+  });
+
+  return {
+    success: false,
+    conversationId,
+    responses: [RETRY_FALLBACK_MESSAGE],
+    conversationStatus: "ACTIVE",
+    needsConsent: false,
+    error: claudeResult?.error ?? "Claude nicht erreichbar",
+  };
+}
+```
+
+Die Fallback-Message wird in `responses[]` zurueckgegeben, aber
+NICHT via `saveMessage()` in die DB geschrieben.
+
+**Aeusserer Catch-Block (`processMessage.ts:479-496`):**
+```typescript
+} catch (error) {
+  return {
+    success: false,
+    conversationId,
+    responses: [],     // LEER — kein Fallback
+    conversationStatus: "ACTIVE",
+    needsConsent: false,
+    error: errorMessage,
+  };
+}
+```
+
+Im aeusseren Catch werden sogar `responses: []` zurueckgegeben —
+gar keine Fallback-Message.
+
+### Happy-Path-Pattern (Referenz)
+
+**Erfolgreiche Bot-Antwort (`processMessage.ts:450-451`):**
+```typescript
+// Bot-Antwort persistieren VOR Transport (Entscheidung 3)
+await saveMessage(conversationId, "ASSISTANT", claudeResult.reply);
+```
+
+`saveMessage()` (`processMessage.ts:132-145`):
+```typescript
+async function saveMessage(
+  conversationId: string,
+  role: MessageRole,
+  content: string
+) {
+  return db.message.create({
+    data: {
+      conversationId,
+      role,
+      contentEncrypted: encryptText(content),
+      messageType: "TEXT",
+    },
+  });
+}
+```
+
+Verschluesselung via `encryptText()` ist integriert — jede
+Message die via `saveMessage()` geht, wird automatisch
+verschluesselt.
+
+### Poll-Endpoint-Abhaengigkeit
+
+`poll/route.ts:130-145` liest ausschliesslich aus der DB:
+```typescript
+const rawMessages = await db.message.findMany({
+  where: { conversationId: conversation.id, ... },
+  orderBy: { timestamp: "asc" },
+});
+const messages = rawMessages.map((m) => ({
+  content: decryptText(m.contentEncrypted),
+  ...
+}));
+```
+
+Kein In-Memory-Cache. Nur persistierte Messages werden
+ausgeliefert. Eine nicht-persistierte Fallback-Message ist
+fuer Web-Widget-User unsichtbar.
+
+### WhatsApp-Vergleich
+
+**WhatsApp-Handler (`handler.ts:507`):**
+```typescript
+await sendMessage(message.from, RETRY_FALLBACK_MESSAGE, message.phoneNumberId);
+```
+
+WhatsApp schickt die Fallback direkt per Transport (Cloud API).
+Auch hier: keine `saveMessage()`-Persistierung. Fuer WhatsApp
+ist das akzeptabel (User sieht die Nachricht im Chat-Transport).
+Fuer Web-Widget fatal (Polling liest nur DB).
+
+**Beide Pfade haben denselben Persistierungs-Mangel**, aber
+nur beim Web-Widget fuehrt es zu einem sichtbaren Bug.
+
+### Verschluesselungs-Kontext
+
+`saveMessage()` ruft intern `encryptText(content)` auf
+(Zeile 141). Wenn wir `saveMessage(conversationId, "ASSISTANT",
+RETRY_FALLBACK_MESSAGE)` ergaenzen, wird die Fallback-Message
+automatisch verschluesselt. Keine separate Verschluesselungs-
+Logik noetig.
+
+### Audit-Log-Kontext
+
+Aktuell wird im Fehler-Fall KEIN `auditLog()` geschrieben.
+Nur im Erfolgsfall:
+```typescript
+auditLog("bot.reply_sent", { tenantId, details: { conversationId, channel } });
+```
+
+Die Action `bot.reply_failed` existiert in der AuditAction-Union
+(audit-log.ts:25), wird aber nirgendwo aufgerufen.
+
+**Empfehlung:** Zusaetzlich zum `saveMessage()`-Fix ein
+`auditLog("bot.reply_failed", ...)` im Fehler-Block ergaenzen.
+Das ist optional (nicht Teil des High-Befunds), aber sinnvoll.
+
+### Scope-Antworten
+
+**Frage 1 (Kanal-agnostisch):** Ja. `saveMessage()` ist kanal-
+agnostisch — es schreibt nur `conversationId`, `role`, `content`.
+Der Fix passiert VOR dem `return` im Claude-Fehler-Block, der
+fuer beide Kanaele identisch ist. WhatsApp-Regression-Risiko:
+keins, weil WhatsApp die Fallback zusaetzlich per Transport
+sendet (das aendert sich nicht).
+
+**Frage 2 (Fallback-Text):** Ja, `RETRY_FALLBACK_MESSAGE`
+existiert bereits (Zeile 53-56). Der Text muss NICHT neu
+eingefuehrt werden. Er muss nur zusaetzlich persistiert werden.
+
+**Frage 3 (Aufwand):** **Klein (~15 Min).** Eine Zeile
+`await saveMessage(...)` im Claude-Fehler-Block. Plus optional
+eine Zeile `auditLog("bot.reply_failed", ...)`. Kein
+Strukturumbau noetig.
+
+### Fix-Plan
+
+**1 Datei, 2 Aenderungen:**
+
+`src/lib/bot/processMessage.ts`:
+
+**Aenderung 1 (Zeile ~434, VOR dem return):**
+```typescript
+await saveMessage(conversationId, "ASSISTANT", RETRY_FALLBACK_MESSAGE);
+```
+Platzierung: nach dem `console.error`, vor dem `return`.
+
+**Aenderung 2 (optional, Zeile ~435):**
+```typescript
+auditLog("bot.reply_failed", {
+  tenantId,
+  details: { conversationId, channel, error: claudeResult?.error },
+});
+```
+
+**Aeusserer Catch-Block (Zeile 479-496):**
+Hier ebenfalls `saveMessage` mit Fallback ergaenzen, damit
+auch bei unerwarteten Fehlern (DB-Timeout waehrend Claude-Call,
+etc.) der User eine Rueckmeldung bekommt.
+
+### Regression-Risiko
+
+**Niedrig.** `saveMessage()` ist derselbe Pfad wie im Happy-Path.
+Einziges Risiko: wenn `saveMessage()` selbst fehlschlaegt (DB
+nicht erreichbar), wuerde der Catch-Block erneut ausgeloest.
+Das ist aber ohnehin der Fall — ein doppelter DB-Fehler aendert
+das Verhalten nicht.
+
+### Test-Strategie fuer H.3
+
+Claude-Fehler lokal simulieren: `ANTHROPIC_API_KEY` in
+`.env.local` temporaer auf einen falschen Wert setzen (z.B.
+`sk-invalid-key-for-testing`). Dann:
+1. Session erstellen
+2. Message senden
+3. 5 Sekunden warten (Retry-Timeout)
+4. Poll: Fallback-Message muss als ASSISTANT-Message erscheinen
+5. `.env.local` wieder korrigieren
+
+---
+
+## Fix-Verification H.3: Lokaler Test mit simuliertem Claude-Fehler
+
+### Setup
+- Branch: `fix/bot-fallback-persistence` (Commit `4e05e8c`)
+- Build: gruen (mit `ANTHROPIC_API_KEY=sk-invalid-for-testing`)
+- Server: `npx next start -p 3100`
+
+### Test-Ergebnisse
+
+| Test | Ergebnis |
+|---|---|
+| Session-Erstellung | 200, Token + ConvID |
+| Message senden | 202 Accepted |
+| Poll nach 15s (Retry-Timeout) | 2 Messages |
+| Message 1 | role: `user`, content: "Test bei kaputtem Claude" |
+| Message 2 | role: `assistant`, content: "Entschuldigung, ich hatte gerade einen kurzen technischen Haenger..." |
+| Fallback-Message im Poll | **PASS** |
+| ANTHROPIC_API_KEY restored | **Ja** (verifiziert: kein "invalid" im Key) |
+
+### Kern-Ergebnis
+
+Die Fallback-Message wird jetzt korrekt in der DB persistiert und
+vom Poll-Endpoint an den Web-Widget-User ausgeliefert. Der Claude-
+Fehler-Pfad funktioniert wie geplant:
+1. User-Message wird gespeichert (Zeile 389, unveraendert)
+2. Claude schlaegt fehl (alle Retries erschoepft)
+3. **NEU:** Fallback wird via `saveMessage()` persistiert
+4. Poll liefert USER + ASSISTANT Messages
+
+### Gesamturteil
+
+**GO fuer H.4 (Merge + Deploy).**
