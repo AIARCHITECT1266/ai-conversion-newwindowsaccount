@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 6.5 abgeschlossen (Navigation + UI-Polish) — bereit für Phase 7
-**Letzter Commit:** docs(phase-6-5): complete sub-phase 6.5 after browser verification and polish fixes
+**Aktuelle Phase:** Phase 7 Pre-Analyse abgeschlossen — bereit fuer Test-Szenario-Durchlauf
+**Letzter Commit:** docs(phase-7): finalize pre-analysis with owner decisions
 
 ---
 
