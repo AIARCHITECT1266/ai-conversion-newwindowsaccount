@@ -323,6 +323,15 @@ Breaking Change.
   (zukuenftige Spalten) unnoetig in den Speicher.
 - **Empfehlung:** `select`-Clause ergaenzen.
 
+### Status: ERLEDIGT (12.04.2026 spaet abends)
+
+**Fix-Commit:** `ce5ccbe` — `fix(widget): explicit select clause
+in poll findMany`
+**Deployed:** Production ai-conversion.ai
+**Fix:** findMany mit explizitem select:
+`{ id, role, contentEncrypted, timestamp }`. Response-Schema
+unveraendert, keine Regression. Lokal + Production verifiziert.
+
 **M5 — Dashboard Toggle: Race-Condition bei Key-Generierung**
 - **Datei:** `src/app/api/dashboard/widget-config/toggle/route.ts:73-84`
 - **Beobachtung:** Check auf bestehenden Key und Update mit
