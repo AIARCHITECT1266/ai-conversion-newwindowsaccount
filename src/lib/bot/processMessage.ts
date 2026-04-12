@@ -430,11 +430,24 @@ export async function processMessage(
       "Claude Antwortgenerierung"
     );
 
-    // Claude fehlgeschlagen → Fallback-Nachricht (NICHT persistiert)
+    // Claude fehlgeschlagen → Fallback-Nachricht persistieren, damit
+    // Web-Widget-User sie via Poll sieht (WhatsApp sendet sie zusaetzlich
+    // per Transport). Verschluesselung automatisch via saveMessage().
     if (!claudeResult || !claudeResult.success || !claudeResult.reply) {
       console.error("[processMessage] Claude fehlgeschlagen nach allen Retries", {
         conversationId,
         error: claudeResult?.error ?? "Timeout oder null",
+      });
+
+      await saveMessage(conversationId, "ASSISTANT", RETRY_FALLBACK_MESSAGE);
+
+      auditLog("bot.reply_failed", {
+        tenantId,
+        details: {
+          conversationId,
+          channel,
+          error: claudeResult?.error ?? "unknown",
+        },
       });
 
       return {
@@ -485,10 +498,23 @@ export async function processMessage(
       error: errorMessage,
     });
 
+    // Unerwarteter Fehler — Fallback persistieren, damit User nicht stumm
+    // bleibt. try/catch um saveMessage, weil die DB selbst das Problem sein
+    // koennte (dann soll kein doppelter Fehler entstehen).
+    try {
+      await saveMessage(conversationId, "ASSISTANT", RETRY_FALLBACK_MESSAGE);
+      auditLog("bot.reply_failed", {
+        tenantId,
+        details: { conversationId, channel, error: errorMessage },
+      });
+    } catch (persistError) {
+      console.error("[processMessage] Fallback-Persistierung fehlgeschlagen", persistError);
+    }
+
     return {
       success: false,
       conversationId,
-      responses: [],
+      responses: [RETRY_FALLBACK_MESSAGE],
       conversationStatus: "ACTIVE",
       needsConsent: false,
       error: errorMessage,
