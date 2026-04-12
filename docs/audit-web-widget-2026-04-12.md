@@ -141,6 +141,24 @@ Raw-Token geloggt werden.
   Queries ergaenzen. `processMessage` hat `tenantId` bereits
   im Input.
 
+### Status: ERLEDIGT (12.04.2026 spaet abends)
+
+**Fix-Commit:** `763fa69` — `fix(bot): enforce tenantId in
+processmessage db queries`
+**Deployed:** Production ai-conversion.ai
+**Verifikation:**
+- H.3 lokal: Multi-Turn-Konversation + STOP-Handler (401 nach
+  STOP = updateMany mit tenantId funktioniert)
+- H.5 Production: Multi-Turn-Flow OK (4 Messages)
+
+5 Queries um Composite-Key-Filter ergaenzt:
+loadConversationHistory (Signatur+where), STOP-Handler (updateMany),
+Consent-Update (updateMany), Scoring lead.findFirst, Scoring
+conversation.findFirst. Defense-in-Depth, kein aktiver Leak-Vektor.
+
+**Gleichzeitig abgeschlossen:** Low L11 (Scoring-Pipeline-Queries)
+— im selben Commit mitgefixt.
+
 **M2 — parseLogoUrl akzeptiert http://-URLs**
 - **Datei:** `src/lib/widget/publicKey.ts:108`
 - **Beobachtung:** `parseLogoUrl` akzeptiert `http://` neben
@@ -174,6 +192,118 @@ Inline-try/catch pro Route. Fallback-Response
 `{error: "Interner Serverfehler"}` mit Status 500 + withCors.
 Bestehende spezifische Fehler-Handler (Zod, Rate-Limit, Auth)
 unveraendert.
+
+---
+
+## Fix-Planung Medium M1: tenantId Composite Keys (Pre-Analyse H.1)
+
+### Vollstaendiger Query-Katalog in processMessage.ts
+
+12 DB-Queries in `src/lib/bot/processMessage.ts`. `tenantId` ist
+ab Zeile 318 (Destrukturierung aus `input`) verfuegbar — alle
+Queries liegen danach oder in Funktionen die `tenantId` als
+Parameter erhalten.
+
+| Zeile | Model | Query | where-Clause | tenantId? | Bewertung |
+|---|---|---|---|---|---|
+| 107 | message | findMany | `{ conversationId }` | **Nein** | **M1** |
+| 137 | message | create | `{ conversationId, ... }` | Nicht in where (create) | OK (kein Lookup) |
+| 167 | lead | findUnique | `{ conversationId }` | **Nein** | **L11** |
+| 171 | conversation | findUnique | `{ id: conversationId }` | **Nein** | **L11** |
+| 175 | tenant | findUnique | `{ id: tenantId }` | Ja (IS tenantId) | OK |
+| 201 | campaign | findUnique | `{ tenantId_slug: { tenantId, slug } }` | Ja | OK |
+| 207 | abTest | findFirst | `{ campaignId, isActive }` | Nein (aber indirekt via campaign) | OK |
+| 212 | abTest | update | `{ id: activeTest.id }` | Nein (aber ID aus vorheriger Query) | OK |
+| 223 | lead | upsert | `{ conversationId }` / create `{ tenantId }` | Im create ja, im where nein | Teilweise |
+| 358 | conversation | update | `{ id: conversationId }` | **Nein** | **M1** |
+| 379 | conversation | update | `{ id: conversationId }` | **Nein** | **M1** |
+| 392 | tenant | findUnique | `{ id: tenantId }` | Ja (IS tenantId) | OK |
+
+### Betroffene Stellen (Fix noetig)
+
+**Prioritaet Hoch (M1 — direkte Composite-Key-Verletzung):**
+
+1. **Zeile 107** — `loadConversationHistory`:
+   `db.message.findMany({ where: { conversationId } })`
+   Fix: `where: { conversationId, conversation: { tenantId } }`
+   Oder: tenantId als Parameter an die Funktion ergaenzen und
+   via Message-Relation filtern.
+
+2. **Zeile 358** — STOP-Handler:
+   `db.conversation.update({ where: { id: conversationId } })`
+   Fix: `where: { id: conversationId, tenantId }` — aber Prisma
+   `update` erwartet `@unique` oder `@@unique` in where. Da
+   `id` allein `@id` (unique) ist, geht `{ id, tenantId }` nur
+   mit `updateMany` (Returns count statt Record) oder via
+   `findFirst` + `update` Zwei-Schritt-Pattern.
+   **Sauberste Loesung:** `db.conversation.updateMany({
+   where: { id: conversationId, tenantId }, data: { status:
+   "CLOSED" } })` — gibt `{ count: 1 }` zurueck.
+
+3. **Zeile 379** — Consent-Update:
+   Gleiche Problematik wie Zeile 358. Gleiche Loesung:
+   `updateMany` mit `{ id: conversationId, tenantId }`.
+
+**Prioritaet Niedrig (L11 — Scoring-Pipeline, Fire-and-Forget):**
+
+4. **Zeile 167** — `db.lead.findUnique({ where: { conversationId } })`
+   Fix: Kein einfacher Composite moeglich, weil `conversationId`
+   bereits `@unique` auf Lead ist. Der tenantId-Check waere
+   redundant mit dem DB-Constraint. Trotzdem: Defense-in-Depth
+   via `findFirst({ where: { conversationId, tenantId } })`.
+
+5. **Zeile 171** — `db.conversation.findUnique({ where: { id } })`
+   Fix: `findFirst({ where: { id: conversationId, tenantId } })`
+
+### Echter Leak-Vektor
+
+**Aktuell kein exploitabler Leak.** Begruendung:
+- `conversationId` ist ein CUID (26+ Zeichen, 128-bit Entropie)
+  — nicht erratbar
+- Die Caller (`/api/widget/message` + WhatsApp-Handler)
+  validieren die Conversation VOR dem processMessage-Aufruf:
+  Widget via `verifySessionToken` (Token → Conversation),
+  WhatsApp via `externalId + tenantId`-Lookup
+- Ein Angreifer muesste sowohl ein gueltiges Session-Token HABEN
+  als auch eine fremde conversationId in den processMessage-
+  Aufruf injizieren — das ist ueber die API nicht moeglich,
+  weil `conversationId` aus der Token-Validierung kommt
+
+**Defense-in-Depth Argument:** Trotzdem sollte processMessage
+seine eigenen Queries absichern, weil ein zukuenftiger Caller
+(z.B. Admin-impersonation, Bulk-Import) die Conversation-ID
+moeglicherweise nicht vorab validiert.
+
+### Fix-Plan
+
+**5 Stellen in 1 Datei:**
+
+`src/lib/bot/processMessage.ts`:
+
+1. `loadConversationHistory` (Zeile 106): Signatur um `tenantId`
+   Parameter erweitern, where-Clause ergaenzen
+2. STOP-Handler (Zeile 358): `update` → `updateMany` mit tenantId
+3. Consent-Update (Zeile 379): `update` → `updateMany` mit tenantId
+4. Scoring: lead.findUnique (Zeile 167): → `findFirst` mit tenantId
+5. Scoring: conversation.findUnique (Zeile 171): → `findFirst` mit tenantId
+
+### Aufwand
+**S (~25 Min).** 5 Query-Aenderungen, keine neue Logik.
+`loadConversationHistory` braucht einen neuen Parameter.
+Die Aufrufe dieser Funktion (Zeile 414) muessen `tenantId`
+mitgeben.
+
+### Regression-Risiko
+**Niedrig.** Alle Aenderungen sind additiv (zusaetzliches
+where-Kriterium). Im Happy-Path ist `tenantId` immer korrekt
+zugeordnet → die Queries liefern identische Ergebnisse.
+Nur bei fehlerhafter Zuordnung (die aktuell nicht vorkommt)
+wuerde das neue Kriterium greifen und einen Zugriff verhindern.
+
+Die `updateMany`-Umstellung aendert den Return-Typ von
+`Conversation` auf `{ count: number }` — an den 2 betroffenen
+Stellen wird der Return-Wert nicht verwendet, also kein
+Breaking Change.
 
 **M4 — poll/route.ts: findMany ohne select-Clause**
 - **Datei:** `src/app/api/widget/poll/route.ts:130-137`
@@ -277,6 +407,8 @@ unveraendert.
 - **Datei:** `src/lib/bot/processMessage.ts:166-176`
 - Gleiche Thematik wie M1, aber Fire-and-Forget.
 - **Empfehlung:** tenantId als Defense-in-Depth.
+- **Status: ERLEDIGT** — im selben Commit `763fa69` wie M1
+  mitgefixt (lead.findFirst + conversation.findFirst mit tenantId).
 
 **L12 — widget.js: innerHTML fuer SVG-Injection**
 - **Datei:** `public/widget.js:228`
