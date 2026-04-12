@@ -296,12 +296,12 @@ export default function WidgetSettingsPage() {
               -Tag deiner Webseite ein.
             </p>
             <div className="relative mb-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#07070d]">
-              <pre className="scrollbar-hide overflow-x-auto p-4 pr-20 font-mono text-[11px] leading-relaxed text-[#ede8df]">
+              <pre className="scrollbar-hide overflow-x-auto p-4 sm:pr-20 font-mono text-[11px] leading-relaxed text-[#ede8df]">
                 {embedSnippet}
               </pre>
               <button
                 onClick={() => handleCopy(embedSnippet)}
-                className="absolute right-2 top-2 flex items-center gap-1.5 rounded-lg bg-white/[0.08] px-2.5 py-1.5 text-[10px] font-medium text-[#ede8df] transition-colors hover:bg-white/[0.12]"
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-white/[0.08] px-2.5 py-1.5 text-[10px] font-medium text-[#ede8df] transition-colors hover:bg-white/[0.12] sm:absolute sm:right-2 sm:top-2 sm:mt-0 sm:w-auto sm:justify-start"
               >
                 {copied ? (
                   <>
