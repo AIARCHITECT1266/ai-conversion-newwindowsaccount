@@ -167,6 +167,15 @@ conversation.findFirst. Defense-in-Depth, kein aktiver Leak-Vektor.
   unverschluesselte Verbindung geladen werden (MITM-Risiko).
 - **Empfehlung:** Nur `https://` und relative Pfade zulassen.
 
+### Status: ERLEDIGT (12.04.2026 spaet abends)
+
+**Fix-Commit:** `4a2ff80` — `fix(widget): reject http urls in
+parseLogoUrl (https-only)`
+**Deployed:** Production ai-conversion.ai
+**Fix:** parseLogoUrl akzeptiert nur noch `https://` oder
+same-origin-Pfade (`/`). Gilt fuer logoUrl UND bubbleIconUrl.
+Kein http-Leak mehr moeglich.
+
 **M3 — Kein top-level try/catch auf Widget-API-Handlern**
 - **Datei:** Alle 4 Widget-API-Routes
 - **Beobachtung:** Keiner der Handler wrappt den Body in
