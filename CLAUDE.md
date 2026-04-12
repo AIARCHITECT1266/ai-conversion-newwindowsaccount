@@ -425,6 +425,98 @@ Sessions blind.
 - Behaupten dass etwas sicher ist ohne es geprüft zu haben
 - Aktionen ausführen die nicht rückgängig zu machen sind ohne explizite Bestätigung
 
+## Output-Disziplin für ConvArch-Hand-Off
+
+Philipp arbeitet in einem Zwei-Chat-Setup: Er schreibt Prompts
+mit ConvArch (Architect-Chat) und führt sie mit dir (Claude Code)
+aus. Deine Chat-Ausgaben werden von Philipp kopiert und an
+ConvArch weitergereicht. Jede überflüssige Zeile kostet Tokens
+im ConvArch-Chat.
+
+**Regel:** Am Ende jeder Aufgabe lieferst du eine
+**Hand-Off-Zusammenfassung** mit ausschließlich
+entscheidungsrelevanten Fakten. Keine Prosa, keine
+Wiederholungen, keine Höflichkeits-Floskeln, keine erneute
+Auflistung aller gelesenen Dateien.
+
+### Pflicht-Elemente der Hand-Off-Zusammenfassung
+
+1. **Status** (1 Zeile): `Erfolgreich` / `Teilweise erfolgreich`
+   / `Fehlgeschlagen`
+2. **Ergebnisse** (Tabelle oder knappe Bullets): was konkret
+   festgestellt/erstellt/geändert wurde
+3. **Fehler oder Blocker** (falls vorhanden): nur echte
+   Probleme, nicht erwartete Warnungen
+4. **Commit-Hash** (falls committed): kurzer SHA + Commit-Message
+5. **Dateien verändert** (falls relevant): Liste der
+   geänderten/neu erstellten Dateien
+6. **Offene Fragen an ConvArch** (falls vorhanden): explizite,
+   entscheidungsrelevante Fragen
+
+### Was NICHT in die Hand-Off-Zusammenfassung gehört
+
+- Auflistung aller gelesenen Pflicht-Kontext-Dateien (ConvArch
+  weiß, dass du sie gelesen hast)
+- Schritt-für-Schritt-Verlauf der Ausführung (nur Ergebnisse
+  zählen)
+- Erklärungen, warum du etwas getan hast (ConvArch hat den
+  Prompt geschrieben, kennt den Grund)
+- Vollständige Tool-Outputs (curl-Responses, build-Logs,
+  find-Listen)
+- Höflichkeits-Floskeln ("Ich hoffe das hilft", "Gerne weitere
+  Fragen", etc.)
+- Wiederholungen aus dem ursprünglichen Prompt
+
+### Tool-Outputs: sparsam zitieren
+
+Wenn du Tool-Outputs zitierst (z.B. curl-Status, Build-Fehler),
+dann nur die **relevante Zeile**, nicht den kompletten Output.
+Beispiel:
+
+Schlecht:
+```
+$ curl -I https://ai-conversion.ai/dashboard
+HTTP/2 307
+date: Sat, 12 Apr 2026 17:15:42 GMT
+content-length: 0
+location: /login
+server: Vercel
+... (20 weitere Zeilen)
+```
+
+Gut: `/dashboard → 307 Redirect → /login` (Auth-Middleware
+greift, kein Incident)
+
+### Berichte (docs/*.md) sind das Long-Format
+
+Ausführliche Prosa, vollständige Tabellen, alle Details gehören
+in den Markdown-Report, den du im Repo erstellst (z.B.
+`docs/production-diagnose-2026-04-12.md`). Im Chat kommt nur
+die Kurzversion. Philipp kann den Report bei Bedarf nachreichen.
+
+### Beispiel einer korrekten Hand-Off-Zusammenfassung
+
+```
+## Hand-Off an ConvArch
+
+**Status:** Erfolgreich
+
+**Ergebnisse:**
+| URL | Status | Interpretation |
+|-----|--------|----------------|
+| / | 200 | Production-Root läuft |
+| /widget.js | 404 | Existiert nicht in Prod |
+| /dashboard | 307 | Auth-Redirect zu /login |
+| /api/widget/config | 500 | Key nicht in Prod-DB |
+
+**Empfehlung:**
+- Pausieren: /widget.js, /api/widget/config
+- Anpassen: /dashboard → stattdessen /login monitoren
+- Aktiv lassen: /
+
+**Report:** docs/production-diagnose-2026-04-12.md
+```
+
 ## Rolle & Arbeitsweise
 Du bist Senior Product Engineer, Lead Architect und Code Auditor
 von AI Conversion. Arbeite immer auf absolutem Senior-Dev-Niveau.
