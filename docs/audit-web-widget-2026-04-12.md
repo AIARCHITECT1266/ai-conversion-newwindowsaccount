@@ -160,6 +160,21 @@ Raw-Token geloggt werden.
 - **Empfehlung:** Pro Handler ein try/catch mit strukturiertem
   `{ error: "Interner Fehler" }` Response (Status 500).
 
+### Status: ERLEDIGT (12.04.2026 spaet abends)
+
+**Fix-Commit:** `b049bce` — `fix(widget): add top-level try/catch
+to all widget api routes`
+**Deployed:** Production ai-conversion.ai
+**Verifikation:**
+- H.3 lokaler Regressions-Test: Happy-Path + Fehler-Pfade
+  (400/401) korrekt
+- H.5 Production-Smoke-Test: keine 500-Regression
+
+Inline-try/catch pro Route. Fallback-Response
+`{error: "Interner Serverfehler"}` mit Status 500 + withCors.
+Bestehende spezifische Fehler-Handler (Zod, Rate-Limit, Auth)
+unveraendert.
+
 **M4 — poll/route.ts: findMany ohne select-Clause**
 - **Datei:** `src/app/api/widget/poll/route.ts:130-137`
 - **Beobachtung:** `db.message.findMany` laedt alle Spalten,
@@ -766,3 +781,116 @@ Fehler-Pfad funktioniert wie geplant:
 ### Gesamturteil
 
 **GO fuer H.4 (Merge + Deploy).**
+
+---
+
+## Fix-Planung Medium M3: Top-Level Error-Handler (Pre-Analyse H.1)
+
+### Ist-Zustand pro Route
+
+| Route | Handler | try/catch vorhanden | Scope des try/catch |
+|---|---|---|---|
+| config (GET) | `GET()` | Nein | — |
+| session (POST) | `POST()` | Teilweise | Nur `request.json()` (Zeile 97-103) |
+| message (POST) | `POST()` | Teilweise | Nur `request.json()` (Zeile 73-79) |
+| poll (GET) | `GET()` | Nein | — |
+
+Keiner der Handler hat einen top-level try/catch der den
+gesamten Funktionskoerper umschliesst. Bei unerwarteten Fehlern
+(DB-Timeout, Redis-Ausfall, `decryptText`-Fehler in poll,
+`resolvePublicKey`-Crash in config/session) laeuft die Exception
+ungefangen durch und Next.js erzeugt einen Default-500-Response,
+der in Dev-Mode Stack-Traces enthalten kann.
+
+### Bestehende Error-Response-Pattern
+
+Alle 4 Routes verwenden konsistentes JSON-Format:
+```
+{ error: "Fehlerbeschreibung auf Deutsch" }
+```
+Optionales `details`-Feld bei Zod-Fehlern:
+```
+{ error: "Ungueltige Eingabe", details: result.error.flatten() }
+```
+
+Kein shared Error-Handler (`handleApiError` o.ae.) existiert im
+Projekt.
+
+### Options-Bewertung
+
+**Option A — Inline try/catch pro Route:**
+- Pro: Minimal-invasiv, kein neuer Import, jeder Handler bleibt
+  eigenstaendig lesbar
+- Con: 4× identischer Catch-Block (6-8 Zeilen je Route)
+- Aufwand: S (~20 Min)
+
+**Option B — Shared Error-Handler-Wrapper:**
+- Pro: DRY, zentraler Error-Logging-Punkt
+- Con: Neuer Import, neuer File, Wrapper-Indirection erschwert
+  Stack-Trace-Zuordnung, ueberdimensioniert fuer 4 Dateien
+- Aufwand: S (~25 Min)
+
+**Option C — Next.js error.tsx:**
+- Pro: Framework-nativ
+- Con: Funktioniert NUR fuer Page-Routes, NICHT fuer API-Routes
+- **Disqualifiziert** fuer diesen Use-Case
+
+### Empfehlung: Option A (Inline try/catch)
+
+Begruendung: 4 identische 6-Zeilen-Bloecke sind akzeptabler
+Boilerplate fuer eine Pre-Pilot-Phase. Ein Shared-Wrapper lohnt
+sich erst ab 8+ Endpoints oder wenn Error-Reporting (Sentry)
+dazukommt. Der CORS-Duplication-Befund (L2) waere ein besserer
+Kandidat fuer eine shared Utility als der Error-Handler.
+
+### Fix-Plan
+
+Pro Route-Handler: den gesamten Funktionskoerper (nach den CORS-
+Preflight-Returns) in try/catch wrappen:
+
+```typescript
+export async function GET/POST(request: NextRequest): Promise<NextResponse> {
+  // ... bestehender Code ...
+
+  try {
+    // ... gesamter Handler-Body (nach CORS-Preflight) ...
+  } catch (error) {
+    console.error("[widget/ROUTE] Unerwarteter Fehler", error);
+    return withCors(
+      NextResponse.json(
+        { error: "Interner Fehler" },
+        { status: 500 },
+      ),
+    );
+  }
+}
+```
+
+**Wichtig:** Der try/catch muss NACH den spezifischen Fehler-
+Returns (Zod, Rate-Limit, Auth) kommen — oder den gesamten Body
+wrappen, wobei die spezifischen Returns innerhalb des try-Blocks
+via `return` rausspringen. Die spezifischen Fehler-Responses
+(400, 401, 429) bleiben unveraendert — sie werden VOR dem catch
+via return beendet.
+
+### Betroffene Dateien
+
+1. `src/app/api/widget/config/route.ts` — GET Handler
+2. `src/app/api/widget/session/route.ts` — POST Handler
+3. `src/app/api/widget/message/route.ts` — POST Handler
+4. `src/app/api/widget/poll/route.ts` — GET Handler
+
+### Regression-Risiko
+
+**Niedrig.** Bestehende return-Pfade (Zod-400, Rate-Limit-429,
+Auth-401) bleiben exakt gleich. Der try/catch umschliesst den
+gesamten Body und faengt nur Exceptions ab, die bisher ungefangen
+durchliefen. Kein bestehendes Verhalten aendert sich.
+
+### Test-Strategie
+
+DB-Timeout lokal simulieren: `DATABASE_URL` auf nicht-existierenden
+Host setzen, Session/Config-Request senden → muss `{ error:
+"Interner Fehler" }` mit Status 500 liefern statt Stack-Trace.
+Alternativ: einfach nach dem Build pruefen, dass normale Requests
+weiterhin die erwarteten Responses liefern (Regressions-Test).
