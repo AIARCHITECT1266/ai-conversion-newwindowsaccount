@@ -136,6 +136,48 @@ Pilot-Ready.
 
 ---
 
+## Tages-Zusammenfassung 12.04.2026
+
+### Deployments heute: 10
+Alle mit sauberem Prozess (Feature-Branch → Pre-Analyse → Lokaler
+Test → Merge → Production-Verifikation → Docs).
+
+### Erledigt
+1. Better Stack Monitoring live (3 Monitore + Status-Page)
+2. Vercel Repo-Mismatch gefixt (war auf falschem Repo verbunden)
+3. CSP-Nonce-Regression (Commits 4590cc1 + 16348a0)
+4. Web-Widget Audit (docs/audit-web-widget-2026-04-12.md)
+5. High #1 — Fallback-Message-Persistierung (4e05e8c)
+6. High #2 — Session-Token-Hash (76ef8fa)
+7. Medium M1 + Low L11 — Tenant-Isolation (763fa69)
+8. Medium M2 — HTTPS-Only Logo-URLs (4a2ff80)
+9. Medium M3 — Top-Level Error-Handler (b049bce)
+10. Medium M4 — Poll select-Clause (ce5ccbe)
+11. Medium M6+M7+M8 — A11y-Bundle (71869f8)
+12. Medium M5 — Toggle Race-Condition (67240f9)
+
+### Audit-Status
+- Critical: 0
+- High: 0 offen (2 erledigt)
+- Medium: 0 offen (8 erledigt)
+- Low: 11 offen (L1-L10, L12) — alle XS-S, keiner pilot-blockierend
+- Info: 30+ (kein Handlungsbedarf)
+
+### Codebase-Status
+**Widget-Codebase ist vollumfaenglich Pilot-Ready.** Alle kritischen
+und mittelprioritaeren Security-, Tenant-Isolation- und
+Accessibility-Themen adressiert.
+
+### Bekannte offene strategische Themen
+- DB-Dev/Prod-Split (vor erstem Pilot!)
+- Sentry / Error-Tracking einrichten
+- AVV-Template nach Art. 28 DSGVO
+- Datenschutzerklaerung Web-Widget
+- Admin-Dashboard: Tenant-Widget-Uebersicht (Scope-Spec ausstehend)
+- Automatisiertes Testing (Unit + Integration)
+
+---
+
 ## Was ist das Ziel?
 
 Erweiterung der bestehenden WhatsApp-Plattform um einen zweiten Kanal:
