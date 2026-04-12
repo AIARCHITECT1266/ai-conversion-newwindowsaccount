@@ -366,6 +366,20 @@ unveraendert, keine Regression. Lokal + Production verifiziert.
 - **Empfehlung:** Messages-Container als `role="list"`,
   jede Bubble als `role="listitem"`.
 
+### Status M6+M7+M8: ERLEDIGT (12.04.2026 spaet abends)
+
+**Fix-Commit:** `71869f8` — `fix(widget): improve accessibility
+on toggle, color-picker, chat log`
+**Deployed:** Production ai-conversion.ai
+**Fixes:**
+- M6: Toggle erhaelt `role="switch"` + `aria-checked` +
+  `aria-label="Widget aktivieren"`
+- M7: Color-Picker-Inputs erhalten `aria-label` (Farbwahl +
+  Hex-Wert) fuer assistive Technologien
+- M8: Messages-Container wechselt auf `role="log"` +
+  `aria-live="polite"` + `aria-label="Konversationsverlauf"`.
+  `role="article"` von einzelnen Bubbles entfernt.
+
 ---
 
 ### Low
