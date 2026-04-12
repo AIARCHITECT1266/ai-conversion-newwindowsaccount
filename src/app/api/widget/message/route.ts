@@ -131,10 +131,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
   const isNewConversation = messageCount === 0 && !conversation.consentGiven;
 
-  // senderIdentifier: opaquer String fuer processMessage.
-  // Voller Session-Token, weil der Phase-3b.5-Consent-Fix darauf
-  // basiert dass Identifier stabil zwischen Turns bleibt.
-  const senderIdentifier = sessionToken;
+  // senderIdentifier: gehashter, opaquer String fuer processMessage.
+  // SHA-256-Hash des Session-Tokens — stabil zwischen Turns (wie
+  // vom Phase-3b.5-Consent-Fix benoetigt), aber kein Bearer-Credential.
+  // Defense-in-Depth: spaetere Code-Pfade koennten den senderIdentifier
+  // versehentlich loggen oder persistieren — ein Hash ist sicher.
+  // Analog zu WhatsApp, wo externalId ein Phone-Hash ist.
+  const senderIdentifier = hashTokenForRateLimit(sessionToken);
 
   // Kanal-agnostische Bot-Logik aufrufen.
   // Signatur exakt wie in src/modules/bot/handler.ts:383-391 gespiegelt.
