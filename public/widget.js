@@ -88,6 +88,7 @@
     // ---------- Bubble ----------
     ".bubble{",
     "  position:fixed;",
+    "  top:auto;",
     "  right:24px;",
     "  bottom:24px;",
     "  width:60px;",
@@ -180,6 +181,12 @@
     // ---------- Mobile ----------
     "@media (max-width:767px){",
     "  .bubble{right:18px;bottom:18px;width:56px;height:56px;}",
+    // Mobile-Fix: Im geoeffneten Zustand wandert die Bubble/Close-X nach
+    // oben-rechts, damit sie nicht den Senden-Button im iframe-Footer
+    // ueberlagert. 44x44px = Minimum Touch-Target (WCAG 2.5.8).
+    // Laut WEB_WIDGET_INTEGRATION.md Phase 5: Bubble ist Loader-Verantwortung,
+    // iframe-Content hat keinen eigenen Close-Button.
+    "  .bubble.open{top:12px;bottom:auto;right:12px;width:44px;height:44px;}",
     "  .frame-wrap{",
     "    inset:0;",
     "    right:0;",

@@ -74,6 +74,112 @@ aktuellen Code-Stand.
 
 ---
 
+## 11. Test-Gruppe B — Ergebnisse (2026-04-12)
+
+**Tester:** Project Owner (Mobile-Test auf echtem Smartphone) +
+Claude Code (curl-Tests, DB-Queries, Cross-Origin-Server-Setup)
+
+**Ergebnis: 3/3 gruen (B3 mit akzeptierter Einschraenkung).**
+
+| # | Szenario | Status | Verifikations-Methode |
+|---|----------|--------|----------------------|
+| B1 | Cross-Origin | **PASS** | http-server auf Port 3001 mit --cors, Widget auf localhost:3001 laedt iframe von localhost:3000, DOM-Verifikation im Browser, CORS-Header korrekt |
+| B2 | Tenant-Isolation | **PASS (13/13)** | 2 Sessions (internal-admin + test-b), Messages an beide, Poll-Cross-Check, Fabricated-Token-Test, DB-Query-Verifikation (getrennte tenantIds, 0 Cross-Leaks) |
+| B3 | Mobile | **PASS (mit Einschraenkung)** | Echtes Smartphone (Brave Android) via LAN-URL 192.168.2.217:3000, Close-X-Fix verifiziert, Welcome-Message sichtbar, Consent-Flow funktional |
+
+### B1 — Cross-Origin (Detail)
+
+- Separater HTTP-Server auf Port 3001 (`npx http-server --cors`)
+  mit `C:\Users\accou\cross-origin-test\index.html`
+- Widget-Loader von localhost:3000 wird korrekt per
+  Cross-Origin in die Test-Seite eingebettet
+- iframe laedt `/embed/widget?key=pub_OQ5vM7rpiwTgwik0`
+- CORS-Preflight und Fetch-Requests an `/api/widget/*`
+  funktionieren (Access-Control-Allow-Origin: *)
+- Test-Server nach Verifikation sauber gestoppt (PID-spezifisch,
+  nicht taskkill /IM node.exe)
+
+### B2 — Tenant-Isolation (Detail)
+
+13 Sub-Tests, alle PASS:
+
+| # | Test | HTTP-Status | Erwartung | Ergebnis |
+|---|------|-------------|-----------|----------|
+| 1 | Session Create Tenant A | 200 | Token + ConvID | PASS |
+| 2 | Session Create Tenant B | 200 | Token + ConvID | PASS |
+| 3 | Message Tenant A | 202 | Accepted | PASS |
+| 4 | Message Tenant B | 202 | Accepted | PASS |
+| 5a | Poll Token A | 200 | Nur A-Messages | PASS ("AI Conversion"-Bot) |
+| 5b | Poll Token B | 200 | Nur B-Messages | PASS ("Atelier Hoffmann"-Bot) |
+| 5c | Token A enthält B-Content? | — | 0 Treffer | PASS |
+| 5d | Token B enthält A-Content? | — | 0 Treffer | PASS |
+| 5e | Fabricated Token → Poll | 401 | "Invalid or expired session" | PASS |
+| 5f | Fabricated Token → Message | 401 | "Invalid or expired session" | PASS |
+| 6a | DB: Conv A ≠ Conv B tenantId | — | Unterschiedlich | PASS |
+| 6b | DB: Cross-Leak A→B | — | 0 | PASS |
+| 6c | DB: Cross-Leak B→A | — | 0 | PASS |
+
+Architektonischer Grund: `verifySessionToken` mappt Token →
+genau eine Conversation → genau einen Tenant. Kein Endpoint
+akzeptiert eine beliebige `conversationId` als Parameter.
+Cross-Tenant-Zugriff ist per Design unmoeglich.
+
+### B3 — Mobile (Detail)
+
+**Test-Geraet:** Echtes Smartphone (Brave Android) via
+LAN-URL `http://192.168.2.217:3000/widget-demo.html`
+
+**Zwei Bugs gefunden und gefixt:**
+
+1. **Close-X-Overlap (Option A Fix):** Auf Mobile ueberlagerte
+   der Close-X-Button (Loader/widget.js) den Senden-Button im
+   iframe-Footer. Fix: `.bubble.open` im Mobile-Media-Query
+   nach `top:12px; right:12px` mit 44x44px verschoben.
+   Verifiziert auf echtem Geraet.
+
+2. **Auto-Fokus-Tastatur (F1 Fix):** Beim Oeffnen des Widgets
+   oeffnete der Auto-Fokus ins Input-Feld sofort die virtuelle
+   Tastatur, die den Viewport schrumpfte und die Welcome-Message
+   aus dem sichtbaren Bereich draengte. Fix: `matchMedia`-Check
+   im Fokus-useEffect — auf Mobile (≤767px) kein Auto-Fokus.
+   Verifiziert auf echtem Geraet.
+
+**Akzeptierte Einschraenkung:**
+Wenn der User aktiv ins Input-Feld tippt, scrollt der Chromium-
+Keyboard-Avoidance-Algorithmus den fokussierten Input ueber die
+Tastatur und verschiebt dabei Header + Welcome-Message kurzzeitig
+aus dem Viewport. Das ist Standard-Chromium-Verhalten (identisch
+bei Intercom, Crisp, Drift) und kein Bug in unserem Code.
+Vollstaendige Loesung waere Visual Viewport API (~150-300 Zeilen
+mit iOS/Android-Edge-Cases), Prioritaet niedrig, nachfrage-
+getrieben. Dokumentiert in docs/tech-debt.md.
+
+### Finale Security-Checkliste
+
+**17 Punkte: 16 PASS + 1 akzeptiert per ADR** (Poll-Endpoint
+ohne auditLog, entschieden in
+docs/decisions/phase-3b-spec-reconciliation.md)
+
+---
+
+## 12. Phase-7-Abschluss
+
+**Status: Phase 7 vollstaendig, Pilot-Ready.**
+
+- Test-Gruppe A: 6/6 gruen
+- Test-Gruppe B: 3/3 gruen (B3 mit akzeptierter Einschraenkung)
+- Test-Gruppe C: 1 Szenario extern blockiert (WhatsApp-Regression,
+  Meta Business Verification ausstehend)
+- Security-Checkliste: 16 PASS + 1 akzeptiert per ADR
+- 2 Mobile-UX-Bugs gefunden und gefixt (Close-X + Auto-Fokus)
+- Integration-Guide geschrieben (docs/integration-guide.md)
+- Build gruen (npx next build)
+
+**Gesamt: 9/10 Szenarien verifiziert, 1 extern blockiert.**
+System ist Pilot-Ready.
+
+---
+
 ### CORS-Entscheidung (ehemals Gap)
 
 **Entscheidung:** Option A — akzeptiert per ADR.
@@ -163,10 +269,10 @@ Feature-Scope.
 |---------|--------|-----|---------------------|--------|
 | 7.1 | **Security-Checkliste abschliessen:** CORS-Gap-Entscheidung + ADR | Entscheidung + Doku | 30 Min | **ERLEDIGT** (ADR geschrieben) |
 | 7.2 | **Test-Gruppe A durchlaufen** (6 Szenarien, sofort testbar) | Manueller Test | 1-1.5h | **ERLEDIGT** (6/6 gruen) |
-| 7.3 | **Test-Gruppe B Setup + Durchlauf** (Cross-Origin, Tenant-Isolation, Mobile) | Setup + Test | 1.5-2h | Offen (Tenant B angelegt) |
-| 7.4 | **Integration-Guide schreiben** (docs/integration-guide.md) | Doku | 1.5-2h | Offen |
+| 7.3 | **Test-Gruppe B Setup + Durchlauf** (Cross-Origin, Tenant-Isolation, Mobile) | Setup + Test | 1.5-2h | **ERLEDIGT** (3/3 gruen, 2 Mobile-Bugs gefixt) |
+| 7.4 | **Integration-Guide schreiben** (docs/integration-guide.md) | Doku | 1.5-2h | **ERLEDIGT** (Commit ea0e2bb) |
 | 7.5 | **Build-Check** (`npx next build`) | Verifikation | 15 Min | **ERLEDIGT** (gruen, 68 Seiten) |
-| 7.6 | **Abschluss-Doku:** PROJECT_STATUS.md, ADR, Tech-Debt-Updates | Doku | 30 Min | Offen |
+| 7.6 | **Abschluss-Doku:** PROJECT_STATUS.md, ADR, Tech-Debt-Updates | Doku | 30 Min | **ERLEDIGT** (dieser Commit) |
 
 **Verbleibender Aufwand Phase 7:** ca. 3-4 Stunden (7.3 + 7.4 + 7.6)
 

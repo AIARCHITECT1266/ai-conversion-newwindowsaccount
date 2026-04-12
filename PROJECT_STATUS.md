@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 7 — Test-Gruppe A abgeschlossen (6/6), bereit fuer Test-Gruppe B
-**Letzter Commit:** test(phase-7): verify test group A (6 scenarios all green)
+**Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready
+**Letzter Commit:** test(phase-7): complete pilot-ready state — all scenarios verified
 
 ---
 
@@ -468,6 +468,32 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   (Hardening, 10 Test-Szenarien aus WEB_WIDGET_INTEGRATION.md,
   Pilot-Kunden-Integration-Guide aus tech-debt.md)
 
+### Phase 7 — Testing & Hardening: Pilot-Ready (Commits dc9538a, ea0e2bb + dieser Commit)
+- Datum: 2026-04-12
+- Pre-Analyse: 10 Test-Szenarien gruppiert (A: sofort, B: Setup,
+  C: blockiert), Security-Checkliste 17 Punkte geprueft
+- Test-Gruppe A (6/6 gruen): Happy Path, DSGVO, Widget-Deaktiviert,
+  Graceful Degradation, Plan-Gating, Rate-Limit
+- Test-Gruppe B (3/3 gruen):
+  * B1 Cross-Origin: http-server auf Port 3001, Widget-Embedding
+    per CORS verifiziert
+  * B2 Tenant-Isolation: 13 Sub-Tests (API + DB), null Cross-Leaks,
+    Fabricated-Token → 401
+  * B3 Mobile: Echtes Smartphone (Brave Android), 2 Bugs gefunden
+    und gefixt (Close-X-Overlap + Auto-Fokus-Tastatur)
+- Test-Gruppe C (1 blockiert): WhatsApp-Regression durch fehlende
+  Meta Business Verification extern blockiert
+- Security-Checkliste: 16 PASS + 1 akzeptiert per ADR
+- 2 Mobile-UX-Fixes: Close-X nach oben-rechts auf Mobile
+  (widget.js), Auto-Fokus-Unterdrueckung (ChatClient.tsx)
+- Chromium-Keyboard-Avoidance als Tech-Debt akzeptiert
+  (Standard-Plattformverhalten)
+- Integration-Guide docs/integration-guide.md geschrieben
+- Test-Tenant-B Seed-Script erstellt
+- 3 ADRs geschrieben (CORS, Embed-Script Vanilla-JS,
+  Tenant-Isolation-Test-Setup)
+- **Gesamt: 9/10 Szenarien verifiziert. System ist Pilot-Ready.**
+
 ### Phase 6.5 — Settings-Sidebar + Browser-Verifikation + Polish (Commits b1f842f, 4cc1db0, 94bf6d6)
 - Datum: 2026-04-12
 - Scope: Navigation-Polish nach dem E2E-Abschluss. Die Settings-
@@ -553,13 +579,11 @@ Siehe docs/test-debt.md. Highlights:
 
 ## Nächster Schritt
 
-**Phase 3a — Widget-API GET-Endpoints**
-- resolvePublicKey-Helper mit Cache
-- GET /api/widget/config
-- GET /api/widget/poll
-- generate-widget-keys.ts (Daten-Migration für Test-Tenant)
-
-Der Phase-3a-Prompt wird von ConvArch vor der Session geliefert.
+**Post-Phase-7 — Pilot-Kunden-Onboarding**
+- Erstes Pilot-Kunden-Deployment auf Vercel Production
+- WhatsApp-Regression-Test nach Meta Business Verification (extern blockiert)
+- Monitoring + Feedback-Loop mit Pilot-Kunden
+- Tech-Debt-Abbau nach Prioritaet (siehe docs/tech-debt.md)
 
 ---
 

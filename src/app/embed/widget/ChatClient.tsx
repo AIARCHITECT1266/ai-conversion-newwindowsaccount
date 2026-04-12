@@ -72,15 +72,29 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
 
   // ----- Fokus ins Input-Feld nach Modal-Close -----
   useEffect(() => {
-    if (sessionToken && !showConsentModal) {
-      inputRef.current?.focus();
-    }
+    if (!sessionToken || showConsentModal) return;
+    // Auf Mobile keinen Auto-Fokus — die virtuelle Tastatur
+    // wuerde sofort den halben Viewport verdecken und die
+    // Welcome-Message aus dem sichtbaren Bereich draengen.
+    // Desktop bleibt unveraendert (Keyboard ist physisch).
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    if (isMobile) return;
+    inputRef.current?.focus();
   }, [sessionToken, showConsentModal]);
 
   // ----- Auto-Scroll auf neue Messages -----
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
+    // Smart-Scroll: nur triggern wenn Container wirklich
+    // scrollbar ist. Bei kurzen Message-Listen (z.B. nur
+    // Welcome-Message) wuerde scrollTop=scrollHeight auf
+    // Mobile die Message oberhalb des sichtbaren Bereichs
+    // verschwinden lassen, besonders wenn die Tastatur den
+    // Viewport schrumpft. Schwellwert: mindestens 100px
+    // Differenz, sonst passt Content ohnehin in den Viewport.
+    const overflow = el.scrollHeight - el.clientHeight;
+    if (overflow <= 100) return;
     el.scrollTop = el.scrollHeight;
   }, [messages]);
 

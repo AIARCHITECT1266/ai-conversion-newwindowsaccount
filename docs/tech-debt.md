@@ -544,3 +544,85 @@ auftritt, ist diese Hypothese der erste Verdacht — dann
 Browser-DevTools-Console oeffnen, nach CSP-Violations suchen,
 im SSR-HTML-Output pruefen ob `<script>`-Tags `nonce="..."`-
 Attribute tragen.
+
+## Phase 7 — Rate-Limiter In-Memory-ephemeral-Cache im Dev-Server
+
+### Status
+Bekanntes Verhalten, kein Bug. Dokumentiert als Dev-Workflow-Hinweis.
+
+### Datum
+2026-04-12 (Phase 7, Test-Gruppe A, Szenario 4)
+
+### Problem
+Der Upstash-Rate-Limiter verwendet einen In-Memory-Cache
+(ephemeral) im Dev-Server-Prozess. Ein `DEL`-Befehl gegen den
+Upstash-Redis-Key resettet nur den serverseitigen Counter in
+Redis, aber der In-Memory-Cache im laufenden Dev-Server-Prozess
+bleibt bestehen und blockt weiterhin.
+
+### Konsequenz fuer Development
+Bei Rate-Limit-Tests waehrend der Entwicklung reicht ein Redis-DEL
+nicht aus. Der Dev-Server muss neu gestartet werden, um den
+In-Memory-Cache zu resetten.
+
+### Production-Relevanz
+Keine. Vercel Fluid Compute recycled Function-Instanzen regelmaessig,
+der In-Memory-Cache hat dort eine natuerlich begrenzte Lebensdauer.
+Deployments resetten den Cache komplett.
+
+### Wann fixen
+Nicht fixen. Das Verhalten ist korrekt und performance-optimal.
+Fuer Entwickler-DX waere ein `?reset-rate-limit`-Debug-Endpoint
+denkbar, aber nur wenn Tests haeufiger scheitern.
+
+## Phase 7 — Mobile-Tastatur-Keyboard-Avoidance (Chromium-Default)
+
+### Status
+Akzeptiert als Plattform-Standardverhalten. Prioritaet niedrig.
+
+### Datum
+2026-04-12 (Phase 7, Test-Gruppe B, Szenario B3 Mobile)
+
+### Symptom
+Beim aktiven Tippen ins Chat-Input-Feld scrollt Chromium nativ
+den fokussierten Input ueber die virtuelle Tastatur. Dabei werden
+Header und Welcome-Message kurzzeitig aus dem sichtbaren Viewport
+geschoben. Nach Bot-Antwort oder Tastatur-Schliessen normalisiert
+sich das Layout.
+
+### Bereits umgesetzte Mitigationen
+- **F1 (Auto-Fokus-Unterdrueckung):** `matchMedia`-Check im
+  Fokus-useEffect in `src/app/embed/widget/ChatClient.tsx` —
+  auf Mobile (≤767px) kein automatischer Fokus ins Input-Feld
+  beim Oeffnen. Loest das Problem beim initialen Widget-Oeffnen.
+- **F2 (Smart-Scroll):** `overflow <= 100` Guard im Auto-Scroll-
+  useEffect — verhindert programmatisches Scroll-to-Bottom bei
+  kurzen Message-Listen. Ergaenzende Massnahme.
+
+### Was NICHT funktioniert hat
+- `100dvh` statt `100vh`/`h-screen`: Wirkungslos, weil der
+  iframe in einem `position:fixed; inset:0` Container sitzt
+  (sowohl in `widget.js` Host als auch in `embed/layout.tsx`).
+  Fixed-Elemente reagieren auf iOS/Android nicht auf die Tastatur.
+  Aenderungen wurden vollstaendig revertiert.
+
+### Vollstaendige Loesung (nicht implementiert)
+Visual Viewport API (`window.visualViewport`) wuerde das
+vollstaendig loesen:
+- `visualViewport.height` gibt die tatsaechliche sichtbare
+  Hoehe zurueck (exkl. Tastatur)
+- `resize`-Event feuert bei Tastatur-Oeffnung/-Schliessung
+- Container-Hoehe dynamisch auf `visualViewport.height` setzen
+
+Geschaetzter Aufwand: 150-300 Zeilen mit iOS/Android-Edge-Cases
+(Safari hat andere Timing-Semantik als Chrome, `resize`-Event
+feuert auf iOS waehrend der Animation, auf Android erst danach).
+
+### Akzeptanz-Begruendung
+Identisches Verhalten bei Intercom, Crisp, Drift und anderen
+Chat-Widgets. Kein Pilot-Kunde wird dieses Verhalten als Bug
+melden, weil es dem Plattform-Standard entspricht.
+
+### Wann fixen
+Nachfrage-getrieben: implementieren wenn ein Pilot-Kunde
+explizit Feedback dazu gibt. Kein Blocker fuer Go-Live.
