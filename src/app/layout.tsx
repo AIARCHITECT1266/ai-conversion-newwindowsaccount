@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -50,11 +51,19 @@ export const metadata: Metadata = {
   robots: "index, follow",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // headers()-Aufruf macht das Root-Layout dynamisch und damit alle
+  // untergeordneten Seiten. Dadurch laeuft die Middleware bei jedem
+  // Request und kann den CSP-Nonce via Content-Security-Policy-
+  // Request-Header propagieren, den Next.js 15 SSR-Renderer zur
+  // Nonce-Injection auf Framework-Scripts nutzt.
+  // Siehe: docs/production-regression-2026-04-12.md (Phase A.3)
+  await headers();
+
   return (
     <html lang="de" className={`${inter.variable} dark`}>
       <body className="noise-bg antialiased">{children}</body>
