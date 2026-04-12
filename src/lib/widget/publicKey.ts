@@ -104,8 +104,10 @@ function parseBoundedString(
 
 function parseLogoUrl(raw: unknown): string | null {
   if (typeof raw !== "string" || raw.length === 0) return null;
-  // Absolute HTTP(S) oder same-origin-Pfad erlauben, sonst null.
-  if (raw.startsWith("https://") || raw.startsWith("http://") || raw.startsWith("/")) {
+  // Nur HTTPS oder same-origin-Pfad erlauben. HTTP abgelehnt wegen
+  // MITM-Risiko (Logo-Bild koennte manipuliert werden) und
+  // Mixed-Content-Problemen (Widget-iframe laeuft ueber HTTPS).
+  if (raw.startsWith("https://") || raw.startsWith("/")) {
     return raw;
   }
   return null;
@@ -152,8 +154,7 @@ export function parseConfig(raw: unknown): ResolvedTenantConfig {
     ),
     // Phase 5: Embed-Loader Tenant-Override fuer das Bubble-Icon.
     // Gleiche URL-Validierung wie logoUrl (parseLogoUrl):
-    // nur https://, http:// oder same-origin-Pfade werden akzeptiert,
-    // alles andere faellt auf null zurueck (-> Standard-Icon).
+    // nur https:// oder same-origin-Pfade, kein http:// (MITM-Schutz).
     bubbleIconUrl: parseLogoUrl(obj.bubbleIconUrl),
   };
 }
