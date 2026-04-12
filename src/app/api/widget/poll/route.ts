@@ -127,12 +127,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // Messages laden. timestamp > since falls gesetzt.
+  // Explizites select: nur Felder laden die im Response-Mapping
+  // gebraucht werden. Defense-in-Depth gegen versehentliches Leak
+  // sensitiver Felder bei zukuenftigen Schema-Erweiterungen.
   const sinceDate = since !== undefined ? new Date(since) : undefined;
   const rawMessages = await db.message.findMany({
     where: {
       conversationId: conversation.id,
       ...(sinceDate ? { timestamp: { gt: sinceDate } } : {}),
       role: { not: "SYSTEM" },
+    },
+    select: {
+      id: true,
+      role: true,
+      contentEncrypted: true,
+      timestamp: true,
     },
     orderBy: { timestamp: "asc" },
   });
