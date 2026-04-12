@@ -87,6 +87,30 @@ Nonce-CSP aktiv, alle Seiten funktional, keine Regression auf Vorhandenem.
 
 ---
 
+## Audit-Hotfix High #2: Session-Token-Hash (12.04.2026 spaet abends)
+
+### Problem (aus Audit docs/audit-web-widget-2026-04-12.md)
+Raw Session-Token (`ws_xxx`) wurde als `senderIdentifier` an
+`processMessage()` uebergeben. Aktuell toter Parameter, aber
+Defense-in-Depth-Risiko fuer zukuenftige Refactors.
+
+### Fix
+Commit `76ef8fa` — Ein-Zeilen-Fix: `sessionToken` →
+`hashTokenForRateLimit(sessionToken)` in
+`src/app/api/widget/message/route.ts:137`
+
+### Verification
+- Lokaler Production-Test (H.3): Message 202, Multi-Turn stabil,
+  kein Leak
+- Production-Smoke-Test (H.5): alle 7 Checks gruen
+- Kein Migrations-Bedarf (Forward-Only, nie in DB persistiert)
+
+### Status
+**Production laeuft stabil auf Commit 76ef8fa.** Widget-Kern-
+Funktionalitaet unveraendert, Token-Leak-Vektor geschlossen.
+
+---
+
 ## Was ist das Ziel?
 
 Erweiterung der bestehenden WhatsApp-Plattform um einen zweiten Kanal:
