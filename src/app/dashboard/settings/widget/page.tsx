@@ -268,6 +268,9 @@ export default function WidgetSettingsPage() {
           <button
             onClick={() => handleToggle(!state.enabled)}
             disabled={toggling}
+            role="switch"
+            aria-checked={state.enabled}
+            aria-label="Widget aktivieren"
             className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
               state.enabled
                 ? "bg-gradient-to-r from-[#c9a84c] to-[#d4b85c]"
@@ -556,12 +559,14 @@ function ColorField({
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          aria-label={`${label} Farbwahl`}
           className="h-7 w-7 shrink-0 cursor-pointer rounded border-0 bg-transparent p-0"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          aria-label={`${label} Hex-Wert`}
           className="w-full bg-transparent font-mono text-[12px] text-[#ede8df] outline-none"
           placeholder="#000000"
           maxLength={7}

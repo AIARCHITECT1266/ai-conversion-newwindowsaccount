@@ -339,9 +339,13 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
         </div>
       </header>
 
-      {/* Messages */}
+      {/* Messages — role="log" fuer chronologische Chat-Ausgabe,
+          aria-live="polite" fuer Screen-Reader-Ankuendigung neuer Messages */}
       <main
         ref={messagesContainerRef}
+        role="log"
+        aria-live="polite"
+        aria-label="Konversationsverlauf"
         className="flex-1 space-y-4 overflow-y-auto px-4 py-6"
       >
         {messages.map((m) => (
@@ -473,7 +477,6 @@ function MessageBubble({
             opacity,
             boxShadow: `0 2px 8px ${withAlpha(config.primaryColor, "33")}`,
           }}
-          role="article"
         >
           {message.content}
           {message.failed && (
@@ -497,7 +500,6 @@ function MessageBubble({
           color: config.textColor,
           boxShadow: `0 1px 3px ${withAlpha(config.primaryColor, "14")}, 0 1px 2px ${withAlpha("#000000", "1A")}`,
         }}
-        role="article"
       >
         {message.content}
       </div>
