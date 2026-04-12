@@ -1,4 +1,18 @@
-# Deploy-Plan 13.04.2026
+# Deploy-Plan 13.04.2026 (vorgezogen auf 12.04. abends)
+
+**STATUS: ABGESCHLOSSEN am 12.04.2026 18:35 Uhr**
+
+Deploy war nicht so gross wie befuerchtet. Root Cause war ein Repo-Mismatch
+bei Vercel (falscher Repo verbunden), nicht ein tatsaechliches Deploy-Problem.
+Nach Reconnect + Push lief alles innerhalb 5 Min durch.
+
+Deployed Commit: ef25efe
+Verified Production: ai-conversion.ai alle Widget-Routes 200 OK
+Siehe PROJECT_STATUS.md fuer Details.
+
+---
+
+## Urspruenglicher Plan (zu historischen Zwecken belassen)
 
 ## Ausgangslage (Stand 12.04.2026, Abend)
 

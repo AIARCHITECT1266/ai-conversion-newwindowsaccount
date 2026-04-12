@@ -1,8 +1,41 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready
-**Letzter Commit:** test(phase-7): complete pilot-ready state — all scenarios verified
+**Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed
+**Letzter Commit:** docs(deploy): pre-deploy diagnostics and CLAUDE.md hardening
+
+---
+
+## Production-Deploy: 12.04.2026 (erfolgreich)
+
+**Deployed Commit:** ef25efe (inkl. Phase 2-7 + Deploy-Prep + Trigger-Commit)
+**Vorheriger Production-Commit:** debe389 (9. April, verwaist)
+**Ursache des 3-Tages-Drifts:** Vercel war mit falschem Repo verbunden
+(`ai-conversion` statt `ai-conversion-newwindowsaccount`). Reconnect am
+12.04.2026 18:25 Uhr. Push + Auto-Deploy erfolgreich.
+
+### Verified in Production (12.04.2026 18:35 Uhr)
+- [x] `/` — 200 OK
+- [x] `/widget.js` — 200 OK (war vor Deploy 404)
+- [x] `/api/widget/config?key=pub_OQ5vM7rpiwTgwik0` — 200 JSON
+- [x] CSP Nonce-basiert (`strict-dynamic`), kein `unsafe-inline`
+- [x] Tenant-Isolation (internal-admin vs test-b) auf Prod verifiziert
+- [x] Function-Region fra1 (Frankfurt, DSGVO-konform)
+- [x] Better Stack Monitoring aktiv (3 Monitore, Status-Page live)
+- [ ] /dashboard/login liefert 400 auf unauthentifizierten curl —
+  kein Blocker, Login-Flow funktioniert im Browser
+
+### Status
+**Production entspricht jetzt lokalem Pilot-Ready-Stand.**
+Infrastruktur-Luecke zwischen lokal und Production ist geschlossen.
+
+### Naechste Schritte fuer Pilot-Akquise
+Siehe ConvArch-Roadmap (Woche-Plan):
+1. AVV-Template nach Art. 28 DSGVO
+2. Sentry einrichten
+3. Datenschutzerklaerung fuer Web-Widget ergaenzen
+4. Single-Instance-DB-Split bevor erster Pilot-Kunde
+   (siehe docs/tech-debt.md)
 
 ---
 
