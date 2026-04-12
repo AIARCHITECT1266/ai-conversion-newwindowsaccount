@@ -398,6 +398,45 @@ Ca. 2-3 Stunden: JSX-Port der HTML-Struktur, Route-Group mit
 eigener `layout.tsx` fuer das Atelier-Hoffmann-Branding,
 Middleware-Override zurueckbauen, Curl-Regression.
 
+## Sub-Phase 6.5 — Webpack-Chunk-Mismatch nach Dashboard-Page-Fixes (Next.js 15.5.14)
+
+### Status
+Bekanntes Upstream-Problem, Workaround empirisch verifiziert.
+
+### Datum
+2026-04-12 (Sub-Phase 6.5 Polish-Phase)
+
+### Häufigkeit
+3× reproduziert (Phase 6.1, Phase 6.3, Sub-Phase 6.5)
+
+### Symptom
+Runtime Error "Cannot find module './NNNN.js'" nach fix-Commits
+die bestehende Dashboard-Pages anfassen. Webpack-Runtime sucht
+alte Chunk-IDs die in der neu kompilierten Version nicht mehr
+existieren.
+
+### Root-Cause (vermutet)
+Next.js 15.5.14 Hot-Reload vergibt nach Multi-File-Änderungen
+oder Fix-Commits Chunk-IDs neu, der laufende Dev-Server
+referenziert aber noch die alten IDs im webpack-runtime.js.
+
+### Workaround (empirisch verifiziert)
+1. Dev-Server stoppen (separates PowerShell, nicht über
+   Claude-Code-Shell-Wrapper — der hängt bei
+   taskkill //F //IM node.exe)
+2. Remove-Item -Recurse -Force .next
+3. npx next dev neu starten
+4. Browser Hard-Reload (Strg+Shift+R)
+
+### Präventions-Regel für Phase 7+
+Nach jedem fix()-Commit der bestehende Dashboard-Pages anfasst,
+Dev-Server proaktiv neu starten statt auf Hot-Reload zu
+vertrauen. 30 Sekunden Reset spart 5-10 Minuten Diagnose.
+
+### Nicht zu fixen (Upstream)
+Das ist ein Next.js-Dev-Server-Bug, kein Projekt-Code-Problem.
+Produktions-Builds (npx next build) sind nicht betroffen.
+
 ## Phase 4-pre — prompt/route.ts ohne auditLog()
 
 ### Status
