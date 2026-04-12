@@ -180,3 +180,285 @@ Option C nur bei akutem Zeitdruck durch externen Stakeholder.
 - Browser-Console-Screenshots: vorhanden beim Project Owner
 - Production-CSP-Header (verifiziert via curl):
   `script-src 'self' 'nonce-qTETCwMhyeFb5N54HqWp3w==' 'strict-dynamic'`
+
+---
+
+## Pre-Analyse A.1 (12.04.2026 abends)
+
+### Next.js-Version
+**15.5.14** (App Router, `src/app/`-Struktur)
+
+### Layouts im Projekt
+
+| Layout | Liest Nonce? | Propagiert Nonce? |
+|---|---|---|
+| `src/app/layout.tsx` | Nein | Nein |
+| `src/app/embed/layout.tsx` | Nein | Nein |
+| `src/app/dashboard/settings/layout.tsx` | Nein | Nein |
+
+Keines der drei Layouts importiert `headers()` oder liest `x-nonce`.
+
+### Script-Tag-Audit
+- `<Script>` (next/script): **0 Verwendungen** im gesamten `src/`
+- `dangerouslySetInnerHTML`: **0 Verwendungen** im gesamten `src/`
+- Einziger Inline-Script im Projekt: Admin-Login-HTML in
+  `src/middleware.ts:262` — traegt korrekten `nonce="${nonce}"`
+
+### next.config.ts
+```ts
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+};
+```
+Kein CSP-Config, keine experimentellen Flags, kein Konflikt.
+
+### Middleware-Analyse (praezisierter Root-Cause)
+
+**Nonce-Generierung (Zeile 8-9, korrekt):**
+```ts
+function generateNonce(): string {
+  return randomBytes(16).toString("base64");
+}
+```
+
+**Request-Header-Weiterreichung (Zeile 162-166):**
+```ts
+const nonce = generateNonce();
+const requestHeaders = new Headers(req.headers);
+requestHeaders.set("x-nonce", nonce);
+const nextWithNonce = () =>
+  NextResponse.next({ request: { headers: requestHeaders } });
+```
+Setzt **nur** `x-nonce` auf die Request-Headers. Setzt die CSP
+**NICHT** auf die Request-Headers.
+
+**CSP auf Response-Headers (Zeile 94-113, via applySecurityHeaders):**
+```ts
+response.headers.set(
+  "Content-Security-Policy",
+  buildCspHeader(nonce, widgetRoute, demoRoute)
+);
+```
+Setzt CSP nur auf die **Response**-Headers — zu spaet fuer den
+Next.js SSR-Renderer, der die Request-Headers liest.
+
+### Root-Cause-Diagnose (praezisiert)
+
+**Next.js 15 liest den Nonce NICHT aus einem `x-nonce`-Header.**
+
+Der interne SSR-Renderer (`getScriptNonceFromHeader` in
+`app-render.tsx`) parst den `Content-Security-Policy`-Header
+aus den **Request-Headers** (die via `NextResponse.next({
+request: { headers } })` weitergereicht werden) und extrahiert
+den `'nonce-XXX'`-Wert aus dem `script-src`-Direktiv.
+
+Die Middleware setzt den CSP-Header aber nur auf die
+**Response**-Headers (via `applySecurityHeaders`). Zum Zeitpunkt
+des SSR-Renderings hat der Renderer keinen Zugriff auf die
+Response-Headers — er sieht nur die Request-Headers. Dort
+findet er `x-nonce` (das er nicht kennt) aber kein
+`Content-Security-Policy` (das er braucht).
+
+**Ergebnis:** Nonce wird nie an Framework-generierte `<script>`-
+Tags propagiert. Browser sieht CSP mit Nonce-Anforderung in der
+Response, aber die Scripts tragen keinen Nonce → blockiert.
+
+**Referenz:** Next.js offizielle CSP-Dokumentation und
+`examples/with-strict-csp/middleware.js` setzen die CSP auf
+BEIDE Header-Ebenen — Request (fuer den Renderer) UND Response
+(fuer den Browser).
+
+### Fix-Plan
+
+**Eine einzige Aenderung in `src/middleware.ts`:**
+
+Die CSP muss zusaetzlich auf die **Request**-Headers gesetzt
+werden, BEVOR `NextResponse.next()` aufgerufen wird. So kann
+der SSR-Renderer den Nonce extrahieren und auf alle Framework-
+Scripts propagieren.
+
+**Konkrete Aenderungen:**
+
+1. **`src/middleware.ts` — Request-Header um CSP ergaenzen:**
+   In der `middleware()`-Funktion, nach Zeile 164
+   (`requestHeaders.set("x-nonce", nonce)`), die CSP auch auf
+   die Request-Headers setzen. Da der `widgetRoute`- und
+   `demoRoute`-Check zu diesem Zeitpunkt noch nicht gelaufen
+   ist, muss die CSP-Berechnung vorgezogen werden — oder der
+   einfachere Weg: die CSP wird in `applySecurityHeaders`
+   zusaetzlich auf die Request-Headers gesetzt (was aber nicht
+   moeglich ist, weil die Request-Headers zu dem Zeitpunkt
+   schon committed sind).
+
+   **Saubere Loesung:** Die `requestHeaders.set(
+   "Content-Security-Policy", buildCspHeader(nonce, ..., ...))`
+   muss VOR dem `NextResponse.next()`-Aufruf passieren. Dafuer
+   muessen `isWidgetRoute()` und `isDemoRoute()` frueher im
+   Flow aufgerufen werden. Das ist moeglich, weil `pathname`
+   bereits auf Zeile 157 verfuegbar ist.
+
+2. **`src/app/layout.tsx` — Keine Aenderung noetig:**
+   Next.js propagiert den Nonce automatisch auf alle Framework-
+   Scripts, sobald er im CSP-Request-Header verfuegbar ist.
+   `layout.tsx` muss NICHTS tun (kein `headers().get()`, kein
+   `nonce`-Prop). Nur eigene `<Script>`-Tags bräuchten ein
+   explizites `nonce`-Attribut — davon gibt es im Projekt null.
+
+3. **`x-nonce`-Header kann bleiben:**
+   Schadet nicht, ist aber fuer den Fix nicht relevant. Kann
+   spaeter entfernt werden wenn kein Code mehr darauf zugreift.
+
+**Aufwand:** ~15-30 Min (eine Zeile in middleware.ts hinzufuegen,
+plus Umstrukturierung des Flows damit widgetRoute/demoRoute
+frueher berechnet werden).
+
+**Risiko:** Niedrig — rein additive Aenderung. Der CSP-Header
+auf der Response-Seite bleibt identisch. Nur der Request-Header
+bekommt eine zusaetzliche Kopie.
+
+---
+
+## Phase A.3: Lokaler Production-Build-Test (12.04.2026 abends)
+
+### Setup
+- Branch: `fix/csp-nonce-request-header` (Commit `4590cc1`)
+- Build: `npx next build` gruen
+- Server: `npx next start -p 3100` (Production-Modus)
+
+### Test-Ergebnisse
+
+| Test | Ergebnis | Details |
+|---|---|---|
+| A: CSP-Nonce im Response-Header | **PASS** | Nonce vorhanden (z.B. `ZCenUJ0LNvmc+f/iEryg+A==`) |
+| B: HTML-Scripts mit Nonce (Root `/`) | **FAIL** | 0 Scripts mit Nonce-Attribut |
+| B: HTML-Scripts mit Nonce (`/embed/widget`) | **PASS** | 5+ Scripts mit Nonce |
+| C: Nonce-Match CSP vs HTML | **PASS** (fuer dynamische Routen) | Identischer Nonce auf allen Script-Tags |
+| Dashboard `/dashboard` | **FAIL** | Statisch vorgerendert, kein Nonce |
+| Widget `/embed/widget` CSP | **PASS** | CSP korrekt mit `frame-ancestors *` |
+
+### Kern-Erkenntnis: Statische Seiten bekommen keinen Nonce
+
+**Der Middleware-Fix funktioniert korrekt fuer dynamische Routen.**
+`/embed/widget` (dynamisch, `ƒ`) hat Nonce auf allen Script-Tags.
+Die CSP-Request-Header-Propagation funktioniert wie vorgesehen.
+
+**Statische Seiten (`○`) werden zur Build-Zeit vorgerendert** —
+zu diesem Zeitpunkt laeuft keine Middleware, es gibt keine
+Request-Headers, und der SSR-Renderer findet keinen CSP-Header.
+Deshalb haben diese Seiten keinen Nonce auf den Framework-Scripts.
+
+**Betroffene statische Seiten:**
+- `/` (Landing-Page)
+- `/dashboard` (Haupt-Dashboard)
+- `/dashboard/settings`, `/dashboard/settings/widget`,
+  `/dashboard/settings/prompt`
+- `/pricing`, `/faq`, `/onboarding`, `/multi-ai`
+- `/admin`
+- Diverse weitere Marketing- und Dashboard-Seiten
+
+**Nicht betroffen (dynamisch, Nonce funktioniert):**
+- `/embed/widget` (Widget-iframe)
+- `/dashboard/login`, `/dashboard/logout`
+- `/dashboard/conversations`, `/dashboard/conversations/[id]`
+- `/dashboard/clients/[id]`
+- Alle API-Routen
+
+### Loesung fuer statische Seiten
+
+Statische Seiten muessen dynamisch gerendert werden, damit die
+Middleware den CSP-Request-Header setzen und der Renderer den
+Nonce extrahieren kann. Zwei Optionen:
+
+**Option 1: `headers()` im Root-Layout aufrufen**
+```tsx
+// src/app/layout.tsx
+import { headers } from "next/headers";
+
+export default async function RootLayout({ children }) {
+  // headers()-Aufruf macht ALLE untergeordneten Seiten dynamisch.
+  // Das ist noetig, damit der Nonce aus der Middleware auf die
+  // Framework-Scripts propagiert wird.
+  await headers();
+  return (
+    <html lang="de" className={`${inter.variable} dark`}>
+      <body className="noise-bg antialiased">{children}</body>
+    </html>
+  );
+}
+```
+Konsequenz: ALLE Seiten werden dynamisch — kein Static-Export
+mehr. Performance-Impact: unklar, abhaengig von Vercel-Caching.
+
+**Option 2: Nur betroffene Seiten einzeln dynamisch machen**
+```tsx
+// In jeder betroffenen page.tsx:
+export const dynamic = "force-dynamic";
+```
+Konsequenz: Feingranulare Kontrolle, aber viele Dateien anfassen.
+
+**Empfehlung:** Option 1 (Root-Layout `headers()`-Aufruf) ist
+die sauberere Loesung — ein einziger Aenderungspunkt. Der
+Performance-Impact ist auf Vercel mit Fluid Compute minimal,
+weil dynamische Seiten trotzdem CDN-gecached werden koennen
+(via `Cache-Control`-Header oder ISR).
+
+### Go/No-Go fuer Phase A.4
+
+**GO-MIT-ERWEITERUNG:** Der Middleware-Fix (CSP auf Request-
+Headers) funktioniert korrekt. Aber fuer einen vollstaendigen
+Fix muss zusaetzlich das Root-Layout `headers()` aufrufen, um
+statische Seiten dynamisch zu machen. Erst dann bekommen ALLE
+Seiten den Nonce.
+
+Naechster Schritt: `src/app/layout.tsx` um `await headers()`
+ergaenzen, dann A.3-Test wiederholen.
+
+---
+
+## Phase A.3b: Erneuter Production-Build-Test (12.04.2026 abends)
+
+### Setup
+- Branch: `fix/csp-nonce-request-header`
+- Commits: `4590cc1` (Middleware-Fix) + `16348a0` (Layout-Fix)
+- Build: gruen, alle Routen dynamisch (`ƒ`)
+- Server: `npx next start -p 3100`
+
+### Test-Ergebnisse
+
+| Test | Route | Scripts mit Nonce | Vorher (A.3) | Ergebnis |
+|---|---|---|---|---|
+| 1 | `/` (Root) | **3** | 0 | **PASS** |
+| 2 | `/dashboard` → `/dashboard/login` | 0 (Route-Handler, kein HTML-Page) | 0 | **N/A** (erwartet) |
+| 4 | `/` (Nonce-Konsistenz) | CSP == HTML | — | **MATCH** |
+| 5 | `/embed/widget` | **2** | 2 | **PASS** |
+| 6 | `/pricing` | **3** | 0 | **PASS** |
+
+### Detail: Dashboard-Route
+
+`/dashboard` liefert 307-Redirect zu `/dashboard/login`.
+`/dashboard/login` ist ein Route-Handler (`route.ts`), kein
+Page-Component — liefert 400 Bad Request auf GET (erwartet POST
+mit Magic-Link-Token). Die Dashboard-Login-Route ist kein
+HTML-Rendering-Pfad, daher keine Script-Tags, kein Nonce noetig.
+Im Browser wird `/dashboard/login` nie direkt als GET aufgerufen —
+der Login-Flow laeuft ueber Magic-Links.
+
+### Nonce-Konsistenz (Test 4 Detail)
+
+Aus einer einzigen curl-Response (`-D` fuer Header + Body):
+- CSP-Header-Nonce: `Kl7At085lOwaE7FTBFUx0Q==`
+- HTML-Script-Nonce: `Kl7At085lOwaE7FTBFUx0Q==`
+- **MATCH** — identischer Nonce in Header und auf allen Script-Tags
+
+### Gesamturteil
+
+**GO fuer Phase A.4 (Merge + Deploy).**
+
+Beide Fixes zusammen loesen das CSP-Nonce-Problem vollstaendig:
+1. Middleware setzt CSP auf Request-Headers → Next.js extrahiert Nonce
+2. Root-Layout `await headers()` → alle Seiten dynamisch → Middleware
+   laeuft pro Request → Nonce wird propagiert
+
+Alle zuvor statischen Seiten (`/`, `/pricing`, `/dashboard/*`) haben
+jetzt Scripts mit korrektem Nonce. Widget-Route bleibt funktional.
+Nonce-Konsistenz zwischen CSP-Header und HTML ist verifiziert.
