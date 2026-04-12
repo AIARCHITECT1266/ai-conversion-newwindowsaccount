@@ -341,6 +341,146 @@ unveraendert, keine Regression. Lokal + Production verifiziert.
   Niedriges Risiko (Dashboard, geringe Concurrency).
 - **Empfehlung:** Atomares `upsert` oder Transaction.
 
+### Status: ERLEDIGT (12.04.2026 spaet abends)
+
+**Fix-Commit:** `67240f9` — `fix(widget): atomic key generation
+via conditional updateMany`
+**Deployed:** Production ai-conversion.ai
+**Fix:** Option D aus H.1 — `updateMany` mit
+`{ id, webWidgetPublicKey: null }`. Atomare Key-Generierung
+ohne Transaction. Zweiter paralleler Request bekommt count=0
+und setzt nur `enabled`.
+
+---
+
+## Fix-Planung Medium M5: Toggle Race-Condition (Pre-Analyse H.1)
+
+### Ist-Zustand
+
+`toggle/route.ts:73-95`:
+```typescript
+const existing = await db.tenant.findUnique({
+  where: { id: tenant.id },
+  select: { webWidgetPublicKey: true },
+});
+let publicKey = existing?.webWidgetPublicKey ?? null;
+let keyGenerated = false;
+if (enabled && !publicKey) {
+  publicKey = generatePublicKey();
+  keyGenerated = true;
+}
+await db.tenant.update({
+  where: { id: tenant.id },
+  data: {
+    webWidgetEnabled: enabled,
+    ...(keyGenerated && publicKey ? { webWidgetPublicKey: publicKey } : {}),
+  },
+});
+```
+
+Pattern: **Read-then-Write ohne Transaktion.** Zwischen dem
+`findUnique` (Zeile 73) und dem `update` (Zeile 86) liegt ein
+Zeitfenster in dem ein zweiter Request denselben Zustand liest.
+
+### Race-Szenarien
+
+**Szenario 1 — Doppelklick (realistisch):** Admin klickt
+zweimal schnell auf den Toggle. Beide Requests sehen
+`publicKey=null`, beide generieren einen neuen Key, der zweite
+`update` ueberschreibt den ersten. Resultat: der Key vom ersten
+Request war kurzzeitig in der DB, wird dann durch den zweiten
+ersetzt. Falls der erste Key bereits irgendwo kopiert wurde
+(Embed-Code), ist er jetzt ungueltig.
+
+**Szenario 2 — Zwei Tabs (unwahrscheinlich):** Admin hat
+Dashboard in zwei Tabs offen. Beide klicken Toggle. Gleicher
+Effekt wie Szenario 1.
+
+**Szenario 3 — Mehrere Admin-User (nicht implementiert):**
+Aktuell gibt es nur einen Admin-User pro Tenant (Magic-Link).
+Dieses Szenario existiert nicht.
+
+**Realismus-Einschaetzung:** Szenario 1 ist real moeglich, aber
+niedrige Auswirkung: der ueberschriebene Key war nur Sekunden
+alt und wurde vermutlich noch nicht verteilt. Kein Datenverlust,
+kein Security-Risk — nur ein unerwarteter Key-Wechsel.
+
+### Loesungsansaetze
+
+**A) DB-Unique-Constraint + P2002-Catch:**
+- Pro: Verhindert Duplikate auf DB-Ebene
+- Con: Loest das Race-Problem nicht (beide Keys sind unique,
+  keiner kollidiert — das Problem ist das Ueberschreiben)
+- **Nicht anwendbar** — unique-Constraint existiert bereits,
+  aber die Race ist kein Duplikat-Problem
+
+**B) `updateMany` als atomare Operation:**
+- Pro: Einfach
+- Con: Loest das Read-then-Write nicht — `updateMany` ist nur
+  fuer die where-Clause atomar, nicht fuer die
+  Read-before-Write-Logik
+- **Nicht anwendbar**
+
+**C) Prisma `$transaction` (Serializable Isolation):**
+- Pro: Korrekte Loesung — Read + Write atomar
+- Con: Prisma-Transactions sind in Prisma 7 mit Driver-Adapters
+  (PrismaPg) eingeschraenkt. `$transaction([...])` (Sequential)
+  gibt keine echte Serializable-Isolation.
+  Interactive Transactions (`$transaction(async (tx) => {...})`)
+  waeren korrekt, aber Kompatibilitaet mit PrismaPg pruefen.
+- **Moeglich, aber Kompatibilitaets-Risiko**
+
+**D) Conditional Update (atomar in SQL):**
+- Pro: Kein Read noetig. `update` mit `where` + Conditional-
+  Schreib-Logik direkt in SQL
+- Umsetzung: `updateMany` mit Bedingung
+  `{ id: tenant.id, webWidgetPublicKey: null }` und
+  `data: { webWidgetPublicKey: newKey, webWidgetEnabled: true }`
+  — wenn Key bereits existiert, matched die where-Clause nicht,
+  count=0, dann nur noch `enabled` setzen.
+- Con: Zwei separate Updates noetig (einer fuer Key-Gen, einer
+  fuer Enable-only). Etwas mehr Code.
+- **Sauberste Loesung fuer diesen spezifischen Fall**
+
+### Empfehlung: Option D (Conditional Update)
+
+Statt Read-then-Write: einen einzigen `updateMany` mit
+`where: { id, webWidgetPublicKey: null }` fuer den Key-Gen-Fall.
+Falls `count === 0`: Key existierte schon, nur `enabled` setzen.
+
+```typescript
+if (enabled) {
+  const newKey = generatePublicKey();
+  const keyResult = await db.tenant.updateMany({
+    where: { id: tenant.id, webWidgetPublicKey: null },
+    data: { webWidgetPublicKey: newKey, webWidgetEnabled: true },
+  });
+  if (keyResult.count === 0) {
+    // Key existiert schon — nur enabled setzen
+    await db.tenant.update({
+      where: { id: tenant.id },
+      data: { webWidgetEnabled: true },
+    });
+  }
+} else {
+  await db.tenant.update({
+    where: { id: tenant.id },
+    data: { webWidgetEnabled: false },
+  });
+}
+```
+
+### Aufwand
+**S (~20 Min).** Umstrukturierung der Zeilen 73-95, kein neuer
+Import, keine Schema-Aenderung.
+
+### Regression-Risiko
+**Niedrig.** Toggle-Verhalten bleibt identisch im Happy-Path.
+Nur der Race-Fall aendert sich: statt Key ueberschreiben wird
+der zweite Request den bestehenden Key beibehalten.
+Key-Rotation (in `generate-key/route.ts`) ist ein separater
+Endpoint und nicht betroffen.
+
 **M6 — Dashboard Toggle: role="switch" fehlt**
 - **Datei:** `src/app/dashboard/settings/widget/page.tsx:268-283`
 - **Beobachtung:** Toggle-Button ohne `role="switch"`,
