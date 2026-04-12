@@ -63,6 +63,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 // ---------- GET Handler ----------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
   const rawToken = request.nextUrl.searchParams.get("token");
   const rawSince = request.nextUrl.searchParams.get("since");
 
@@ -153,4 +154,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 200 },
     ),
   );
+  } catch (error) {
+    console.error("[widget/poll] Unerwarteter Fehler", error);
+    return withCors(
+      NextResponse.json(
+        { error: "Interner Serverfehler" },
+        { status: 500 },
+      ),
+    );
+  }
 }

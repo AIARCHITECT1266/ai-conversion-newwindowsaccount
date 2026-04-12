@@ -73,6 +73,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 // ---------- POST Handler ----------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
   const ip = getClientIp(request);
 
   // Rate-Limit STRENG laut WEB_WIDGET_INTEGRATION.md Phase 3 § 3.3:
@@ -167,4 +168,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 200 },
     ),
   );
+  } catch (error) {
+    console.error("[widget/session] Unerwarteter Fehler", error);
+    return withCors(
+      NextResponse.json(
+        { error: "Interner Serverfehler" },
+        { status: 500 },
+      ),
+    );
+  }
 }

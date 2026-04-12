@@ -68,6 +68,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 // ---------- POST Handler ----------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
   // Body parsen
   let rawBody: unknown;
   try {
@@ -164,4 +165,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // 202 Accepted: Die Bot-Antwort liegt persistiert in der DB,
   // das Widget holt sie via /api/widget/poll ab.
   return withCors(NextResponse.json({ ok: true }, { status: 202 }));
+  } catch (error) {
+    console.error("[widget/message] Unerwarteter Fehler", error);
+    return withCors(
+      NextResponse.json(
+        { error: "Interner Serverfehler" },
+        { status: 500 },
+      ),
+    );
+  }
 }

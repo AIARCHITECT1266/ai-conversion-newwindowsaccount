@@ -63,6 +63,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 // ---------- GET Handler ----------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
   const ip = getClientIp(request);
 
   // Rate-Limit: 100 Requests pro Stunde pro IP
@@ -133,4 +134,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 200 },
     ),
   );
+  } catch (error) {
+    console.error("[widget/config] Unerwarteter Fehler", error);
+    return withCors(
+      NextResponse.json(
+        { error: "Interner Serverfehler" },
+        { status: 500 },
+      ),
+    );
+  }
 }
