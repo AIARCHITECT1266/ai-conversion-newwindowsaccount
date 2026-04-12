@@ -754,3 +754,27 @@ Commits in naechsten Tagen.
 - Test-Setup zwischen internal-admin und test-b nicht explizit
   verifiziert
 - To-Do: gezielt testen, Dokumentation ergaenzen
+
+## Code-Cleanup (nicht blockierend)
+
+### TD-Cleanup-01: Vercel.live-Nonce-Fehler in CSP
+- Symptom: "Sign in with"-Button auf Preview-Deploys wirft CSP-Warning
+- Ursache: vercel.live-Script braucht Nonce-Ergaenzung oder Whitelist
+- Nur Preview-Deploys betroffen, Production unauffaellig
+- Fix: `frame-src https://vercel.live` in CSP-Konfiguration (Middleware)
+- Aufwand: 15 Min inkl. Preview-Test
+
+### TD-Cleanup-02: Widget-Auth-Diskrepanz — NICHT VERIFIZIERT
+- Uebergabeprotokoll nannte `x-widget-public-key`-Header als
+  alternativen Auth-Pfad in `/api/widget/config`
+- Code-Audit 12.04.2026: Header existiert NICHT im Code.
+  Config-Endpoint nutzt ausschliesslich Query-Parameter `?key=`
+- Status: kein Action-Item, Punkt ist gegenstandslos
+
+### TD-Cleanup-03: Phase-4-Branch — NICHT VERIFIZIERT
+- Uebergabeprotokoll nannte Branch `phase-4-admin-dashboard`
+  mit 11 ungemergten Commits
+- Code-Audit 12.04.2026: Branch existiert weder lokal noch remote
+  (kein Match in `git branch -a`)
+- Status: moeglicherweise bereits gemergt oder verworfen, kein
+  Action-Item

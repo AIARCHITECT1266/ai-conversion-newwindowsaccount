@@ -34,6 +34,18 @@ Stand: 12.04.2026
   Aktuell nur generische Anleitung. Ergaenzung bei Bedarf (Next.js,
   WordPress, Shopify).
 
+## Testing
+- **E2E-Test-Szenarien aus Uebergabeprotokoll 12.04.2026**
+  5 konkrete Flows, die vor Pilot-Akquise durchlaufen werden sollten:
+  1. Widget-Session-Erstellung + Multi-Turn + Consent-Flow
+  2. Rate-Limit-Verhalten (Session/Message/Poll)
+  3. Tenant-Isolation (Cross-Tenant-Zugriff darf nicht moeglich sein)
+  4. Mobile-Viewport-Rendering + Touch-Interaktion
+  5. Cross-Origin-Embedding (Widget auf fremder Domain)
+
+  Voraussetzung: Testing-Setup (Vitest + Playwright) muss erst gebaut
+  werden. Aufwand nach Setup: 2-3h einmalig.
+
 ## Feedback-Prozess
 - **Visual-Viewport-API-Trigger-Definition**
   Mobile-Tastatur-Tech-Debt: wer trackt Pilot-Feedback, wo wird es
