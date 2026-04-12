@@ -93,28 +93,27 @@ const WEBHOOK_ONLY_HEADERS: Record<string, string> = {
 
 function applySecurityHeaders(
   response: NextResponse,
-  pathname: string,
-  nonce: string
+  csp: string,
+  widgetRoute: boolean,
 ): NextResponse {
-  if (pathname.startsWith("/api/webhook/")) {
-    for (const [key, value] of Object.entries(WEBHOOK_ONLY_HEADERS)) {
-      response.headers.set(key, value);
-    }
-    return response;
-  }
   for (const [key, value] of Object.entries(BASE_SECURITY_HEADERS)) {
     response.headers.set(key, value);
   }
-  const widgetRoute = isWidgetRoute(pathname);
-  const demoRoute = isDemoRoute(pathname);
-  response.headers.set(
-    "Content-Security-Policy",
-    buildCspHeader(nonce, widgetRoute, demoRoute)
-  );
+  // CSP-String kommt vorberechnet rein — identisch zum Request-Header,
+  // damit kein Drift zwischen Renderer-Nonce und Browser-CSP entsteht.
+  response.headers.set("Content-Security-Policy", csp);
   // X-Frame-Options: DENY wuerde frame-ancestors * auf Widget-Routen
   // widersprechen. Auf Widget-Routen entfernen.
   if (widgetRoute) {
     response.headers.delete("X-Frame-Options");
+  }
+  return response;
+}
+
+// Webhook-Routen: nur Transport-Security, kein CSP (kein HTML-Output)
+function applyWebhookHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(WEBHOOK_ONLY_HEADERS)) {
+    response.headers.set(key, value);
   }
   return response;
 }
@@ -156,12 +155,33 @@ function isDashboardPath(pathname: string): boolean {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Nonce pro Request generieren. Wird gleichzeitig in die CSP und in
-  // den weitergereichten Request-Header x-nonce gesteckt, sodass
-  // Next.js SSR ihn in alle Inline-<script>-Tags injizieren kann.
+  // Webhook-Routen: nur Transport-Security-Headers, kein CSP, kein Nonce.
+  // Webhooks liefern kein HTML aus und brauchen keine Script-Kontrolle.
+  if (pathname.startsWith("/api/webhook/")) {
+    return applyWebhookHeaders(NextResponse.next());
+  }
+
+  // Nonce pro Request generieren und CSP berechnen.
+  //
+  // KRITISCH: Die CSP muss auf BEIDE Header-Ebenen gesetzt werden:
+  // 1. Request-Headers — damit der Next.js 15 SSR-Renderer den Nonce
+  //    aus dem Content-Security-Policy-Header extrahieren und automatisch
+  //    auf alle Framework-generierten <script>-Tags propagieren kann
+  //    (intern via getScriptNonceFromHeader in app-render.tsx).
+  // 2. Response-Headers — damit der Browser die CSP durchsetzt.
+  //
+  // Ohne die CSP auf den Request-Headers fehlt der Nonce auf den
+  // Framework-Scripts (webpack, main-app, page-chunks, Hydration-
+  // Inline-Scripts) und der Browser blockiert sie.
+  // Siehe: docs/production-regression-2026-04-12.md
   const nonce = generateNonce();
+  const widgetRoute = isWidgetRoute(pathname);
+  const demoRoute = isDemoRoute(pathname);
+  const cspHeader = buildCspHeader(nonce, widgetRoute, demoRoute);
+
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", cspHeader);
   const nextWithNonce = () =>
     NextResponse.next({ request: { headers: requestHeaders } });
 
@@ -173,25 +193,25 @@ export async function middleware(req: NextRequest) {
       if (pathname.startsWith("/api/dashboard")) {
         return applySecurityHeaders(
           NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 }),
-          pathname,
-          nonce
+          cspHeader,
+          widgetRoute,
         );
       }
       // Seiten: Weiterleitung zur Login-Fehlerseite
       return applySecurityHeaders(
         NextResponse.redirect(new URL("/dashboard/login", req.url)),
-        pathname,
-        nonce
+        cspHeader,
+        widgetRoute,
       );
     }
     // Token als Header weiterreichen (fuer API-Routen zur Tenant-Aufloesung)
     const response = nextWithNonce();
     response.headers.set("x-dashboard-token", dashboardToken);
-    return applySecurityHeaders(response, pathname, nonce);
+    return applySecurityHeaders(response, cspHeader, widgetRoute);
   }
 
   if (!isAdminPath(pathname)) {
-    return applySecurityHeaders(nextWithNonce(), pathname, nonce);
+    return applySecurityHeaders(nextWithNonce(), cspHeader, widgetRoute);
   }
 
   // 1. API-Routen: Bearer-Token oder Cookie pruefen (Session-Token, nicht Secret)
@@ -203,26 +223,26 @@ export async function middleware(req: NextRequest) {
 
     // Session-Token via Bearer-Header pruefen
     if (bearerToken && await validateAdminSession(bearerToken)) {
-      return applySecurityHeaders(nextWithNonce(), pathname, nonce);
+      return applySecurityHeaders(nextWithNonce(), cspHeader, widgetRoute);
     }
 
     // Fallback: Session-Cookie (Browser-Aufrufe aus dem Admin-Dashboard)
     const adminCookie = req.cookies.get("admin_token")?.value;
     if (adminCookie && await validateAdminSession(adminCookie)) {
-      return applySecurityHeaders(nextWithNonce(), pathname, nonce);
+      return applySecurityHeaders(nextWithNonce(), cspHeader, widgetRoute);
     }
 
     return applySecurityHeaders(
       NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 }),
-      pathname,
-      nonce
+      cspHeader,
+      widgetRoute,
     );
   }
 
   // 2. Admin-Seiten (/admin): Cookie-basierte Authentifizierung
   const adminCookie = req.cookies.get("admin_token")?.value;
   if (adminCookie && await validateAdminSession(adminCookie)) {
-    return applySecurityHeaders(nextWithNonce(), pathname, nonce);
+    return applySecurityHeaders(nextWithNonce(), cspHeader, widgetRoute);
   }
 
   // Nicht authentifiziert → Login-Seite anzeigen
@@ -293,7 +313,7 @@ export async function middleware(req: NextRequest) {
       headers: { "Content-Type": "text/html; charset=utf-8" },
     }
   );
-  return applySecurityHeaders(loginResponse, pathname, nonce);
+  return applySecurityHeaders(loginResponse, cspHeader, widgetRoute);
 }
 
 export const config = {
