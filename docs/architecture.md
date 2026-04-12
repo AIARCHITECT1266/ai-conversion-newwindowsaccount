@@ -4,9 +4,9 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-12
-> **Stand des Codes:** Commit `8b2ccf1` (nach Phase 4c + Phase 5-Pre
-> Hotfix + CLAUDE.md-Härtung)
+> **Letzte Aktualisierung:** 2026-04-12 (Nachpflege nach Phase 7 + Deploy + CSP-Hotfix)
+> **Stand des Codes:** Commit `1dfb6dc` (Phase 7 abgeschlossen, Production
+> deployed, CSP-Nonce-Regression behoben)
 
 ---
 
@@ -37,20 +37,23 @@ dasselbe CRM und dasselbe Lead-Scoring.
   mit Paddle-Checkout)
 - **Admin-Konsole** — `/admin` (Tenant-CRUD, Stats, Plan-Prompts)
 - **Tenant-Dashboard** — `/dashboard/*` (Conversations, Leads, CRM,
-  Clients, Campaigns, Broadcasts, Settings)
+  Clients, Campaigns, Broadcasts, Settings inkl. Widget-Config +
+  Settings-Sidebar mit Mobile-Hamburger, Phase 6.2–6.5)
 - **Asset Studio** — `/dashboard/assets/*` (KI-Bildgenerierung
   mit Konva-basiertem Editor)
 - **Embed-Widget** — `/embed/widget` (iframe-Chat-UI für Kunden-
-  Websites, Phase 4a–4c)
+  Websites, Phase 4a–4c) + `public/widget.js` (Vanilla-JS-Loader
+  mit closed Shadow DOM, Floating-Bubble, Lazy-Config-Fetch,
+  Phase 5)
 
-### Backend (Next.js API Routes, 47 Endpoints)
+### Backend (Next.js API Routes, 51 Endpoints)
 
 Gruppiert nach Zweck:
 
 | Gruppe | Routen | Auth |
 |---|---|---|
 | **Admin** | `/api/admin/*` — login, tenants, stats, plan-prompts | Session-Cookie nach `ADMIN_SECRET` |
-| **Dashboard** | `/api/dashboard/*` — me, stats, conversations, leads, campaigns, broadcasts, clients, crm, export, settings | Magic-Link-Token (`dashboard_token` Cookie) |
+| **Dashboard** | `/api/dashboard/*` — me, stats, conversations, leads, campaigns, broadcasts, clients, crm, export, settings, widget-config (GET/PATCH), widget-config/generate-key (POST), widget-config/toggle (POST) | Magic-Link-Token (`dashboard_token` Cookie) |
 | **Widget** | `/api/widget/*` — config, session, message, poll | `webWidgetPublicKey` + Session-Token |
 | **Webhooks** | `/api/webhook/whatsapp`, `/api/paddle/webhook` | HMAC-Signatur |
 | **Cron** | `/api/cron/cleanup`, `/api/cron/followup` | `CRON_SECRET` Header |
@@ -61,7 +64,7 @@ Gruppiert nach Zweck:
 
 - **ORM:** Prisma 7 mit `@prisma/adapter-pg` (Driver Adapter)
 - **Hosting:** Prisma Postgres Frankfurt (DSGVO-konform, EU-Region)
-- **Schema:** 13 Models, 11 Enums (Stand: 403 Zeilen)
+- **Schema:** 13 Models, 11 Enums (Stand: 402 Zeilen)
 - **Isolation:** Jedes Tenant-bezogene Model hat `tenantId` mit
   `@relation(..., onDelete: Cascade)` (Ausnahmen siehe
   docs/tech-debt.md: CampaignTemplate und Broadcast ohne FK)
@@ -78,7 +81,8 @@ Gruppiert nach Zweck:
 | **Upstash Redis** | Rate-Limiting (Sliding Window) | `@upstash/ratelimit` |
 | **Notion** | Session-Notes (interne Arbeits-Doku) | `@notionhq/client ^5.16.0` |
 | **HubSpot** | Lead-Push für Hot-Leads (Score > 70) | Direkte REST-Calls, API-Key verschlüsselt |
-| **Vercel** | Hosting (Fluid Compute, Frankfurt-nah) | Plattform-Runtime |
+| **Vercel** | Hosting (Fluid Compute, Function-Region fra1 Frankfurt) | Plattform-Runtime |
+| **Better Stack** | Uptime-Monitoring (3 Monitore, Status-Page) | HTTP-Keyword-Checks |
 
 ---
 
@@ -228,7 +232,8 @@ Entwicklungs-Status.
     Null-Ergebnisse, siehe tech-debt.md)
   - `POST /api/widget/session` — erzeugt Conversation mit
     `channel: WEB`, optional `consentGiven=true` (Phase 4-pre),
-    Rate-Limit 30/h/IP
+    Rate-Limit 10/h/IP (laut WEB_WIDGET_INTEGRATION.md § 3.3,
+    korrigiert in Phase 3b Spec-Fix Commit `a26977d`)
   - `POST /api/widget/message` — nimmt Nutzer-Nachricht an, ruft
     `processMessage` mit `channel: WEB`, antwortet **202
     Accepted** (asynchron), Rate-Limit 60/h/Token-Hash
@@ -249,8 +254,69 @@ Entwicklungs-Status.
   Rate-Limit-Key verwendet, um Klartext-Tokens aus dem
   Upstash-Cache fernzuhalten
 
-**Noch offen:** Phase 5 — Embed-Script (Floating-Button-Launcher
-als `<script src="...">` für Kunden-Websites)
+### 5.3 Embed-Script (Phase 5, produktiv seit 12. April 2026)
+
+- **Datei:** `public/widget.js` — Vanilla-JS-Loader (12.9 KB),
+  kein Build-Step, IIFE-gekapselt
+- **Einbettung:** `<script src="https://ai-conversion.ai/widget.js"
+  data-key="pub_xxx" async></script>`
+- **Shadow DOM:** Closed Shadow DOM verhindert CSS-Bleed zwischen
+  Host-Seite und Widget
+- **Floating Bubble:** Runder Button unten rechts (60px Desktop,
+  56px Mobile), Gradient-Hintergrund aus Tenant-Config
+- **Icon-Morph:** Chat-Bubble-Icon ↔ Close-X mit 300ms
+  CSS-Transition
+- **Lazy-Loading:** Config-Fetch und iframe werden erst beim
+  ersten Klick geladen (kein Performance-Impact auf Host-Seite)
+- **Mobile-Optimierung (Phase 7):**
+  - Close-X-Button wandert im geoeffneten Zustand nach oben-rechts
+    (44x44px Touch-Target), damit kein Overlap mit dem
+    Senden-Button im iframe-Footer
+  - Auto-Fokus ins Input-Feld auf Mobile unterdrueckt, damit die
+    virtuelle Tastatur nicht sofort den Viewport schrumpft
+- **CSP:** Host-Seiten mit striktem CSP muessen
+  `script-src https://ai-conversion.ai`, `connect-src
+  https://ai-conversion.ai`, `frame-src https://ai-conversion.ai`
+  in ihre CSP eintragen (siehe `docs/integration-guide.md`)
+- **ADR:** `docs/decisions/phase-5-embed-script.md`
+
+### 5.4 Dashboard Widget-Settings (Phase 6.2, produktiv)
+
+- **Settings-Page:** `/dashboard/settings/widget` — Toggle,
+  Public-Key-Display mit Copy-Button, Embed-Code-Generator mit
+  Plattform-Tabs (HTML/WordPress/Shopify/GTM), Config-Editor
+  (5 Color-Pickers + 5 Text-Inputs), Live-Preview via iframe
+- **3 API-Endpoints:**
+  - `GET /api/dashboard/widget-config` — Config mit Defaults,
+    Plan-Check via `hasPlanFeature()` (Starter → 403)
+  - `PATCH /api/dashboard/widget-config` — Partielles Update
+    der 10 editierbaren Felder, Zod-Validierung, Merge-Semantik
+  - `POST /api/dashboard/widget-config/generate-key` — Idempotenter
+    Key-Gen mit 3×-Retry bei Unique-Kollision
+  - `POST /api/dashboard/widget-config/toggle` — Enable/Disable,
+    Auto-Key-Generierung bei Erstaktivierung
+- **Plan-Gating:** `hasPlanFeature(paddlePlan, "web_widget")` —
+  Starter sieht Upgrade-Prompt, Growth+ sieht volle Settings
+
+### 5.5 Conversations-List-View (Phase 6.3, produktiv)
+
+- **Route:** `/dashboard/conversations` — Server Component mit
+  Prisma-Direct-Load, URL-Query-Filter `?channel=WHATSAPP|WEB`
+  und `?page=N` Paginierung (20/Seite)
+- **ChannelBadge:** Wiederverwendbare Komponente in 3 Views
+  (List, Detail, CRM) — Emerald fuer WhatsApp, Sky fuer Web
+- **Channel-Filter:** `ConversationsFilter` Client Component mit
+  `useTransition` fuer smooth Filter-Wechsel
+
+### 5.6 Settings-Sidebar (Phase 6.5, produktiv)
+
+- **Layout:** `/dashboard/settings/layout.tsx` — Server Component,
+  flex-Container mit linker Sidebar + main
+- **Sidebar:** Client Component mit Mobile-Hamburger (`<640px`),
+  `usePathname` fuer Active-State, Coming-Soon-Items sichtbar
+  aber disabled (Notifications, API-Keys, Team, Billing)
+- **Uebersicht:** `/dashboard/settings/page.tsx` — 2 aktive +
+  4 Coming-Soon-Cards
 
 ---
 
@@ -287,7 +353,7 @@ sobald diese Datei angelegt wird.
 
 | Schicht | Mechanismus |
 |---|---|
-| **CSP** | Nonce-basiert mit `'strict-dynamic'` (Phase 4-pre, Middleware generiert 128-bit Nonce pro Request, injiziert via `x-nonce`-Header in SSR) |
+| **CSP** | Nonce-basiert mit `'strict-dynamic'` (Phase 4-pre + Hotfix 12.04.2026). Middleware generiert 128-bit Nonce pro Request, setzt `Content-Security-Policy` auf BEIDE Header-Ebenen: Request-Headers (damit Next.js 15 SSR-Renderer den Nonce via `getScriptNonceFromHeader` extrahiert und auf alle Framework-Scripts propagiert) und Response-Headers (damit der Browser die CSP durchsetzt). Root-Layout ruft `await headers()` auf, um dynamisches Rendering aller Seiten zu erzwingen — ohne das wuerden statisch vorgerenderte Seiten keinen Nonce bekommen. Siehe `docs/production-regression-2026-04-12.md` fuer die vollstaendige Analyse |
 | **Frame-Ancestors** | `'none'` für alle Routen außer `/embed/*` und `/api/widget/*` (dort `*` für iframe-Embedding) |
 | **Security-Header** | `X-Frame-Options: DENY` (Ausnahme Widget-Routen), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (Camera/Mic/Geo/FLoC off) |
 | **Tenant-Isolation** | Composite Keys auf DB-Query-Ebene, Pflicht in CLAUDE.md |
@@ -326,6 +392,12 @@ Folgenscheidungen:
 | — | `externalId` nullable (Phase 3a.5) | Erlaubt WEB-Conversations ohne Phone-Hash; Lesson Learned: Konsumenten-Audit vergessen → Phase 5-Pre Hotfix |
 | — | Polling statt WebSockets (Phase 3b) | 2-Sekunden-Polling reicht für Widget-UX, Vercel-Fluid-Compute-freundlich |
 | — | Widget-Consent pre-accepted via Frontend-Modal (Phase 4-pre) | Spart einen Roundtrip im Web, `consentGiven=true` im Session-POST |
+| — | Embed-Script als Vanilla-JS statt Build-Pipeline (Phase 5) | 12.9 KB Loader ohne Dependencies, kein NPM-Projekt, closed Shadow DOM. ADR: `docs/decisions/phase-7-embed-script-vanilla-js.md` |
+| — | CORS `*` auf Widget-Endpoints (Phase 7) | Widget-Endpoints sind public-facing by design. Absicherung via Rate-Limit + Session-Token, nicht CORS. ADR: `docs/decisions/phase-7-cors-public-widget-endpoints.md` |
+| — | CSP auf Request-Headers propagieren (Hotfix 12.04.) | Next.js 15 SSR-Renderer liest Nonce aus CSP-Request-Header, nicht aus separatem `x-nonce`. Ohne Request-Header-CSP: keine Nonce-Injection auf Framework-Scripts |
+| — | Force-Dynamic via `await headers()` im Root-Layout (Hotfix 12.04.) | Statische Seiten bekommen keinen Nonce (Build-Zeit = keine Middleware). Trade-off: Static Generation aufgegeben zugunsten Security. Performance-Impact vernachlaessigbar mit Vercel Fluid Compute |
+| — | `hasPlanFeature()` statt `checkLimit()` fuer Widget-Gating (Phase 6.2) | Saubere Trennung Quota-Limit vs. Feature-Flag. Widget ist ein Feature-Gate (Growth+), kein Quota-Counter |
+| — | Dedizierte Conversations-List-View statt Filter in bestehenden Views (Phase 6.3) | DRY durch wiederverwendbare `ChannelBadge`-Komponente, skaliert besser als verstreute Filter |
 
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
@@ -337,7 +409,7 @@ Re-Evaluations-Prozess (ADR-Workflow) in
 
 | Schicht | Technologie | Begründung |
 |---|---|---|
-| **Framework** | Next.js 15 App Router | SSR + API Routes aus einer Codebase, SSG für Marketing-Seiten, Streaming-Support |
+| **Framework** | Next.js 15.5.14 App Router | SSR + API Routes aus einer Codebase. Alle Seiten dynamisch gerendert (Root-Layout `await headers()` erzwingt dies fuer CSP-Nonce-Propagation). Streaming-Support |
 | **UI-Runtime** | React 19 | App Router-Voraussetzung, Server Components für statische Teile |
 | **Sprache** | TypeScript strict (ohne `any`) | Pflicht laut CLAUDE.md, Code-Qualitäts-Baseline |
 | **ORM** | Prisma 7 mit PrismaPg Driver Adapter | Type-safe Queries, Migrations-Workflow, EU-Postgres-Support |
@@ -353,8 +425,9 @@ Re-Evaluations-Prozess (ADR-Workflow) in
 | **Validierung** | Zod 4 | Pflicht für alle POST/PATCH, `safeParse` nach `request.json()` |
 | **Animationen** | framer-motion, Tailwind | Widget-Entrance, Modal-Transitions |
 | **Tests** | Vitest | (Eingerichtet, noch keine Tests geschrieben — siehe `docs/quality-roadmap.md` Lücke 1) |
-| **Hosting** | Vercel Fluid Compute | Frankfurt-nah, Node.js 24 Runtime, 300s Timeout Default |
-| **Domain** | `ai-conversion.ai` | Produktions-Endpoint |
+| **Hosting** | Vercel Fluid Compute | Function-Region fra1 (Frankfurt), Node.js 24 Runtime, 300s Timeout Default |
+| **Monitoring** | Better Stack | 3 Uptime-Monitore (/, /widget.js, /api/widget/config), Status-Page unter status.ai-conversion.ai |
+| **Domain** | `ai-conversion.ai` | Produktions-Endpoint, deployed seit 12.04.2026 auf Commit `e04e7d0`+ |
 
 ---
 
@@ -399,5 +472,7 @@ an Nebentabellen, neuen Dashboard-Features, UI-Anpassungen.
 Solche Änderungen gehören in `PROJECT_STATUS.md` und ggf.
 `docs/decisions/`.
 
-**Letzte Aktualisierung:** 2026-04-12 — Erstanlage nach
-CLAUDE.md-Härtung (Commit `70b18ed` + `8b2ccf1`).
+**Letzte Aktualisierung:** 2026-04-12 — Nachpflege nach Phase 5,
+6, 6.5, 7, Production-Deploy und CSP-Nonce-Hotfix. Erstanlage
+war nach CLAUDE.md-Haertung (Commit `70b18ed` + `8b2ccf1`),
+Nachpflege auf Commit `1dfb6dc`.
