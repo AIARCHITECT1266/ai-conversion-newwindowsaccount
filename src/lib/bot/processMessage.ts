@@ -103,9 +103,10 @@ async function withRetry<T>(
 // ---------- DB-Hilfsfunktionen ----------
 
 // Gespraechsverlauf laden (entschluesselt)
-async function loadConversationHistory(conversationId: string) {
+// Tenant-Isolation: Defense-in-Depth via Composite-Key
+async function loadConversationHistory(conversationId: string, tenantId: string) {
   const messages = await db.message.findMany({
-    where: { conversationId },
+    where: { conversationId, conversation: { tenantId } },
     orderBy: { timestamp: "asc" },
     take: 20,
   });
@@ -163,13 +164,14 @@ function runScoringPipeline(
       if (!scoreResult?.success || scoreResult.score === undefined) return;
 
       // Lead, Conversation und Tenant parallel laden
+      // Tenant-Isolation: Defense-in-Depth via Composite-Key
       const [existingLead, conv, tenantForHubSpot] = await Promise.all([
-        db.lead.findUnique({
-          where: { conversationId },
+        db.lead.findFirst({
+          where: { conversationId, tenantId },
           select: { status: true, pipelineStatus: true, dealValue: true, notes: true },
         }),
-        db.conversation.findUnique({
-          where: { id: conversationId },
+        db.conversation.findFirst({
+          where: { id: conversationId, tenantId },
           select: { campaignSlug: true, leadSource: true },
         }),
         db.tenant.findUnique({
@@ -354,9 +356,10 @@ export async function processMessage(
     }
 
     // STOP-Befehl pruefen (DSGVO: Verarbeitung beenden)
+    // Tenant-Isolation: Defense-in-Depth via Composite-Key
     if (message.trim().toUpperCase() === "STOP") {
-      await db.conversation.update({
-        where: { id: conversationId },
+      await db.conversation.updateMany({
+        where: { id: conversationId, tenantId },
         data: { status: "CLOSED" },
       });
 
@@ -375,9 +378,10 @@ export async function processMessage(
     }
 
     // Consent als erteilt markieren (zweite Nachricht = Zustimmung)
+    // Tenant-Isolation: Defense-in-Depth via Composite-Key
     if (!consentGiven) {
-      await db.conversation.update({
-        where: { id: conversationId },
+      await db.conversation.updateMany({
+        where: { id: conversationId, tenantId },
         data: {
           consentGiven: true,
           consentAt: new Date(),
@@ -411,7 +415,7 @@ export async function processMessage(
     }
 
     // Gespraechsverlauf laden und Claude-Antwort generieren
-    const history = await loadConversationHistory(conversationId);
+    const history = await loadConversationHistory(conversationId, tenantId);
     const resolvedPrompt = loadSystemPrompt({
       systemPrompt: tenant.systemPrompt,
       paddlePlan: tenant.paddlePlan,
