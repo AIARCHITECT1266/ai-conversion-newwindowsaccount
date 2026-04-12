@@ -830,3 +830,73 @@ Alle Aenderungen sind Two-Way-Door:
   `SettingsSidebar.tsx`, plus neue Settings-Page schreiben
 
 Keine One-Way-Doors.
+
+### Browser-Verifikation + Polish-Phase (2026-04-12)
+
+**Tester:** Project Owner (manueller Browser-Durchlauf aller
+12 Smoke-Test-Schritte, alle gruen)
+
+Beim manuellen Durchlauf der Sub-Phase 6.5 im Browser wurden
+**3 visuelle Bugs** identifiziert und in 2 Fix-Commits behoben:
+
+**Bug 1 — Toggle-Handle unsichtbar + asymmetrisch**
+
+- **Symptom:** Der Widget-Enable/Disable-Toggle auf der
+  Settings-Page hatte einen unsichtbaren Handle (gleiche Farbe
+  wie der Track-Hintergrund) und sprang beim Aktivieren
+  asymmetrisch nach rechts
+- **Root-Cause:** Handle war `bg-gray-300` auf einem aehnlich
+  hellen Track, und `translate-x-5` (20px) stimmte nicht mit
+  der Track-Breite ueberein
+- **Fix (Commit 4cc1db0):** Handle auf `bg-white` gesetzt,
+  translate-x-[22px] fuer symmetrische Position im 48px-Track
+
+**Bug 2 — Embed-Code-Snippet Overflow**
+
+- **Symptom:** Das Embed-Code-Snippet auf der Widget-Settings-
+  Page lief horizontal ueber den Container hinaus, mit
+  sichtbarer Phantom-Scrollbar
+- **Root-Cause:** Kein `padding-right` fuer den
+  absolut-positionierten Copy-Button, und eine globale
+  `scrollbar-width: thin`-Regel in `globals.css` (Klasse
+  `.navy-700-scrollbar`) erzeugte eine sichtbare Scrollbar
+  auf dem `<pre>`-Element
+- **Fix (Commit 4cc1db0):** `pr-20` auf dem Snippet-Container
+  fuer Button-Platz, plus `scrollbar-hide`-Utility-Klasse in
+  `globals.css` (`scrollbar-width: none` +
+  `::-webkit-scrollbar { display: none }`)
+
+**Bug 3 — Copy-Button auf Mobile nicht erreichbar**
+
+- **Symptom:** Der Copy-Button lag als absolut-positioniertes
+  Overlay ueber dem Snippet und war auf schmalen Viewports
+  vom Snippet-Text ueberdeckt bzw. nicht als eigenstaendiges
+  Touch-Target erkennbar
+- **Root-Cause:** `absolute top-2 right-2`-Positionierung
+  funktioniert auf Desktop, aber auf Mobile fehlt der visuelle
+  Kontext eines separaten Buttons
+- **Fix (Commit 94bf6d6):** Responsive Loesung — auf Desktop
+  (`sm:`) bleibt der Button absolut positioniert, auf Mobile
+  wird er als eigenstaendiger Full-Width-Button unter dem
+  Snippet gerendert
+
+### Lessons Learned aus der Polish-Phase
+
+**Diagnose vor Fix hat uns bei Bug 1 und Bug 2 vor falschen
+Fixes bewahrt:**
+
+- Bei Bug 1 sah das Symptom nach einem asymmetrischen Translate
+  aus, tatsaechlich war das primaere Problem die unsichtbare
+  Handle-Farbe (fehlendes `bg-white` statt `bg-gray-300`). Der
+  Translate-Fix allein haette das Handle weiterhin unsichtbar
+  gelassen
+- Bei Bug 2 sah das Symptom nach einer fehlenden Scrollbar-
+  Unterdrueckung aus, tatsaechlich war der Trigger eine globale
+  `.navy-700-scrollbar`-Klasse in `globals.css`, die das
+  `<pre>`-Element unerwartet beeinflusste. Ein naiver
+  `overflow-hidden`-Fix haette den Horizontal-Scroll komplett
+  unterdrueckt statt die Phantom-Scrollbar gezielt zu verstecken
+
+CLAUDE.md Regel 3 (Diagnose vor Code-Change) hat sich damit
+erneut als wertvolle Heuristik bestaetigt — auch bei
+"offensichtlich kleinen" UI-Bugs.

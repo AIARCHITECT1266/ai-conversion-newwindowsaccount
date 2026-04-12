@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 6.5 — Settings-Sidebar (Navigation-Polish, committed)
-**Letzter Commit:** (dieser Commit) feat(dashboard): add settings sidebar with mobile hamburger (phase 6.5)
+**Aktuelle Phase:** Phase 6.5 abgeschlossen (Navigation + UI-Polish) — bereit für Phase 7
+**Letzter Commit:** docs(phase-6-5): complete sub-phase 6.5 after browser verification and polish fixes
 
 ---
 
@@ -468,7 +468,7 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   (Hardening, 10 Test-Szenarien aus WEB_WIDGET_INTEGRATION.md,
   Pilot-Kunden-Integration-Guide aus tech-debt.md)
 
-### Phase 6.5 — Settings-Sidebar (Navigation-Polish, dieser Commit)
+### Phase 6.5 — Settings-Sidebar + Browser-Verifikation + Polish (Commits b1f842f, 4cc1db0, 94bf6d6)
 - Datum: 2026-04-12
 - Scope: Navigation-Polish nach dem E2E-Abschluss. Die Settings-
   Bereiche (Widget aus 6.2, Prompt aus Phase 4-pre) saßen bis
@@ -504,6 +504,18 @@ Vollständige Spec: WEB_WIDGET_INTEGRATION.md
   nicht md: — per User-Briefing "Mobile <640px"
 - Build grün, neue Route /dashboard/settings (Static, 175 B)
   erscheint im Route-Manifest
+- **Browser-Verifikation am 2026-04-12 durch Project Owner:**
+  alle 12 Smoke-Test-Schritte grün
+- 4 Polish-Fixes aus Browser-Beobachtung (Commits 4cc1db0 +
+  94bf6d6):
+  * Toggle-Handle sichtbar (weiß) + symmetrische Position
+    (translate-x-[22px])
+  * Embed-Code Overflow-Fix (pr-20 + scrollbar-hide für
+    Phantom-Scrollbar aus globals.css)
+  * Responsive Copy-Button für Mobile (full-width unter
+    Snippet statt absolute-overlay)
+- Tech-Debt: Webpack-Chunk-Mismatch-Pattern dokumentiert
+  (siehe docs/tech-debt.md)
 
 ---
 
