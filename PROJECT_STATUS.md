@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed
-**Letzter Commit:** docs(deploy): pre-deploy diagnostics and CLAUDE.md hardening
+**Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed + CSP-Hotfix
+**Letzter Commit:** docs(regression): complete diagnosis reports for A.1/A.3/A.3b
 
 ---
 
@@ -36,6 +36,54 @@ Siehe ConvArch-Roadmap (Woche-Plan):
 3. Datenschutzerklaerung fuer Web-Widget ergaenzen
 4. Single-Instance-DB-Split bevor erster Pilot-Kunde
    (siehe docs/tech-debt.md)
+
+---
+
+## Production-Hotfix: 12.04.2026 abends (CSP-Nonce-Regression behoben)
+
+### Problem
+Der Production-Deploy vom Nachmittag (Commit ef25efe) hat die CSP-Nonce-
+Migration aus Phase 6 aktiviert. Folge: Browser blockierte alle
+JavaScript-Bundles, weil Next.js den Nonce nicht auf Framework-Scripts
+propagierte.
+
+### Root Cause
+1. Middleware setzte CSP nur auf Response-Headers, nicht auf Request-Headers.
+   Next.js 15 SSR-Renderer extrahiert den Nonce aus dem
+   Content-Security-Policy-Header der Request-Headers.
+2. Viele Seiten wurden statisch zur Build-Zeit gerendert — zu dem Zeitpunkt
+   laeuft keine Middleware, kein Nonce verfuegbar.
+
+### Fix (Feature-Branch fix/csp-nonce-request-header, 3 Commits)
+1. `4590cc1` — Middleware propagiert CSP jetzt auf BEIDE Header-Ebenen
+   (Request + Response)
+2. `16348a0` — Root-Layout ruft `await headers()` auf → zwingt dynamisches
+   Rendering aller Seiten
+3. `e04e7d0` — Regression-Dokumentation
+
+### Verification
+- Lokaler Production-Build-Test (A.3b): alle Test-Routen gruen,
+  Nonce-Match CSP == HTML
+- Preview-Deploy auf Vercel: Landing und Dashboard rendern vollstaendig
+- Production-Deploy (Commit e04e7d0): Landing und Dashboard live,
+  keine CSP-Script-Violations
+
+### Prozess-Lektion
+Phase 6 hat den Nonce-Austausch gebaut und committet, aber nie in einer
+echten Production-Umgebung (oder lokal via `next start`) verifiziert.
+Dev-Mode ist CSP-lax und verdeckt solche Regressionen. Ab jetzt: vor
+jedem sicherheitsrelevanten Deploy zwingend `next build && next start`
+lokal testen, und Preview-Deploys nutzen.
+
+### Status
+**Production laeuft stabil auf Commit e04e7d0.**
+Nonce-CSP aktiv, alle Seiten funktional, keine Regression auf Vorhandenem.
+
+### Offene Punkte (nicht blockierend)
+- Logo-Cleanup: `_next/image` 404 auf entferntes `/logo.png` — beim
+  Rebranding ohnehin neu
+- Vercel.live iframe CSP-Warnung: nur in Preview-Umgebung sichtbar,
+  nicht in Production. Kein Handlungsbedarf.
 
 ---
 

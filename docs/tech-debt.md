@@ -660,3 +660,27 @@ Sobald ein Pilot-Kunde Echtdaten produziert, ist lokales Testing
 gegen dieselbe DB eine akute Datenschutz-Verletzung (Pilot-
 Kundendaten wuerden in lokale Entwicklung fliessen). Spaetestens
 dann muss der Split stehen.
+
+## Logo-Asset-404 auf Production
+
+### Status
+Akzeptiert — wird beim Rebranding behoben.
+
+### Datum
+2026-04-12
+
+### Problem
+Code referenziert noch `/logo1.jpg` und `/logo.png` in Metadata
+(OG-Image, Twitter-Card), aber die Dateien wurden am 12.04. aus
+`public/` entfernt bzw. umbenannt. Resultat: 404 auf
+`_next/image?url=%2Flogo1.png` in Browser-Console.
+
+### Einschlag
+- Kein Rendering-Problem (Rest der Seite rendert normal)
+- Nur Console-404, OG-Image/Twitter-Card-Preview fehlt
+- Kein User-sichtbarer Effekt auf der Seite selbst
+
+### Rueckzahlung
+Beim geplanten Rebranding. Neues Logo wird mit neuem Code-Pfad
+eingefuehrt, alte Referenzen in `src/app/layout.tsx` Metadata
+automatisch ersetzt.

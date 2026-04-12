@@ -559,6 +559,6 @@ Bei jeder Aufgabe:
 1. templates/route.ts: briefing/openers/abVarianten/ziele nicht Zod-validiert
 2. Cleanup-Cron Stufe 4: findMany statt deleteMany (Performance)
 3. checkLimit(): kein Redis-Cache (DB-Count bei jedem Call)
-4. CSP: noch unsafe-inline (später Nonce-basiert)
+4. CSP script-src: ERLEDIGT (Nonce-basiert seit 12.04.2026, style-src bleibt unsafe-inline)
 5. HubSpot-Push: fire-and-forget (bewusste Entscheidung)
 6. Paddle Webhook: doppeltes ts=-Parsing in Handler + verifySignature
