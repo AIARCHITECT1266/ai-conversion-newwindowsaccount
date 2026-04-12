@@ -66,33 +66,45 @@ export async function POST(req: NextRequest) {
 
   const { enabled } = parseResult.data;
 
-  // Wenn aktiviert wird und noch kein Key existiert: einen erzeugen.
-  // Wir inlinen die Generator-Logik statt fetch() aufs andere Route
-  // zu machen - vermeidet einen zusaetzlichen HTTP-Hop und haelt
-  // die Transaktion intakt.
-  const existing = await db.tenant.findUnique({
-    where: { id: tenant.id },
-    select: { webWidgetPublicKey: true },
-  });
-
-  let publicKey = existing?.webWidgetPublicKey ?? null;
+  // Race-Safety: Key-Generierung atomar via updateMany mit
+  // Conditional-Where. Zwei parallele Requests koennen nicht beide
+  // einen neuen Key erzeugen, weil die where-Clause
+  // `webWidgetPublicKey: null` nach dem ersten erfolgreichen Update
+  // nicht mehr matched. Der zweite bekommt count=0 und faellt auf
+  // enabled-only-Update zurueck.
+  let publicKey: string | null = null;
   let keyGenerated = false;
 
-  if (enabled && !publicKey) {
-    publicKey = generatePublicKey();
-    keyGenerated = true;
-  }
+  if (enabled) {
+    const newKey = generatePublicKey();
+    const keyResult = await db.tenant.updateMany({
+      where: { id: tenant.id, webWidgetPublicKey: null },
+      data: { webWidgetPublicKey: newKey, webWidgetEnabled: true },
+    });
 
-  await db.tenant.update({
-    where: { id: tenant.id },
-    data: {
-      webWidgetEnabled: enabled,
-      // Nur setzen, wenn wir tatsaechlich einen neuen Key erzeugt
-      // haben. Sonst laufen wir nicht Gefahr, bestehende Keys zu
-      // ueberschreiben.
-      ...(keyGenerated && publicKey ? { webWidgetPublicKey: publicKey } : {}),
-    },
-  });
+    if (keyResult.count > 0) {
+      // Neuer Key wurde atomar erzeugt und gesetzt
+      publicKey = newKey;
+      keyGenerated = true;
+    } else {
+      // Key existiert bereits — nur enabled-Flag setzen
+      await db.tenant.update({
+        where: { id: tenant.id },
+        data: { webWidgetEnabled: true },
+      });
+      // Bestehenden Key fuer Response laden
+      const existing = await db.tenant.findUnique({
+        where: { id: tenant.id },
+        select: { webWidgetPublicKey: true },
+      });
+      publicKey = existing?.webWidgetPublicKey ?? null;
+    }
+  } else {
+    await db.tenant.update({
+      where: { id: tenant.id },
+      data: { webWidgetEnabled: false },
+    });
+  }
 
   // Audit-Log: zwei Events wenn neuer Key erzeugt wurde.
   if (keyGenerated) {
