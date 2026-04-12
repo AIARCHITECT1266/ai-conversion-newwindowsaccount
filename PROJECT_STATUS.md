@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-12
-**Aktuelle Phase:** Phase 7 Pre-Analyse abgeschlossen — bereit fuer Test-Szenario-Durchlauf
-**Letzter Commit:** docs(phase-7): finalize pre-analysis with owner decisions
+**Aktuelle Phase:** Phase 7 — Test-Gruppe A abgeschlossen (6/6), bereit fuer Test-Gruppe B
+**Letzter Commit:** test(phase-7): verify test group A (6 scenarios all green)
 
 ---
 

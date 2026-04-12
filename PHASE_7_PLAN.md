@@ -162,13 +162,13 @@ Feature-Scope.
 | Schritt | Inhalt | Typ | Geschaetzter Aufwand | Status |
 |---------|--------|-----|---------------------|--------|
 | 7.1 | **Security-Checkliste abschliessen:** CORS-Gap-Entscheidung + ADR | Entscheidung + Doku | 30 Min | **ERLEDIGT** (ADR geschrieben) |
-| 7.2 | **Test-Gruppe A durchlaufen** (6 Szenarien, sofort testbar) | Manueller Test | 1-1.5h | Offen |
+| 7.2 | **Test-Gruppe A durchlaufen** (6 Szenarien, sofort testbar) | Manueller Test | 1-1.5h | **ERLEDIGT** (6/6 gruen) |
 | 7.3 | **Test-Gruppe B Setup + Durchlauf** (Cross-Origin, Tenant-Isolation, Mobile) | Setup + Test | 1.5-2h | Offen (Tenant B angelegt) |
 | 7.4 | **Integration-Guide schreiben** (docs/integration-guide.md) | Doku | 1.5-2h | Offen |
 | 7.5 | **Build-Check** (`npx next build`) | Verifikation | 15 Min | **ERLEDIGT** (gruen, 68 Seiten) |
 | 7.6 | **Abschluss-Doku:** PROJECT_STATUS.md, ADR, Tech-Debt-Updates | Doku | 30 Min | Offen |
 
-**Verbleibender Aufwand Phase 7:** ca. 4-5.5 Stunden (7.2 + 7.3 + 7.4 + 7.6)
+**Verbleibender Aufwand Phase 7:** ca. 3-4 Stunden (7.3 + 7.4 + 7.6)
 
 **Szenario 9 (WhatsApp-Regression)** ist external-blocked durch
 Meta Business Verification. Phase 7 wird mit 9/10 Szenarien
@@ -267,3 +267,120 @@ lief fehlerfrei durch (68 Seiten, alle Routes im Manifest).
 Der existierende Eintrag "Webpack-Chunk-Mismatch nach
 Dashboard-Page-Fixes (Next.js 15.5.14)" deckt diese
 Fehlerklasse ab.
+
+---
+
+## 9. Test-Gruppe A — Ergebnisse (2026-04-12)
+
+**Tester:** Project Owner (manueller Browser-Durchlauf) +
+Claude Code (DB-Queries, curl-Tests)
+
+**Ergebnis: 6/6 gruen.**
+
+| # | Szenario | Status | Zeitstempel | Verifikations-Methode |
+|---|----------|--------|------------|----------------------|
+| 1 | Happy Path | **PASS** | 12:58 UTC | Browser: widget-demo.html → Bubble → Consent → Chat → Lead im Dashboard mit Channel WEB |
+| 6 | DSGVO | **PASS** | 13:00 UTC | DB-Query: consentGiven=true, consentAt gesetzt, 17.4s vor erster User-Message |
+| 7 | Widget deaktiviert | **PASS** | 13:05 UTC | DB: webWidgetEnabled=false → Config-Endpoint 404 → Widget zeigt "nicht verfuegbar" → kein Crash |
+| 8 | Graceful Degradation | **PASS** | 13:06 UTC | curl: 3 ungueltige Token-Varianten → alle 400 mit Zod-Fehlermeldung auf Deutsch |
+| 10 | Plan-Gating | **PASS** | 13:14 UTC | DB: paddlePlan=null → Dashboard zeigt UpgradePrompt → paddlePlan zurueckgesetzt |
+| 4 | Rate-Limit | **PASS** | 13:18 UTC | curl-Loop: 15 Requests → 9 OK + 6× 429, spec-konform (10/h inkl. Szenario-1-Request) |
+
+### Befunde pro Szenario
+
+**Szenario 1 (Happy Path):** Vollstaendiger End-to-End-Flow
+verifiziert. Widget-Demo-Seite mit echtem Public Key von
+internal-admin konfiguriert, Bubble erscheint, Consent-Modal
+funktioniert, Bot antwortet (AI Conversion Plattform-Kontext),
+Lead mit Score 30 und Channel WEB im Dashboard sichtbar.
+Conversation-ID: `cmnvrs59...` (maskiert).
+
+**Szenario 6 (DSGVO):** DB-Query bestaetigt: `consentGiven=true`,
+`consentAt=2026-04-12T12:58:38.098Z`, erste User-Message um
+`12:58:55.507Z` — Consent liegt 17.4 Sekunden VOR der ersten
+Nachricht. Consent wird im selben DB-Call wie die Conversation-
+Erstellung gesetzt (Delta consentAt→createdAt: -8ms, quasi-
+simultan). 6 Messages (3× USER, 3× ASSISTANT) — Multi-Turn
+funktioniert.
+
+**Szenario 7 (Widget deaktiviert):** `webWidgetEnabled: false`
+in DB gesetzt → `/api/widget/config?key=...` liefert 404 →
+Widget-Frontend zeigt "Widget nicht verfuegbar" → kein Crash,
+saubere Degradation. Nach Reaktivierung sofort wieder
+funktionsfaehig. Toggle-State im Dashboard-Settings korrekt
+reflektiert.
+
+**Szenario 8 (Graceful Degradation):** Drei curl-Tests mit
+ungueltigem Token:
+- Komplett falscher Token → 400 + Zod: "Ungueltiges Token-Format"
+- Leerer Token → 400 + Zod: "Too small" + "Ungueltiges Token-Format"
+- Fehlender content-Field → 400 + Zod: beide Felder bemängelt
+
+Alle Fehler werden von der Zod-Validierung VOR dem DB-Lookup
+abgefangen — Session-Token-Format-Pruefung (`^ws_[A-Za-z0-9_-]+$`)
+ist die erste Verteidigungslinie. Server laeuft nach allen
+Tests weiter (HTTP 200 auf `/`).
+
+**Szenario 10 (Plan-Gating):** `paddlePlan: null` (= Starter)
+gesetzt → Widget-Settings-Page zeigt UpgradePrompt ("Web-Widget
+ist ab Growth verfuegbar" + "Plan upgraden"-Button). API liefert
+403. Nach Zuruecksetzen auf `growth_monthly` sofort wieder volle
+Settings-UI.
+
+Bonus-Fund: Beim initialen Test war der User versehentlich als
+test-b (Growth) eingeloggt statt internal-admin (Starter).
+Diagnose ueber Public-Key-Vergleich im Dashboard (`pub_2lxs3_...`
+= test-b statt `pub_OQ5vM7...` = internal-admin). Root-Cause:
+falscher Magic-Link aus `dashboard-links.txt` benutzt. **Implizite
+Tenant-Isolation-Verifikation:** zwei Tenants sehen ausschliesslich
+ihre eigenen Daten — kein Cross-Tenant-Leak.
+
+**Szenario 4 (Rate-Limit):** 15 POST-Requests gegen
+`/api/widget/session` in schneller Folge. Ergebnis: 9× 200,
+6× 429. Spec-Erwartung war 10× 200, aber der 10. Request-Slot
+war bereits durch den Szenario-1-Happy-Path-Request belegt
+(Upstash Sliding-Window zaehlt innerhalb des 1h-Fensters).
+Fehlermeldung auf Deutsch: "Zu viele Anfragen - bitte spaeter
+erneut versuchen". **Spec-konform: exakt 10 Sessions/IP/h.**
+
+### Bonus-Fund: Implizite Tenant-Isolation
+
+Waehrend des Plan-Gating-Tests (Szenario 10) wurde
+versehentlich der Magic-Link von test-b statt internal-admin
+benutzt. Das Dashboard zeigte daraufhin:
+- Public Key von test-b (`pub_2lxs3_H7wUPc0joC`)
+- Conversations von test-b (keine)
+- Settings von test-b (Growth-Plan, Widget enabled)
+
+Zu keinem Zeitpunkt waren Daten von internal-admin sichtbar.
+Die Token-basierte Tenant-Isolation im Dashboard funktioniert
+korrekt — jeder Magic-Link bindet die Session exklusiv an
+einen Tenant. Dies ist eine **implizite Verifikation von
+Szenario 3 (Tenant-Isolation)** aus Test-Gruppe B, die den
+formalen Test erleichtert.
+
+---
+
+## 10. Test-Setup-Cleanup nach Test-Gruppe A
+
+### public/widget-demo.html
+Waehrend Szenario 1 wurde der Placeholder `pub_DEMO_REPLACE_ME`
+durch den echten Public Key `pub_OQ5vM7rpiwTgwik0` ersetzt.
+**Zurueckgesetzt auf `pub_DEMO_REPLACE_ME` vor dem Commit.**
+Kein Secret-Leak im Git-History (der Public Key ist per Design
+oeffentlich, aber der Placeholder-Zustand ist der korrekte
+committed State).
+
+### dashboard-links.txt
+Enthaelt Magic-Links fuer beide Tenants. Ist bereits in
+`.gitignore` (Zeile 47) — kein Commit-Risiko. Die Tokens
+in der Datei rotieren bei jeder neuen Session, alte Tokens
+werden bei Rotation invalidiert.
+
+### DB-Zustand nach Test-Gruppe A
+- internal-admin: `paddlePlan=growth_monthly`,
+  `webWidgetEnabled=true` (Originalzustand wiederhergestellt)
+- test-b: unveraendert (`growth_monthly`, `enabled=true`)
+- 10 Test-Conversations (9 aus Rate-Limit-Test + 1 aus Happy-
+  Path) in der DB. Nicht geloescht — stoen DSGVO-Cleanup-Cron
+  nach retentionDays automatisch
