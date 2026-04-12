@@ -275,8 +275,8 @@ export default function WidgetSettingsPage() {
             } disabled:opacity-40`}
           >
             <span
-              className={`absolute top-0.5 h-6 w-6 rounded-full bg-[#07070d] transition-transform ${
-                state.enabled ? "translate-x-5" : "translate-x-0.5"
+              className={`absolute left-0 top-0.5 h-6 w-6 rounded-full bg-white transition-transform ${
+                state.enabled ? "translate-x-[22px]" : "translate-x-0.5"
               }`}
             />
           </button>
@@ -296,7 +296,7 @@ export default function WidgetSettingsPage() {
               -Tag deiner Webseite ein.
             </p>
             <div className="relative mb-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#07070d]">
-              <pre className="overflow-x-auto p-4 font-mono text-[11px] leading-relaxed text-[#ede8df]">
+              <pre className="scrollbar-hide overflow-x-auto p-4 pr-20 font-mono text-[11px] leading-relaxed text-[#ede8df]">
                 {embedSnippet}
               </pre>
               <button
