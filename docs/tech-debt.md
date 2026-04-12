@@ -684,3 +684,73 @@ Code referenziert noch `/logo1.jpg` und `/logo.png` in Metadata
 Beim geplanten Rebranding. Neues Logo wird mit neuem Code-Pfad
 eingefuehrt, alte Referenzen in `src/app/layout.tsx` Metadata
 automatisch ersetzt.
+
+## Dev-Workflow & Local-Setup (offene Punkte vom 12.04.2026)
+
+### TD-Dev-01: `taskkill /F /IM node.exe` killt alle Node-Prozesse
+- Problem: killt auch Cross-Origin-Test-Server auf Port 3001
+- Loesung: PID-spezifisch via
+  `Get-NetTCPConnection -LocalPort X → Stop-Process -Id`
+- Status: dokumentiert, nicht eskaliert
+
+### TD-Dev-02: Next.js Dev-Server braucht `--hostname 0.0.0.0` fuer LAN-Zugriff
+- Ohne Flag: Next.js bindet nur auf localhost, Smartphone im WLAN
+  kommt nicht dran
+- Korrekter Dev-Befehl: `npx next dev --hostname 0.0.0.0`
+
+### TD-Dev-03: Webpack-Chunk-Mismatch nach `npx next build` mit laufendem Dev-Server
+- Symptom: ENOENT auf /embed/widget/page.js
+- Trigger: Production-Build parallel zum laufenden Dev-Server
+- Rezept: `Strg+C → rm -rf .next → npx next dev --hostname 0.0.0.0`
+
+### TD-Dev-04: Cross-Origin-Test-Setup existiert
+- Pfad: `C:\Users\accou\cross-origin-test\index.html`
+- Zweck: Widget-Embedding auf fremder Test-Domain (localhost:3001)
+- Nicht im Repo, bei naechster Nutzung Setup nicht neu aufbauen
+
+### TD-Dev-05: DSGVO-Cleanup-Cron Retention-Period unverifiziert
+- Aktueller `retentionDays`-Wert unverifiziert
+- Risiko: koennte Production-Daten frueher loeschen als gedacht
+- To-Do: Wert pruefen und explizit dokumentieren
+
+### TD-Dev-06: Race-Simulation M5 ausstehend
+- Kontext: Medium M5 (Toggle Race-Condition) wurde via Code-Review
+  verifiziert
+- Race-Simulation (Dev-DB nullt Production-Key) wurde bewusst
+  uebersprungen wegen Single-Instance-DB
+- To-Do: nach Dev/Prod-DB-Split aktive Verifikation durchfuehren
+
+## Audit-Follow-Up (Low-Befunde)
+
+### Audit vom 12.04.2026: 11 Low-Befunde offen
+Vollstaendige Liste mit Details in
+`docs/audit-web-widget-2026-04-12.md`.
+Zusammenfassung:
+- L1: Magic Numbers in Rate-Limits (alle 4 Widget-Routes)
+- L2: CORS-Helper 4x dupliziert
+- L3: publicKey-Cache ohne Size-Limit
+- L4: decryptText-Fehler im Poll nicht gefangen
+- L5: Textarea focus:outline-none ohne Ersatz
+- L6: mergeMessages re-sortiert bei jedem Poll
+- L7: MessageBubble ohne React.memo
+- L8: Feedback-Banner ohne aria-live
+- L9: Platform-Tabs ohne ARIA-Tab-Pattern
+- L10: Preview-iframe feste Breite 400px
+- L12: widget.js innerHTML fuer SVG
+
+Prioritaet: keiner pilot-blockierend, buendeln zu 1-2 Cleanup-
+Commits in naechsten Tagen.
+
+## Diagnose-Aufgaben (ungeklaerter Status)
+
+### Diag-01: Dashboard-Magic-Link-Invalidierung bei Session-Wechsel
+- Beobachtung 12.04.2026: internal-admin-Link war gueltig, dann
+  test-b-Link verwendet, internal-admin-Link ungueltig
+- Vermutung: neuer Token invalidiert alten
+- Unverifiziert — echter Bug oder by design?
+
+### Diag-02: Rate-Limit pro Tenant vs. pro IP
+- Aktuell unklar, wie Rate-Limits im Multi-Tenant-Kontext scoped sind
+- Test-Setup zwischen internal-admin und test-b nicht explizit
+  verifiziert
+- To-Do: gezielt testen, Dokumentation ergaenzen

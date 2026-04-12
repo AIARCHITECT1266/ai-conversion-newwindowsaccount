@@ -175,6 +175,9 @@ Accessibility-Themen adressiert.
 - Datenschutzerklaerung Web-Widget
 - Admin-Dashboard: Tenant-Widget-Uebersicht (Scope-Spec ausstehend)
 - Automatisiertes Testing (Unit + Integration)
+- Integration-Guide Platzhalter `[SUPPORT-EMAIL]` und `[STATUS-URL]`
+  vor erstem Pilot-Kunden ersetzen
+- Wix-Menuepfade in Integration-Guide verifizieren vor erstem Wix-Kunden
 
 ---
 
