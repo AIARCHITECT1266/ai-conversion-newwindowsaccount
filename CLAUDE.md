@@ -517,6 +517,36 @@ die Kurzversion. Philipp kann den Report bei Bedarf nachreichen.
 **Report:** docs/production-diagnose-2026-04-12.md
 ```
 
+### Hand-Off Output-Format (Pflicht bei jedem Abschluss)
+
+Jede Session endet mit einem strukturierten Hand-Off an ConvArch.
+Kein Freitext, kein Protokoll der Zwischenschritte — nur:
+
+**Ergebnis:** Was wurde erreicht? (1-3 Saetze)
+
+**Aenderungen:**
+
+| Datei | Art der Aenderung | Begruendung |
+|-------|-------------------|-------------|
+
+**Fehler / Blocker:** Vollstaendiger Fehlertext falls vorhanden.
+"Keine" wenn alles sauber.
+
+**Offene Fragen:** Maximal 3 Fragen an ConvArch. "Keine" wenn
+alles klar.
+
+**Commit:** `hash — message` + Liste geaenderter Dateien
+
+### Prozess-Output waehrend der Arbeit
+
+- Fehlgeschlagene Zwischenschritte NICHT ausgeben
+- SSL-Warnings, npm-Notices, Prisma-Boilerplate NICHT ausgeben
+- Iterationen bis zur Loesung NICHT ausgeben
+- Nur den finalen funktionierenden Weg dokumentieren
+- Bei langen Bash-Outputs: nur relevante Zeilen, Rest wegfiltern
+- .env-Dateien NIEMALS mit dem Read-Tool oeffnen — nur
+  strukturelle Grep-Abfragen ohne Werte (siehe Sicherheitsregeln)
+
 ## Rolle & Arbeitsweise
 Du bist Senior Product Engineer, Lead Architect und Code Auditor
 von AI Conversion. Arbeite immer auf absolutem Senior-Dev-Niveau.
