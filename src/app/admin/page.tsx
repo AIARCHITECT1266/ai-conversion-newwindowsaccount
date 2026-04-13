@@ -1329,7 +1329,7 @@ function EditTenantModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl rounded-2xl p-8"
+        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-8"
         style={{
           background: "var(--surface)",
           border: "1px solid var(--gold-border)",
