@@ -4,9 +4,9 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-12 (Nachpflege nach Phase 7 + Deploy + CSP-Hotfix)
-> **Stand des Codes:** Commit `1dfb6dc` (Phase 7 abgeschlossen, Production
-> deployed, CSP-Nonce-Regression behoben)
+> **Letzte Aktualisierung:** 2026-04-13 (Nachpflege: Model-Count, Routen, Version, Commit-Stand)
+> **Stand des Codes:** Commit `acfac1e` (Security-Audit abgeschlossen,
+> Widget-Hardening, Doku-Konsolidierung)
 
 ---
 
@@ -32,7 +32,7 @@ dasselbe CRM und dasselbe Lead-Scoring.
 ### Web-Frontend (Next.js 15 App Router, React 19, Tailwind 4)
 
 - **Marketing-Site** — `/`, `/pricing`, `/faq`, `/multi-ai`,
-  `/datenschutz`, `/impressum`
+  `/datenschutz`, `/impressum`, `/agb`, `/coming-soon`
 - **Onboarding** — `/onboarding` (Self-Service-Tenant-Erstellung
   mit Paddle-Checkout)
 - **Admin-Konsole** — `/admin` (Tenant-CRUD, Stats, Plan-Prompts)
@@ -64,7 +64,7 @@ Gruppiert nach Zweck:
 
 - **ORM:** Prisma 7 mit `@prisma/adapter-pg` (Driver Adapter)
 - **Hosting:** Prisma Postgres Frankfurt (DSGVO-konform, EU-Region)
-- **Schema:** 13 Models, 11 Enums (Stand: 402 Zeilen)
+- **Schema:** 14 Models, 11 Enums (Stand: 402 Zeilen)
 - **Isolation:** Jedes Tenant-bezogene Model hat `tenantId` mit
   `@relation(..., onDelete: Cascade)` (Ausnahmen siehe
   docs/tech-debt.md: CampaignTemplate und Broadcast ohne FK)
@@ -335,7 +335,8 @@ in `docs/data-model.md` (geplant).
 | **Campaign** | Marketing-Kampagne | `slug`, `isActive`, Relationen zu `AbTest`, `Broadcast` |
 | **CampaignTemplate** | Vorlage (System oder Tenant) | `briefing`, `openers`, `abVarianten`, `ziele` (alle JSON) |
 | **AbTest** | A/B-Test pro Kampagne | `variantA/B`, `sendsA/B`, `responsesA/B`, `winnerId` |
-| **Broadcast** | Massen-WhatsApp-Aussand | `message`, `segment`, `status`, `recipients[]` |
+| **Broadcast** | Massen-WhatsApp-Aussand | `message`, `segment`, `status` |
+| **BroadcastRecipient** | Empfaenger eines Broadcasts | `broadcastId`, `phone`, `status`, `sentAt` |
 | **ProcessedMessage** | WA-Dedup-Tabelle (24h TTL) | `messageId` unique |
 | **Asset**, **AssetCredit**, **TenantAssetModel** | AI Asset Studio | Bildgenerierung per Claude/Grok/Gemini/Flux |
 
@@ -409,7 +410,7 @@ Re-Evaluations-Prozess (ADR-Workflow) in
 
 | Schicht | Technologie | Begründung |
 |---|---|---|
-| **Framework** | Next.js 15.5.14 App Router | SSR + API Routes aus einer Codebase. Alle Seiten dynamisch gerendert (Root-Layout `await headers()` erzwingt dies fuer CSP-Nonce-Propagation). Streaming-Support |
+| **Framework** | Next.js ^15.3.0 App Router | SSR + API Routes aus einer Codebase. Alle Seiten dynamisch gerendert (Root-Layout `await headers()` erzwingt dies fuer CSP-Nonce-Propagation). Streaming-Support |
 | **UI-Runtime** | React 19 | App Router-Voraussetzung, Server Components für statische Teile |
 | **Sprache** | TypeScript strict (ohne `any`) | Pflicht laut CLAUDE.md, Code-Qualitäts-Baseline |
 | **ORM** | Prisma 7 mit PrismaPg Driver Adapter | Type-safe Queries, Migrations-Workflow, EU-Postgres-Support |
@@ -472,7 +473,7 @@ an Nebentabellen, neuen Dashboard-Features, UI-Anpassungen.
 Solche Änderungen gehören in `PROJECT_STATUS.md` und ggf.
 `docs/decisions/`.
 
-**Letzte Aktualisierung:** 2026-04-12 — Nachpflege nach Phase 5,
-6, 6.5, 7, Production-Deploy und CSP-Nonce-Hotfix. Erstanlage
-war nach CLAUDE.md-Haertung (Commit `70b18ed` + `8b2ccf1`),
-Nachpflege auf Commit `1dfb6dc`.
+**Letzte Aktualisierung:** 2026-04-13 — Nachpflege: Model-Count
+korrigiert (14 statt 13, BroadcastRecipient fehlte), fehlende
+Routen ergaenzt (/agb, /coming-soon), Next.js-Version korrigiert
+(^15.3.0), Commit-Stand aktualisiert auf `acfac1e`.
