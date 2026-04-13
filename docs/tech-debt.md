@@ -866,6 +866,32 @@ Verarbeitete Daten: Stack-Traces, URL-Pfade, User-Agent,
 Browser-Version. `sendDefaultPii: false` → keine IP-Adressen,
 keine Cookies.
 
+## TD-Monitoring-03: instrumentation.ts Lokation fuer Next.js 15 + src/ (13.04.2026)
+
+### Status
+Erledigt (dokumentiert fuer Wissens-Konservierung).
+
+### Pilot-blockierend
+Nein.
+
+### Kontext
+Bei manueller Sentry-Installation (ohne Wizard) wurde `instrumentation.ts`
+zunaechst ins Projekt-Root gelegt. Next.js 15 mit `/src/app`-Verzeichnis
+erwartet die Datei aber in `/src/instrumentation.ts` — sonst wird sie
+nicht geladen, Sentry SDK bleibt uninitialisiert (silent No-Op).
+
+Symptom: `getClient()` returns undefined, `captureException()` fuehrt
+keinen HTTP-Call aus, keine Events in Sentry-Dashboard sichtbar.
+
+### Loesung (am 13.04.2026 erfolgt)
+- `instrumentation.ts` → `src/instrumentation.ts` verschoben
+- Imports angepasst: `./sentry.*.config` → `../sentry.*.config`
+
+### Lehre fuer Zukunft
+- Bei Next.js + `src/`-Verzeichnis IMMER `instrumentation.ts` in `/src/` legen
+- Nicht-Wizard-Installs erfordern bewusste Pfad-Wahl
+- Diagnose-Endpoint mit `Sentry.getClient()` ist die schnellste Verifikation
+
 ## Code-Cleanup (nicht blockierend)
 
 ### TD-Cleanup-01: Vercel.live-Nonce-Fehler in CSP

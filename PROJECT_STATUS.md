@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-13
 **Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed + CSP-Hotfix
-**Letzter Commit:** docs(infra): document db-split, vercel storage adr, and prod incident postmortem
+**Letzter Commit:** feat(monitoring): sentry production-verified, debug endpoints removed
 
 ---
 
@@ -20,10 +20,15 @@
 7. architecture.md nachgepflegt (Model-Count, Routen, Version)
 8. SESSION_HANDOFF.md erstellt fuer ConvArch-Uebergabe
 9. CLAUDE.md: Hand-Off Output-Format und Prozess-Output-Regeln ergaenzt
-10. Sentry SDK fuer Next.js installiert (Error-Monitoring only, EU-Region).
-    Source-Maps-Upload deaktiviert. AVV + Datenschutz-Update als Tech-Debt
-    erfasst (TD-Compliance-01, TD-Compliance-02). Verifikation in Production
-    nach Vercel-DSN-Setup ausstehend.
+10. Sentry SDK fuer Next.js installiert und in Production verifiziert:
+    - SDK installiert, Build gruen
+    - instrumentation.ts lag im Root statt /src/ (Next.js 15 + /src/app
+      erwartet instrumentation.ts in /src/) → verschoben, Imports angepasst
+    - SDK initialisiert sich korrekt, Test-Event erfolgreich empfangen
+    - Source-Maps-Upload deaktiviert (TD-Monitoring-02)
+    - AVV + Datenschutz-Update als Tech-Debt erfasst (TD-Compliance-01/02)
+    - Diagnostische Test-Endpoints entfernt nach Verifikation
+    - TD-Monitoring-03 fuer Wissens-Konservierung angelegt
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 
@@ -46,13 +51,14 @@ Pilot-Blocker #2 (Sentry).
 
 ### Pilot-Blocker-Status
 - ~~#1 Integration-Guide-Platzhalter~~ — erledigt 13.04.
-- #2 Sentry / Error-Tracking — SDK installiert, Vercel-DSN-Setup + Prod-Test ausstehend
+- ~~#2 Sentry / Error-Tracking~~ — erledigt 13.04. (SDK installiert +
+  in Production verifiziert, DSN-Scope auf Production beschraenkt)
 - ~~#3 DB-Dev/Prod-Split~~ — erledigt 13.04.
 - #4 Datenschutzerklaerung Web-Widget — offen
 - #5 Wix-Menuepfade verifizieren — offen
 - #6 AVV-Template nach Art. 28 DSGVO — offen
 
-**4 von 6 Pilot-Blockern verbleiben.**
+**3 von 6 Pilot-Blockern verbleiben.**
 
 ---
 
