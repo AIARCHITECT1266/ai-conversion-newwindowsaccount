@@ -4,9 +4,9 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-13 (Nachpflege: Model-Count, Routen, Version, Commit-Stand)
-> **Stand des Codes:** Commit `acfac1e` (Security-Audit abgeschlossen,
-> Widget-Hardening, Doku-Konsolidierung)
+> **Letzte Aktualisierung:** 2026-04-13 (DB-Split, Vercel-Storage-ADR, Incident-Postmortem)
+> **Stand des Codes:** Commit `9066afd` (DB-Split abgeschlossen,
+> Production-Incident behoben, Postmortem dokumentiert)
 
 ---
 
@@ -63,7 +63,12 @@ Gruppiert nach Zweck:
 ### Datenbank (Prisma 7 + Postgres Frankfurt)
 
 - **ORM:** Prisma 7 mit `@prisma/adapter-pg` (Driver Adapter)
-- **Hosting:** Prisma Postgres Frankfurt (DSGVO-konform, EU-Region)
+- **Hosting:** Prisma Postgres Frankfurt (DSGVO-konform, EU-Region),
+  **zwei Instanzen seit 13.04.2026:**
+  - **teal-battery** (Production) — nur in Vercel Production Env-Vars,
+    nicht in `.env.local`
+  - **red-mirror** (Development) — nur in `.env.local`, nicht in Vercel
+  - ADR: `docs/decisions/vercel-storage-minimal-config.md`
 - **Schema:** 14 Models, 11 Enums (Stand: 402 Zeilen)
 - **Isolation:** Jedes Tenant-bezogene Model hat `tenantId` mit
   `@relation(..., onDelete: Cascade)` (Ausnahmen siehe
@@ -365,7 +370,7 @@ sobald diese Datei angelegt wird.
 | **Retention** | `Tenant.retentionDays` (Default 90), automatisch via `/api/cron/cleanup` (DSGVO-Pflicht-Löschung) |
 | **Audit-Log** | `auditLog()` aus `@/modules/compliance/audit-log` für jede sensitive Operation, `SENSITIVE_FIELDS` werden automatisch gefiltert |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
-| **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfügbar), Vercel Fluid Compute |
+| **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
 | **Zahlungen** | Paddle als Merchant of Record (übernimmt EU-Umsatzsteuer + PCI-Compliance) |
 
 **Verweis:** Sicherheits-Entscheidungen sind dokumentiert in
@@ -399,6 +404,8 @@ Folgenscheidungen:
 | — | Force-Dynamic via `await headers()` im Root-Layout (Hotfix 12.04.) | Statische Seiten bekommen keinen Nonce (Build-Zeit = keine Middleware). Trade-off: Static Generation aufgegeben zugunsten Security. Performance-Impact vernachlaessigbar mit Vercel Fluid Compute |
 | — | `hasPlanFeature()` statt `checkLimit()` fuer Widget-Gating (Phase 6.2) | Saubere Trennung Quota-Limit vs. Feature-Flag. Widget ist ein Feature-Gate (Growth+), kein Quota-Counter |
 | — | Dedizierte Conversations-List-View statt Filter in bestehenden Views (Phase 6.3) | DRY durch wiederverwendbare `ChannelBadge`-Komponente, skaliert besser als verstreute Filter |
+| — | Dev/Prod-DB-Split mit zwei Prisma-Postgres-Instanzen (13.04.2026) | teal-battery=Prod (nur Vercel), red-mirror=Dev (nur .env.local). Verhindert Cross-Env-Datenlecks. ADR: `docs/decisions/vercel-storage-minimal-config.md` |
+| — | Vercel-Storage Production-only (13.04.2026) | Preview/Dev-Environments haben bewusst keine DATABASE_URL. Verhindert versehentliche Prod-DB-Zugriffe durch Preview-Branches |
 
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
@@ -473,7 +480,7 @@ an Nebentabellen, neuen Dashboard-Features, UI-Anpassungen.
 Solche Änderungen gehören in `PROJECT_STATUS.md` und ggf.
 `docs/decisions/`.
 
-**Letzte Aktualisierung:** 2026-04-13 — Nachpflege: Model-Count
-korrigiert (14 statt 13, BroadcastRecipient fehlte), fehlende
-Routen ergaenzt (/agb, /coming-soon), Next.js-Version korrigiert
-(^15.3.0), Commit-Stand aktualisiert auf `acfac1e`.
+**Letzte Aktualisierung:** 2026-04-13 — DB-Split dokumentiert
+(teal-battery/red-mirror, zwei Instanzen), Vercel-Storage-ADR
+und DB-Split-ADR in Entscheidungstabelle ergaenzt, Hosting-Zeile
+in Security-Sektion aktualisiert. Commit-Stand: `9066afd`.
