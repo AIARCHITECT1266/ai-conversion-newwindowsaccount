@@ -122,7 +122,15 @@ export async function PATCH(
     const tenant = await db.tenant.update({
       where: { id },
       data,
-      select: TENANT_PUBLIC_SELECT,
+      select: {
+        ...TENANT_PUBLIC_SELECT,
+        _count: {
+          select: {
+            conversations: true,
+            leads: true,
+          },
+        },
+      },
     });
 
     console.log("[Admin] Tenant aktualisiert", {
