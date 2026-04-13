@@ -815,6 +815,57 @@ verknuepft.
 ### ADR
 `docs/decisions/vercel-storage-minimal-config.md`
 
+## TD-Monitoring-02: Sentry Source-Maps-Upload deaktiviert (13.04.2026)
+
+### Status
+Akzeptierte Architektur-Entscheidung.
+
+### Pilot-blockierend
+Nein.
+
+### Kontext
+`hideSourceMaps: true` in `next.config.ts` (withSentryConfig).
+Stack-Traces in Sentry zeigen minified Code statt Original-TS.
+Vorteil: Free-Tier-Storage gespart, keine versehentliche
+Code-Exposure via Source-Maps.
+Nachteil: Debugging schwerer.
+
+### Trigger fuer Aktivierung
+Erste echte Production-Errors die schwer zu lesen sind
+ODER Upgrade auf bezahlten Sentry-Plan.
+
+## TD-Compliance-01: Sentry-AVV unterzeichnen (13.04.2026)
+
+### Status
+Offen.
+
+### Pilot-blockierend
+Ja (fuer Pilot-Kunden mit DSGVO-Anforderungen).
+
+### Aufwand
+5 Min.
+
+### Vorgehen
+Sentry-Settings → Legal & Compliance → Data Processing Addendum
+→ Online unterzeichnen. Datum + Bestaetigungs-Mail archivieren.
+
+## TD-Compliance-02: Sentry in Datenschutzerklaerung aufnehmen (13.04.2026)
+
+### Status
+Offen.
+
+### Pilot-blockierend
+Ja (kommt mit Pilot-Blocker #4).
+
+### Aufwand
+Bei Datenschutzerklaerung-Update mit erledigen.
+
+### Inhalt
+Sentry GmbH (US-Mutter, EU-Tochter), Frankfurt-Hosting.
+Verarbeitete Daten: Stack-Traces, URL-Pfade, User-Agent,
+Browser-Version. `sendDefaultPii: false` → keine IP-Adressen,
+keine Cookies.
+
 ## Code-Cleanup (nicht blockierend)
 
 ### TD-Cleanup-01: Vercel.live-Nonce-Fehler in CSP

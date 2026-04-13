@@ -87,6 +87,7 @@ Gruppiert nach Zweck:
 | **Notion** | Session-Notes (interne Arbeits-Doku) | `@notionhq/client ^5.16.0` |
 | **HubSpot** | Lead-Push für Hot-Leads (Score > 70) | Direkte REST-Calls, API-Key verschlüsselt |
 | **Vercel** | Hosting (Fluid Compute, Function-Region fra1 Frankfurt) | Plattform-Runtime |
+| **Sentry** | Error-Monitoring (Server + Client + Edge, EU-Region Frankfurt) | `@sentry/nextjs ^10.48.0`, KEIN Tracing/Replay (DSGVO + Free-Tier) |
 | **Better Stack** | Uptime-Monitoring (3 Monitore, Status-Page) | HTTP-Keyword-Checks |
 
 ---
