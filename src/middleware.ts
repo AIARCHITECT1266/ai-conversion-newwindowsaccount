@@ -69,7 +69,8 @@ function buildCspHeader(
     "style-src-attr 'unsafe-inline'",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data:",
-    "connect-src 'self'",
+    // Sentry Browser-SDK braucht connect-src fuer Event-Ingest (EU-Region)
+    "connect-src 'self' https://*.ingest.de.sentry.io",
     `frame-ancestors ${frameAncestors}`,
     "base-uri 'self'",
     "form-action 'self'",

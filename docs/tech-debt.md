@@ -892,6 +892,32 @@ keinen HTTP-Call aus, keine Events in Sentry-Dashboard sichtbar.
 - Nicht-Wizard-Installs erfordern bewusste Pfad-Wahl
 - Diagnose-Endpoint mit `Sentry.getClient()` ist die schnellste Verifikation
 
+## TD-Monitoring-04: Browser-Side Sentry war durch CSP blockiert (13.04.2026)
+
+### Status
+Erledigt.
+
+### Pilot-blockierend
+Nein (Server-Side Sentry funktionierte).
+
+### Kontext
+CSP `connect-src 'self'` blockierte alle Browser-Fetch-Calls zu
+`https://*.ingest.de.sentry.io`. Sentry Client-SDK konnte keine Events
+senden. Server-Side Sentry (via instrumentation.ts) war nicht betroffen
+(kein CSP im Server-Kontext). Dadurch wurde der Bug beim initialen
+Sentry-Test nicht entdeckt (Test lief nur Server-Side).
+
+### Loesung
+`connect-src` in `src/middleware.ts` um `https://*.ingest.de.sentry.io`
+erweitert.
+
+### Lehre fuer Zukunft
+Bei jedem neuen externen Service der Browser-Requests macht:
+CSP-connect-src-Anpassung in Middleware mitdenken. Checkliste:
+- Sentry → connect-src
+- Analytics → connect-src + script-src
+- CDN-Assets → script-src / style-src / img-src
+
 ## Code-Cleanup (nicht blockierend)
 
 ### TD-Cleanup-01: Vercel.live-Nonce-Fehler in CSP

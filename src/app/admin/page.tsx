@@ -1072,10 +1072,38 @@ function TenantDetailModal({
               />
               <DetailField label="Leads" value={String(tenant._count.leads)} />
               <DetailField
+                label="Plan"
+                value={
+                  tenant.paddlePlan
+                    ? tenant.paddlePlan.includes("professional")
+                      ? "Professional"
+                      : tenant.paddlePlan.includes("growth")
+                        ? "Growth"
+                        : "Starter"
+                    : "Starter"
+                }
+              />
+              <DetailField
                 label="Erstellt am"
                 value={formatDate(tenant.createdAt)}
               />
             </div>
+
+            {/* Schnell-Aktion: alle Einstellungen bearbeiten */}
+            <button
+              type="button"
+              onClick={onEdit}
+              className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition hover:bg-[rgba(201,168,76,0.08)]"
+              style={{
+                border: "1px solid var(--gold-border)",
+                color: "var(--gold)",
+              }}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Alle Einstellungen bearbeiten
+            </button>
 
             {/* System-Prompt mit Vorlage-Buttons */}
             <div className="mb-6">

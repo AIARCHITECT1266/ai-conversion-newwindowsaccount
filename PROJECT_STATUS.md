@@ -32,6 +32,11 @@
 11. Admin-UI: paddlePlan-Selector in Anlage- + Bearbeiten-Modal ergaenzt.
     Vorher: neue Tenants nur via DB-PATCH plan-faehig. Jetzt: 1-Klick
     Plan-Auswahl (Starter/Growth/Professional) direkt im Admin-UI.
+12. TenantDetailModal: Plan-Anzeige + "Alle Einstellungen bearbeiten"-Button
+    ergaenzt. Vorher: EditTenantModal war unerreichbar (onEdit-Prop nicht
+    aufgerufen). Jetzt: Detail-Modal zeigt Plan + fuehrt zum Edit-Modal.
+13. CSP: connect-src um Sentry-Ingest erweitert (TD-Monitoring-04).
+    Browser-Side Sentry war seit Setup blockiert, Server-Side ueberdeckte es.
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 
