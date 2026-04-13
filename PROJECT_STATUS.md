@@ -29,6 +29,9 @@
     - AVV + Datenschutz-Update als Tech-Debt erfasst (TD-Compliance-01/02)
     - Diagnostische Test-Endpoints entfernt nach Verifikation
     - TD-Monitoring-03 fuer Wissens-Konservierung angelegt
+11. Admin-UI: paddlePlan-Selector in Anlage- + Bearbeiten-Modal ergaenzt.
+    Vorher: neue Tenants nur via DB-PATCH plan-faehig. Jetzt: 1-Klick
+    Plan-Auswahl (Starter/Growth/Professional) direkt im Admin-UI.
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 

@@ -12,6 +12,15 @@ import { db } from "@/shared/db";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 
 // Zod-Schema fuer Tenant-Erstellung
+// Erlaubte paddlePlan-Werte (muss mit detectPlanType() kompatibel sein)
+const ALLOWED_PLANS = [
+  "starter",
+  "growth_monthly",
+  "growth_yearly",
+  "professional_monthly",
+  "professional_yearly",
+] as const;
+
 const createTenantSchema = z.object({
   name: z.string().min(1).max(255),
   slug: z.string().min(1).max(64),
@@ -20,6 +29,7 @@ const createTenantSchema = z.object({
   brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional().default("#000000"),
   retentionDays: z.number().int().min(1).max(3650).optional().default(90),
   systemPrompt: z.string().max(10000).optional().default(""),
+  paddlePlan: z.enum(ALLOWED_PLANS).nullable().optional().default(null),
 });
 
 // Felder die in API-Responses zurueckgegeben werden (ohne dashboardToken!)
@@ -106,6 +116,7 @@ export async function POST(request: NextRequest) {
         brandColor: body.brandColor,
         retentionDays: body.retentionDays,
         systemPrompt: body.systemPrompt,
+        paddlePlan: body.paddlePlan,
         dashboardToken: hashToken(rawToken),
         dashboardTokenExpiresAt: new Date(Date.now() + MAGIC_LINK_EXPIRY_MS),
         isActive: true,

@@ -727,6 +727,7 @@ function CreateTenantModal({
     whatsappPhoneId: string;
     brandName: string;
     brandColor: string;
+    paddlePlan: string | null;
   }) => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -736,6 +737,7 @@ function CreateTenantModal({
     whatsappPhoneId: "",
     brandName: "",
     brandColor: "#7c3aed",
+    paddlePlan: null as string | null,
   });
 
   // Slug automatisch aus Name generieren
@@ -883,6 +885,32 @@ function CreateTenantModal({
                     background: "var(--surface)",
                   }}
                 />
+              </div>
+              <div>
+                <label
+                  className="mb-1 block text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Plan
+                </label>
+                <select
+                  value={form.paddlePlan ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      paddlePlan: e.target.value || null,
+                    }))
+                  }
+                  className="w-full rounded-lg px-4 py-2.5 text-sm text-white outline-none transition focus:border-[rgba(201,168,76,0.35)]"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--gold-border)",
+                  }}
+                >
+                  <option value="">Starter (kein Web-Widget)</option>
+                  <option value="growth_monthly">Growth (Web-Widget aktiv)</option>
+                  <option value="professional_monthly">Professional</option>
+                </select>
               </div>
             </div>
             <div className="mt-8 flex justify-end gap-3">
@@ -1263,6 +1291,14 @@ function EditTenantModal({
 
   const isValid = form.name && form.brandName && Number(form.retentionDays) > 0;
 
+  // Lokalen Plan-Namen auf DB-Wert mappen
+  function planToDbValue(plan: string | null): string | null {
+    if (!plan || plan === "starter") return null;
+    if (plan === "growth") return "growth_monthly";
+    if (plan === "professional") return "professional_monthly";
+    return plan;
+  }
+
   function handleSave() {
     if (!isValid) return;
     const updates: Record<string, unknown> = {};
@@ -1274,6 +1310,11 @@ function EditTenantModal({
     if (form.systemPrompt !== (tenant.systemPrompt || ""))
       updates.systemPrompt = form.systemPrompt;
     if (form.isActive !== tenant.isActive) updates.isActive = form.isActive;
+
+    // Plan-Aenderung erkennen und als DB-Wert senden
+    const newPlanDb = planToDbValue(activePlan);
+    const currentPlanDb = tenant.paddlePlan ?? null;
+    if (newPlanDb !== currentPlanDb) updates.paddlePlan = newPlanDb;
 
     if (Object.keys(updates).length === 0) {
       onClose();
@@ -1348,6 +1389,27 @@ function EditTenantModal({
               placeholder="90"
               mono
             />
+          </div>
+          <div>
+            <label
+              className="mb-1 block text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Plan
+            </label>
+            <select
+              value={activePlan ?? "starter"}
+              onChange={(e) => setActivePlan(e.target.value)}
+              className="w-full rounded-lg px-4 py-2.5 text-sm text-white outline-none transition focus:border-[rgba(201,168,76,0.35)]"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--gold-border)",
+              }}
+            >
+              <option value="starter">Starter (kein Web-Widget)</option>
+              <option value="growth">Growth (Web-Widget aktiv)</option>
+              <option value="professional">Professional</option>
+            </select>
           </div>
           <div>
             <label

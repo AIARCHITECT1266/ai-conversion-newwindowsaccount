@@ -23,9 +23,19 @@ const TENANT_PUBLIC_SELECT = {
   brandName: true,
   brandColor: true,
   retentionDays: true,
+  paddlePlan: true,
   isActive: true,
   createdAt: true,
 } as const;
+
+// Erlaubte paddlePlan-Werte (muss mit detectPlanType() kompatibel sein)
+const ALLOWED_PLANS = [
+  "starter",
+  "growth_monthly",
+  "growth_yearly",
+  "professional_monthly",
+  "professional_yearly",
+] as const;
 
 // Zod-Schema fuer PATCH-Body
 const updateTenantSchema = z.object({
@@ -34,6 +44,7 @@ const updateTenantSchema = z.object({
   brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   retentionDays: z.number().int().min(1).max(3650).optional(),
   systemPrompt: z.string().max(10000).optional(),
+  paddlePlan: z.enum(ALLOWED_PLANS).nullable().optional(),
   isActive: z.boolean().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "Mindestens ein Feld muss angegeben werden",
