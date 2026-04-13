@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-12
+**Letzte Aktualisierung:** 2026-04-13
 **Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed + CSP-Hotfix
-**Letzter Commit:** docs(regression): complete diagnosis reports for A.1/A.3/A.3b
+**Letzter Commit:** docs: replace placeholder values in integration-guide
 
 ---
 
@@ -175,8 +175,7 @@ Accessibility-Themen adressiert.
 - Datenschutzerklaerung Web-Widget
 - Admin-Dashboard: Tenant-Widget-Uebersicht (Scope-Spec ausstehend)
 - Automatisiertes Testing (Unit + Integration)
-- Integration-Guide Platzhalter `[SUPPORT-EMAIL]` und `[STATUS-URL]`
-  vor erstem Pilot-Kunden ersetzen
+- ~~Integration-Guide Platzhalter~~ — erledigt 13.04.2026 (`support@ai-conversion.ai`, `https://status.ai-conversion.ai`)
 - Wix-Menuepfade in Integration-Guide verifizieren vor erstem Wix-Kunden
 
 ---

@@ -252,8 +252,8 @@ mit dem Prefix `[ai-conversion-widget]`.
 
 ### 9. Kontakt und Support
 
-- **Technische Fragen:** [SUPPORT-EMAIL]
-- **Status-Seite:** [STATUS-URL]
+- **Technische Fragen:** support@ai-conversion.ai
+- **Status-Seite:** https://status.ai-conversion.ai
 - **Dokumentation:** `https://ai-conversion.ai/docs` (in Vorbereitung)
 
 Bei dringenden Problemen mit dem Widget (z.B. Widget laedt
