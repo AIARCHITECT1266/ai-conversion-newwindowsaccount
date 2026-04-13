@@ -627,39 +627,36 @@ melden, weil es dem Plattform-Standard entspricht.
 Nachfrage-getrieben: implementieren wenn ein Pilot-Kunde
 explizit Feedback dazu gibt. Kein Blocker fuer Go-Live.
 
-## DB-Umgebung: Single-Instance (Dev = Prod)
+## DB-Umgebung: Dev/Prod-Split (erledigt 13.04.2026)
 
 ### Status
-Akzeptiert fuer Pre-Pilot-Phase.
+Erledigt. Zwei separate Prisma-Postgres-Instanzen auf `db.prisma.io`.
 
 ### Datum
-2026-04-13 (entdeckt waehrend Deploy-Vorbereitung)
+2026-04-13
 
-### Einschlag
-Lokale Entwicklung und Production nutzen dieselbe Prisma-Postgres-
-Instanz (`db.prisma.io:5432`). Kein isolierter Staging-Bereich.
-Lokale Tests, `prisma migrate dev`-Experimente und versehentliche
-Datenmanipulationen wirken direkt auf Production.
+### Loesung (Option C umgesetzt)
+Zwei separate Prisma-Postgres-Instanzen auf `db.prisma.io:5432`:
+- **Dev-DB:** `.env.local` → `DATABASE_URL` mit eigenen Credentials.
+  Schema via `prisma migrate deploy` aufgesetzt (6 Migrationen).
+  Keine Produktionsdaten, sicher fuer lokale Experimente.
+- **Prod-DB:** Ausschliesslich in Vercel Environment Variables
+  (Production-Scope) hinterlegt. Enthaelt echte Tenant-Daten
+  (`internal-admin`, 43 Conversations, 55 Messages, 13 Leads).
+  Nicht in `.env.local` vorhanden.
 
-### Warum aktuell akzeptabel
-- Noch keine echten Pilot-Kunden-Daten in der DB
-- Solo-Founder-Kontext
-- Migrations sind sauber und kontrolliert
+### Verifikations-Pflicht
+Vercel Production `DATABASE_URL` muss manuell verifiziert werden:
+Vercel Dashboard → Settings → Environment Variables → Production.
+Die Prod-Credentials duerfen NIEMALS in `.env.local` oder im
+Repo landen. Bei `vercel env pull` darauf achten, dass nur
+Development/Preview-Scope gezogen wird, nicht Production.
 
-### Rueckzahlung faellig
-VOR erstem Pilot-Kunden-Onboarding.
-
-### Loesungsrichtungen
-- Option A: Prisma Postgres Branching (falls im Tarif enthalten)
-  fuer Dev-Branch
-- Option B: Lokale PostgreSQL-Instanz via Docker fuer Dev
-- Option C: Zweite Prisma-Postgres-Instanz als separate Dev-DB
-
-### Falsifikations-Kriterium
-Sobald ein Pilot-Kunde Echtdaten produziert, ist lokales Testing
-gegen dieselbe DB eine akute Datenschutz-Verletzung (Pilot-
-Kundendaten wuerden in lokale Entwicklung fliessen). Spaetestens
-dann muss der Split stehen.
+### Restrisiko
+Beide Instanzen laufen auf `db.prisma.io` (Prisma Postgres).
+Ein versehentliches `vercel env pull --environment production`
+wuerde die Prod-URL wieder in `.env.local` schreiben. Dagegen
+schuetzt nur Disziplin + dieser Dokumentations-Eintrag.
 
 ## Logo-Asset-404 auf Production
 

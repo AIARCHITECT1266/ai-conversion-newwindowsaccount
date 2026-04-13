@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-13
 **Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed + CSP-Hotfix
-**Letzter Commit:** docs: replace placeholder values in integration-guide
+**Letzter Commit:** chore(db): clean up .env.local, migrate schema to dev db
 
 ---
 
@@ -169,7 +169,7 @@ und mittelprioritaeren Security-, Tenant-Isolation- und
 Accessibility-Themen adressiert.
 
 ### Bekannte offene strategische Themen
-- DB-Dev/Prod-Split (vor erstem Pilot!)
+- ~~DB-Dev/Prod-Split~~ — erledigt 13.04.2026 (zwei Prisma-Postgres-Instanzen, Dev via .env.local, Prod nur in Vercel)
 - Sentry / Error-Tracking einrichten
 - AVV-Template nach Art. 28 DSGVO
 - Datenschutzerklaerung Web-Widget
