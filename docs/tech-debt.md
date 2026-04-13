@@ -752,6 +752,69 @@ Commits in naechsten Tagen.
   verifiziert
 - To-Do: gezielt testen, Dokumentation ergaenzen
 
+## TD-Monitoring-01: Better Stack deckt DB-abhaengige Endpoints nicht ab (13.04.2026)
+
+### Status
+Offen.
+
+### Kategorie
+Monitoring/Observability.
+
+### Pilot-blockierend
+Nein, aber Pilot-Risiko.
+
+### Kontext
+Production war seit 08.04.2026 fuer /dashboard/login und alle
+DB-abhaengigen Endpoints defekt durch korrumpierte DATABASE_URL
+(Prisma P1001: "Can't reach database server at base"). Better Stack
+hat 5 Tage lang keinen Alarm geschlagen, weil die 3 konfigurierten
+Monitore (/, /widget.js, /api/widget/config) nicht DB-abhaengig sind.
+
+### Loesung
+Mindestens 1 Better-Stack-Monitor auf einen DB-abhaengigen Endpoint.
+Beispiel: `GET /api/widget/config?key=invalid` → erwarte 4xx (nicht 5xx).
+Bei 5xx → DB-Problem → Alarm. Alternative: Sentry (Pilot-Blocker #2)
+faengt Runtime-Exceptions in Echtzeit und haette den P1001-Fehler
+innerhalb von Sekunden gemeldet.
+
+### Aufwand
+15-30 Min (Better Stack). Wird durch Sentry-Setup groesstenteils obsolet.
+
+## TD-Infra-01: Preview/Development DATABASE_URL bewusst nicht konfiguriert (13.04.2026)
+
+### Status
+Akzeptierte Architektur-Entscheidung.
+
+### Kategorie
+Infrastruktur.
+
+### Pilot-blockierend
+Nein.
+
+### Kontext
+Vercel Project hat NUR DATABASE_URL fuer Production gesetzt (zeigt
+auf teal-battery). Preview und Development haben KEINE DATABASE_URL —
+Builds scheitern absichtlich. Lokale Entwicklung laeuft ueber
+.env.local (zeigt auf red-mirror, separate Instanz). red-mirror
+existiert in Vercel Account-Storage, ist aber NICHT mit dem Projekt
+verknuepft.
+
+### Begruendung
+- Preview-Deploys werden aktuell nicht aktiv genutzt
+- Verhindert versehentliche Schreibvorgaenge auf Production-DB
+  durch Preview-Branches
+- Verhindert ungeklaerte Datenfluesse durch undefinierte Dev-Vercel-DB
+
+### Bei kuenftigem Bedarf fuer Preview-Deploys
+1. Vercel Storage → red-mirror → "Connect Project" → ai-conversion
+2. NUR Preview + Development anhaken, Production NICHT
+3. Custom Prefix komplett LEEREN (damit DATABASE_URL erzeugt wird)
+4. Vercel legt automatisch korrekte Env-Vars an
+5. Aufwand: 10-15 Min, eigene Session mit Smoke-Test
+
+### ADR
+`docs/decisions/vercel-storage-minimal-config.md`
+
 ## Code-Cleanup (nicht blockierend)
 
 ### TD-Cleanup-01: Vercel.live-Nonce-Fehler in CSP

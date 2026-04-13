@@ -2,7 +2,53 @@
 
 **Letzte Aktualisierung:** 2026-04-13
 **Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed + CSP-Hotfix
-**Letzter Commit:** chore(db): clean up .env.local, migrate schema to dev db
+**Letzter Commit:** docs(infra): document db-split, vercel storage adr, and prod incident postmortem
+
+---
+
+## Tages-Zusammenfassung 13.04.2026
+
+### Erledigt
+1. Integration-Guide-Platzhalter ersetzt (Pilot-Blocker #1)
+2. DB-Split komplett (Pilot-Blocker #3): zwei Prisma-Postgres-Instanzen,
+   Dev via .env.local, Prod nur in Vercel Production Env-Vars
+3. Production-Incident entdeckt und behoben (siehe unten)
+4. Vercel-Storage konsolidiert: nur DATABASE_URL fuer Production,
+   Preview/Development bewusst leer (ADR: vercel-storage-minimal-config)
+5. Magic-Link fuer internal-admin gegen Prod-DB rotiert, Login verifiziert
+6. dashboard-links.txt bereinigt (11 alte Tokens entfernt)
+7. architecture.md nachgepflegt (Model-Count, Routen, Version)
+8. SESSION_HANDOFF.md erstellt fuer ConvArch-Uebergabe
+9. CLAUDE.md: Hand-Off Output-Format und Prozess-Output-Regeln ergaenzt
+
+### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
+
+**Dauer:** ~5 Tage unentdeckt (08.04. bis 13.04. ~15:30 Uhr)
+**Auswirkung:** Alle DB-abhaengigen Endpoints lieferten 500 (Prisma P1001:
+"Can't reach database server at base"). Betroffen: /dashboard/login,
+/api/dashboard/*, /api/widget/session, /api/widget/message, /api/widget/poll,
+/api/webhook/whatsapp, /api/cron/*.
+**Nicht betroffen:** / (statisch), /widget.js (statisch), /api/widget/config
+(In-Memory-Cache, kein DB-Zugriff bei Cache-Hit).
+**Root-Cause:** Vercel Production DATABASE_URL hatte korrumpierten Wert —
+Hostname `base` statt `db.prisma.io`. Vermutlich Quoting-Bug beim initialen
+Setup am 08.04. (`""postgres://..."` statt `"postgres://..."`).
+**Behebung:** Manueller URL-Replace in Vercel Dashboard + Redeploy.
+**Warum 5 Tage unentdeckt:** Better Stack monitored nur 3 Endpoints
+(/, /widget.js, /api/widget/config) — keiner davon ist DB-abhaengig.
+Sentry (Pilot-Blocker #2) haette den P1001 sofort gemeldet.
+**Praevention:** TD-Monitoring-01 (DB-Endpoint in Better Stack) +
+Pilot-Blocker #2 (Sentry).
+
+### Pilot-Blocker-Status
+- ~~#1 Integration-Guide-Platzhalter~~ — erledigt 13.04.
+- #2 Sentry / Error-Tracking — offen
+- ~~#3 DB-Dev/Prod-Split~~ — erledigt 13.04.
+- #4 Datenschutzerklaerung Web-Widget — offen
+- #5 Wix-Menuepfade verifizieren — offen
+- #6 AVV-Template nach Art. 28 DSGVO — offen
+
+**4 von 6 Pilot-Blockern verbleiben.**
 
 ---
 
