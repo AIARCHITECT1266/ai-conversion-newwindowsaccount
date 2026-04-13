@@ -4,9 +4,9 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-13 (DB-Split, Vercel-Storage-ADR, Incident-Postmortem)
-> **Stand des Codes:** Commit `9066afd` (DB-Split abgeschlossen,
-> Production-Incident behoben, Postmortem dokumentiert)
+> **Letzte Aktualisierung:** 2026-04-13 (Sentry Error-Monitoring, DB-Split, Vercel-Storage-ADR)
+> **Stand des Codes:** Commit `87d98ec` (Sentry production-verified,
+> DB-Split abgeschlossen, Production-Incident behoben)
 
 ---
 
@@ -370,6 +370,7 @@ sobald diese Datei angelegt wird.
 | **STOP-Befehl** | Jede User-Nachricht `"STOP"` setzt `status: CLOSED` + Audit-Log `bot.conversation_stopped` |
 | **Retention** | `Tenant.retentionDays` (Default 90), automatisch via `/api/cron/cleanup` (DSGVO-Pflicht-Löschung) |
 | **Audit-Log** | `auditLog()` aus `@/modules/compliance/audit-log` für jede sensitive Operation, `SENSITIVE_FIELDS` werden automatisch gefiltert |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `sentry.client.config.ts` (Client). Nur in Production aktiv (`enabled: NODE_ENV === "production"`). AVV-Unterzeichnung ausstehend (TD-Compliance-01) |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
 | **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
 | **Zahlungen** | Paddle als Merchant of Record (übernimmt EU-Umsatzsteuer + PCI-Compliance) |
@@ -407,6 +408,7 @@ Folgenscheidungen:
 | — | Dedizierte Conversations-List-View statt Filter in bestehenden Views (Phase 6.3) | DRY durch wiederverwendbare `ChannelBadge`-Komponente, skaliert besser als verstreute Filter |
 | — | Dev/Prod-DB-Split mit zwei Prisma-Postgres-Instanzen (13.04.2026) | teal-battery=Prod (nur Vercel), red-mirror=Dev (nur .env.local). Verhindert Cross-Env-Datenlecks. ADR: `docs/decisions/vercel-storage-minimal-config.md` |
 | — | Vercel-Storage Production-only (13.04.2026) | Preview/Dev-Environments haben bewusst keine DATABASE_URL. Verhindert versehentliche Prod-DB-Zugriffe durch Preview-Branches |
+| — | Sentry Minimal-Config: Error-Only, kein Tracing/Replay (13.04.2026) | `tracesSampleRate: 0`, `replaysSessionSampleRate: 0`, `sendDefaultPii: false`. DSGVO-Minimierung + Free-Tier-Budget. Source-Maps-Upload deaktiviert (TD-Monitoring-02) |
 
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
@@ -435,7 +437,8 @@ Re-Evaluations-Prozess (ADR-Workflow) in
 | **Animationen** | framer-motion, Tailwind | Widget-Entrance, Modal-Transitions |
 | **Tests** | Vitest | (Eingerichtet, noch keine Tests geschrieben — siehe `docs/quality-roadmap.md` Lücke 1) |
 | **Hosting** | Vercel Fluid Compute | Function-Region fra1 (Frankfurt), Node.js 24 Runtime, 300s Timeout Default |
-| **Monitoring** | Better Stack | 3 Uptime-Monitore (/, /widget.js, /api/widget/config), Status-Page unter status.ai-conversion.ai |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs ^10.48.0`) | Error-Tracking Server + Client + Edge, EU-Region Frankfurt, Free-Tier, KEIN Tracing/Replay (DSGVO). Init via `src/instrumentation.ts` |
+| **Uptime-Monitoring** | Better Stack | 3 Uptime-Monitore (/, /widget.js, /api/widget/config), Status-Page unter status.ai-conversion.ai |
 | **Domain** | `ai-conversion.ai` | Produktions-Endpoint, deployed seit 12.04.2026 auf Commit `e04e7d0`+ |
 
 ---
@@ -481,7 +484,7 @@ an Nebentabellen, neuen Dashboard-Features, UI-Anpassungen.
 Solche Änderungen gehören in `PROJECT_STATUS.md` und ggf.
 `docs/decisions/`.
 
-**Letzte Aktualisierung:** 2026-04-13 — DB-Split dokumentiert
-(teal-battery/red-mirror, zwei Instanzen), Vercel-Storage-ADR
-und DB-Split-ADR in Entscheidungstabelle ergaenzt, Hosting-Zeile
-in Security-Sektion aktualisiert. Commit-Stand: `9066afd`.
+**Letzte Aktualisierung:** 2026-04-13 — Sentry Error-Monitoring
+in Externe Services, Security-Tabelle, Technologie-Stack und
+Entscheidungstabelle ergaenzt. DB-Split dokumentiert
+(teal-battery/red-mirror, zwei Instanzen). Commit-Stand: `87d98ec`.
