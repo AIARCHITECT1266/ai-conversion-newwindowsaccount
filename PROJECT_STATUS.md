@@ -41,6 +41,10 @@
     umgestellt (TD-Monitoring-05). Ignorierte Build-Warnung vom initialen
     Setup endgueltig adressiert. Alle Sentry-Configs liegen jetzt
     einheitlich in src/. Build ohne Sentry-DEPRECATION-Warnungen.
+15. Admin-UI: Widget-Aktivierung via Toggle im Edit-Modal ergaenzt.
+    Plan-Gate: nur Growth+ kann Widget aktivieren. Backend generiert
+    Public-Key automatisch bei Erstaktivierung. Detail-Modal zeigt
+    Widget-Status + Public-Key mit Copy-Button.
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 

@@ -43,6 +43,8 @@ const TENANT_PUBLIC_SELECT = {
   brandColor: true,
   retentionDays: true,
   paddlePlan: true,
+  webWidgetEnabled: true,
+  webWidgetPublicKey: true,
   isActive: true,
   createdAt: true,
 } as const;

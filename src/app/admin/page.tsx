@@ -15,6 +15,8 @@ interface Tenant {
   retentionDays: number;
   paddlePlan: string | null;
   systemPrompt: string;
+  webWidgetEnabled: boolean;
+  webWidgetPublicKey: string | null;
   isActive: boolean;
   createdAt: string;
   _count: {
@@ -1084,10 +1086,57 @@ function TenantDetailModal({
                 }
               />
               <DetailField
+                label="Web-Widget"
+                value={
+                  tenant.webWidgetEnabled ? (
+                    <span className="text-emerald-400">Aktiv</span>
+                  ) : (
+                    <span className="text-gray-500">Inaktiv</span>
+                  )
+                }
+              />
+              <DetailField
                 label="Erstellt am"
                 value={formatDate(tenant.createdAt)}
               />
             </div>
+
+            {/* Public-Key-Zeile: nur anzeigen wenn Widget aktiv */}
+            {tenant.webWidgetEnabled && tenant.webWidgetPublicKey && (
+              <div className="mb-6">
+                <p
+                  className="mb-1 text-xs uppercase tracking-wider"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Web-Widget Public Key
+                </p>
+                <div
+                  className="flex items-center gap-2 rounded-lg p-3 font-mono text-xs"
+                  style={{
+                    background: "var(--bg)",
+                    border: "1px solid var(--gold-border)",
+                    color: "var(--gold)",
+                  }}
+                >
+                  <span className="flex-1 select-all break-all">
+                    {tenant.webWidgetPublicKey}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (tenant.webWidgetPublicKey) {
+                        navigator.clipboard.writeText(tenant.webWidgetPublicKey);
+                        setToast("Public Key kopiert");
+                      }
+                    }}
+                    className="shrink-0 rounded px-2 py-1 text-xs transition hover:bg-[rgba(201,168,76,0.08)]"
+                    style={{ color: "var(--gold)" }}
+                  >
+                    Kopieren
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Schnell-Aktion: alle Einstellungen bearbeiten */}
             <button
@@ -1291,6 +1340,7 @@ function EditTenantModal({
     brandColor: tenant.brandColor,
     retentionDays: String(tenant.retentionDays),
     systemPrompt: tenant.systemPrompt || "",
+    webWidgetEnabled: tenant.webWidgetEnabled,
     isActive: tenant.isActive,
   });
   const [activePlan, setActivePlan] = useState<string | null>(() => {
@@ -1343,6 +1393,10 @@ function EditTenantModal({
     const newPlanDb = planToDbValue(activePlan);
     const currentPlanDb = tenant.paddlePlan ?? null;
     if (newPlanDb !== currentPlanDb) updates.paddlePlan = newPlanDb;
+
+    // Widget-Aktivierung: Backend generiert Public-Key bei Erstaktivierung
+    if (form.webWidgetEnabled !== tenant.webWidgetEnabled)
+      updates.webWidgetEnabled = form.webWidgetEnabled;
 
     if (Object.keys(updates).length === 0) {
       onClose();
@@ -1438,6 +1492,45 @@ function EditTenantModal({
               <option value="growth">Growth (Web-Widget aktiv)</option>
               <option value="professional">Professional</option>
             </select>
+          </div>
+          <div>
+            <label
+              className="mb-1 block text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Web-Widget
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={activePlan === "starter"}
+                onClick={() =>
+                  setForm((f) => ({ ...f, webWidgetEnabled: !f.webWidgetEnabled }))
+                }
+                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors ${
+                  form.webWidgetEnabled ? "bg-emerald-500" : "bg-gray-600"
+                } ${activePlan === "starter" ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    form.webWidgetEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <span className="text-sm text-gray-300">
+                {form.webWidgetEnabled ? "Aktiviert" : "Deaktiviert"}
+              </span>
+            </div>
+            {activePlan === "starter" && (
+              <p className="mt-1.5 text-[11px] text-gray-500">
+                Growth-Plan erforderlich fuer Web-Widget
+              </p>
+            )}
+            {form.webWidgetEnabled && !tenant.webWidgetPublicKey && (
+              <p className="mt-1.5 text-[11px] text-[#c9a84c]">
+                Public-Key wird beim Speichern automatisch generiert
+              </p>
+            )}
           </div>
           <div>
             <label

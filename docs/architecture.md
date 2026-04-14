@@ -4,9 +4,9 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-14 (Sentry Browser-SDK sauber auf src/instrumentation-client.ts umgestellt)
-> **Stand des Codes:** Commit folgt (Sentry Browser-Init korrigiert,
-> alle Sentry-Configs einheitlich in `src/`)
+> **Letzte Aktualisierung:** 2026-04-14 (Widget-Aktivierung im Admin-UI, Sentry Browser-SDK fix)
+> **Stand des Codes:** Commit folgt (Admin-UI Widget-Toggle,
+> Sentry Browser-Init korrigiert, alle Sentry-Configs in `src/`)
 
 ---
 

@@ -12,6 +12,8 @@ import { z } from "zod";
 import { db } from "@/shared/db";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 import { auditLog } from "@/modules/compliance/audit-log";
+import { generatePublicKey } from "@/lib/widget/publicKey";
+import { hasPlanFeature } from "@/lib/plan-limits";
 
 // Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
 const TENANT_PUBLIC_SELECT = {
@@ -24,6 +26,8 @@ const TENANT_PUBLIC_SELECT = {
   brandColor: true,
   retentionDays: true,
   paddlePlan: true,
+  webWidgetEnabled: true,
+  webWidgetPublicKey: true,
   isActive: true,
   createdAt: true,
 } as const;
@@ -45,6 +49,7 @@ const updateTenantSchema = z.object({
   retentionDays: z.number().int().min(1).max(3650).optional(),
   systemPrompt: z.string().max(30000).optional(),
   paddlePlan: z.enum(ALLOWED_PLANS).nullable().optional(),
+  webWidgetEnabled: z.boolean().optional(),
   isActive: z.boolean().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "Mindestens ein Feld muss angegeben werden",
@@ -119,9 +124,37 @@ export async function PATCH(
 
     const data = parseResult.data;
 
+    // Widget-Aktivierung: Plan pruefen + Public-Key generieren falls noch keiner da ist
+    type TenantUpdate = typeof data & { webWidgetPublicKey?: string };
+    const updateData: TenantUpdate = { ...data };
+    if (data.webWidgetEnabled === true) {
+      const current = await db.tenant.findUnique({
+        where: { id },
+        select: { paddlePlan: true, webWidgetPublicKey: true },
+      });
+      if (!current) {
+        return NextResponse.json(
+          { error: "Tenant nicht gefunden" },
+          { status: 404 }
+        );
+      }
+      // Plan-Gate: nur Growth+ darf Widget aktivieren
+      const effectivePlan = data.paddlePlan !== undefined ? data.paddlePlan : current.paddlePlan;
+      if (!hasPlanFeature(effectivePlan, "web_widget")) {
+        return NextResponse.json(
+          { error: "Growth-Plan erforderlich fuer Web-Widget" },
+          { status: 400 }
+        );
+      }
+      // Public-Key bei Erstaktivierung generieren
+      if (!current.webWidgetPublicKey) {
+        updateData.webWidgetPublicKey = generatePublicKey();
+      }
+    }
+
     const tenant = await db.tenant.update({
       where: { id },
-      data,
+      data: updateData,
       select: {
         ...TENANT_PUBLIC_SELECT,
         _count: {
