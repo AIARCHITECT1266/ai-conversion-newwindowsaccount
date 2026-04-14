@@ -220,6 +220,24 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
     }, MODAL_FADE_MS);
   }, []);
 
+  // ----- Fokus nach Bot-Antwort (Desktop only) -----
+  // Nach jedem neuen Message-Set pruefen ob die letzte Message eine Assistant-
+  // Antwort ist und der aktuelle Fokus entweder auf Body oder auf der Textarea
+  // liegt (User hat sich nicht aktiv woandershin geklickt). Nur Desktop —
+  // Mobile koennte die User-Geste (Tastatur schliessen) ueberschreiben.
+  const lastMessageForFocus = messages[messages.length - 1];
+  useEffect(() => {
+    if (!lastMessageForFocus || lastMessageForFocus.role !== "assistant") return;
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(max-width: 767px)").matches) return;
+    const active = document.activeElement;
+    const onInputOrBody =
+      !active || active === document.body || active === inputRef.current;
+    if (onInputOrBody) {
+      inputRef.current?.focus();
+    }
+  }, [lastMessageForFocus]);
+
   const handleSendMessage = useCallback(async () => {
     const trimmed = inputValue.trim();
     if (!trimmed || isSending || !sessionToken) return;
@@ -236,6 +254,11 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
     setMessages((prev) => [...prev, optimisticMessage]);
     setInputValue("");
     setIsSending(true);
+
+    // Fokus sofort wieder ins Input-Feld — User hat gerade getippt/gesendet,
+    // das ist eine klare Interaktion. Auf Mobile ist die Tastatur ohnehin
+    // aktiv, refocus haelt sie sichtbar.
+    inputRef.current?.focus();
 
     try {
       const res = await fetch("/api/widget/message", {
