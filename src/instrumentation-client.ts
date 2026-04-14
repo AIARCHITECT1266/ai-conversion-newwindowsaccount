@@ -1,5 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
 
+// Browser-Side Sentry-Init. Wird von Next.js 15 automatisch geladen
+// (src/instrumentation-client.ts Konvention).
+// Offizielle Doku: https://docs.sentry.io/platforms/javascript/guides/nextjs/
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 

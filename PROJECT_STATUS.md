@@ -37,6 +37,10 @@
     aufgerufen). Jetzt: Detail-Modal zeigt Plan + fuehrt zum Edit-Modal.
 13. CSP: connect-src um Sentry-Ingest erweitert (TD-Monitoring-04).
     Browser-Side Sentry war seit Setup blockiert, Server-Side ueberdeckte es.
+14. Sentry Browser-SDK-Init sauber auf src/instrumentation-client.ts
+    umgestellt (TD-Monitoring-05). Ignorierte Build-Warnung vom initialen
+    Setup endgueltig adressiert. Alle Sentry-Configs liegen jetzt
+    einheitlich in src/. Build ohne Sentry-DEPRECATION-Warnungen.
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 

@@ -918,6 +918,40 @@ CSP-connect-src-Anpassung in Middleware mitdenken. Checkliste:
 - Analytics → connect-src + script-src
 - CDN-Assets → script-src / style-src / img-src
 
+## TD-Monitoring-05: Sentry Browser-SDK-Init auf src/instrumentation-client.ts umgestellt (14.04.2026)
+
+### Status
+Erledigt.
+
+### Pilot-blockierend
+Nein.
+
+### Kontext
+`sentry.client.config.ts` im Projekt-Root wurde von `@sentry/nextjs` v10
++ Next.js 15 nicht mehr automatisch geladen. Die Build-Warnung
+(*"It is recommended renaming your sentry.client.config.ts file, or moving
+its content to instrumentation-client.ts"*) wurde beim initialen Setup
+ignoriert. Folge: `Sentry.init()` wurde im Browser nie aufgerufen,
+Browser-Events landeten nie in Sentry. Server-Side Sentry ueberdeckte
+den Bug (funktionierte korrekt via `src/instrumentation.ts` register()).
+
+### Loesung
+Saubere Umsetzung nach offizieller Sentry-Doku fuer Next.js 15 + src/:
+- `/sentry.client.config.ts` → `src/instrumentation-client.ts`
+- `/sentry.server.config.ts` → `src/sentry.server.config.ts`
+- `/sentry.edge.config.ts` → `src/sentry.edge.config.ts`
+- `src/instrumentation.ts` Imports angepasst (`../` → `./`)
+- `next.config.ts` unveraendert (withSentryConfig ist pfad-agnostisch)
+
+Datei-Inhalte identisch (DSN, tracesSampleRate=0, kein Replay,
+enabled=production, sendDefaultPii=false). Kein `onRouterTransitionStart`
+(nicht noetig bei tracesSampleRate=0).
+
+### Lehre fuer Zukunft
+Build-Warnungen von Drittanbieter-SDKs NIEMALS ignorieren — auch nicht
+wenn alles "anscheinend" funktioniert. Server-Side kann Client-Side-Bugs
+ueberdecken, die erst bei echtem User-Traffic sichtbar werden.
+
 ## Code-Cleanup (nicht blockierend)
 
 ### TD-Cleanup-01: Vercel.live-Nonce-Fehler in CSP

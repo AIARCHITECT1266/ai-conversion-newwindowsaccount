@@ -4,9 +4,9 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-13 (Sentry Error-Monitoring, DB-Split, Vercel-Storage-ADR)
-> **Stand des Codes:** Commit `87d98ec` (Sentry production-verified,
-> DB-Split abgeschlossen, Production-Incident behoben)
+> **Letzte Aktualisierung:** 2026-04-14 (Sentry Browser-SDK sauber auf src/instrumentation-client.ts umgestellt)
+> **Stand des Codes:** Commit folgt (Sentry Browser-Init korrigiert,
+> alle Sentry-Configs einheitlich in `src/`)
 
 ---
 
@@ -87,7 +87,7 @@ Gruppiert nach Zweck:
 | **Notion** | Session-Notes (interne Arbeits-Doku) | `@notionhq/client ^5.16.0` |
 | **HubSpot** | Lead-Push für Hot-Leads (Score > 70) | Direkte REST-Calls, API-Key verschlüsselt |
 | **Vercel** | Hosting (Fluid Compute, Function-Region fra1 Frankfurt) | Plattform-Runtime |
-| **Sentry** | Error-Monitoring (Server + Client + Edge, EU-Region Frankfurt) | `@sentry/nextjs ^10.48.0`, KEIN Tracing/Replay (DSGVO + Free-Tier) |
+| **Sentry** | Error-Monitoring (Server + Client + Edge, EU-Region Frankfurt) | `@sentry/nextjs ^10.48.0`, KEIN Tracing/Replay (DSGVO + Free-Tier). Init: `src/instrumentation-client.ts` (Browser) + `src/instrumentation.ts` (Server/Edge) |
 | **Better Stack** | Uptime-Monitoring (3 Monitore, Status-Page) | HTTP-Keyword-Checks |
 
 ---
@@ -370,7 +370,7 @@ sobald diese Datei angelegt wird.
 | **STOP-Befehl** | Jede User-Nachricht `"STOP"` setzt `status: CLOSED` + Audit-Log `bot.conversation_stopped` |
 | **Retention** | `Tenant.retentionDays` (Default 90), automatisch via `/api/cron/cleanup` (DSGVO-Pflicht-Löschung) |
 | **Audit-Log** | `auditLog()` aus `@/modules/compliance/audit-log` für jede sensitive Operation, `SENSITIVE_FIELDS` werden automatisch gefiltert |
-| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `sentry.client.config.ts` (Client). Nur in Production aktiv (`enabled: NODE_ENV === "production"`). AVV-Unterzeichnung ausstehend (TD-Compliance-01) |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). AVV-Unterzeichnung ausstehend (TD-Compliance-01) |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
 | **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
 | **Zahlungen** | Paddle als Merchant of Record (übernimmt EU-Umsatzsteuer + PCI-Compliance) |
@@ -437,7 +437,7 @@ Re-Evaluations-Prozess (ADR-Workflow) in
 | **Animationen** | framer-motion, Tailwind | Widget-Entrance, Modal-Transitions |
 | **Tests** | Vitest | (Eingerichtet, noch keine Tests geschrieben — siehe `docs/quality-roadmap.md` Lücke 1) |
 | **Hosting** | Vercel Fluid Compute | Function-Region fra1 (Frankfurt), Node.js 24 Runtime, 300s Timeout Default |
-| **Error-Monitoring** | Sentry (`@sentry/nextjs ^10.48.0`) | Error-Tracking Server + Client + Edge, EU-Region Frankfurt, Free-Tier, KEIN Tracing/Replay (DSGVO). Init via `src/instrumentation.ts` |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs ^10.48.0`) | Error-Tracking Server + Client + Edge, EU-Region Frankfurt, Free-Tier, KEIN Tracing/Replay (DSGVO). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Browser) |
 | **Uptime-Monitoring** | Better Stack | 3 Uptime-Monitore (/, /widget.js, /api/widget/config), Status-Page unter status.ai-conversion.ai |
 | **Domain** | `ai-conversion.ai` | Produktions-Endpoint, deployed seit 12.04.2026 auf Commit `e04e7d0`+ |
 
