@@ -1510,23 +1510,31 @@ function EditTenantModal({
               }}
             />
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, isActive: !f.isActive }))}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                form.isActive ? "bg-emerald-500" : "bg-gray-600"
-              }`}
+          <div>
+            <label
+              className="mb-1 block text-xs"
+              style={{ color: "var(--text-muted)" }}
             >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  form.isActive ? "translate-x-5" : "translate-x-0"
+              Status
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, isActive: !f.isActive }))}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                  form.isActive ? "bg-emerald-500" : "bg-gray-600"
                 }`}
-              />
-            </button>
-            <span className="text-sm text-gray-300">
-              {form.isActive ? "Aktiv" : "Inaktiv"}
-            </span>
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    form.isActive ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <span className="text-sm text-gray-300">
+                {form.isActive ? "Aktiviert" : "Deaktiviert"}
+              </span>
+            </div>
           </div>
         </div>
 
