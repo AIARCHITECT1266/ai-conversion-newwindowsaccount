@@ -43,7 +43,7 @@ const updateTenantSchema = z.object({
   brandName: z.string().min(1).max(255).optional(),
   brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   retentionDays: z.number().int().min(1).max(3650).optional(),
-  systemPrompt: z.string().max(10000).optional(),
+  systemPrompt: z.string().max(30000).optional(),
   paddlePlan: z.enum(ALLOWED_PLANS).nullable().optional(),
   isActive: z.boolean().optional(),
 }).refine((data) => Object.keys(data).length > 0, {

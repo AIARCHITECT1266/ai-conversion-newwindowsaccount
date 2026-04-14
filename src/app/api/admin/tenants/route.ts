@@ -28,7 +28,7 @@ const createTenantSchema = z.object({
   brandName: z.string().min(1).max(255),
   brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional().default("#000000"),
   retentionDays: z.number().int().min(1).max(3650).optional().default(90),
-  systemPrompt: z.string().max(10000).optional().default(""),
+  systemPrompt: z.string().max(30000).optional().default(""),
   paddlePlan: z.enum(ALLOWED_PLANS).nullable().optional().default(null),
 });
 
