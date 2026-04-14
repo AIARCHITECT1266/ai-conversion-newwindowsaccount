@@ -1,12 +1,12 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-13
-**Aktuelle Phase:** Phase 7 abgeschlossen — Pilot-Ready, Production deployed + CSP-Hotfix
-**Letzter Commit:** feat(monitoring): sentry production-verified, debug endpoints removed
+**Letzte Aktualisierung:** 2026-04-14
+**Aktuelle Phase:** Pilot-Ready — Eigen-Marketing-Widget live, Admin-UI konsolidiert, Mara kalibriert
+**Letzter Commit:** docs: session summary 2026-04-14 (widget live + mara calibrated)
 
 ---
 
-## Tages-Zusammenfassung 13.04.2026
+## Tages-Zusammenfassung 13.–14.04.2026
 
 ### Erledigt
 1. Integration-Guide-Platzhalter ersetzt (Pilot-Blocker #1)
@@ -59,6 +59,48 @@
     - PATCH-Endpoint: `webWidgetConfig` partielles Merge-Update
       (bestehende Felder wie primaryColor/logoUrl bleiben erhalten)
     - TENANT_PUBLIC_SELECT um `webWidgetConfig` erweitert
+18. System-Prompt-Limit auf 30.000 Zeichen erhoeht (POST + PATCH Zod-Schemas).
+    Vorher: 10.000 Zeichen — Sentry hatte 5 "Too big"-Events fuer legitime
+    Prompts (Cassandra-Vorlage + tenant-spezifische Additions). Jetzt
+    ausreichend Platz fuer branchen-spezifische Prompts.
+19. Mara (ai-conversion-marketing-Bot) konfiguriert + iterativ kalibriert:
+    - Sie-Form durchgehend (B2B-SaaS-Ton)
+    - Kein Doppel-Einstieg (Welcome-Message + Bot-Begruessung nicht
+      beide mit "Hi")
+    - Anti-Redundanz-Regeln im System-Prompt (keine erneute
+      Firmennennung, keine Wiederholung der User-Nachricht)
+    - Praesens statt Konjunktiv (weniger ausweichend, klarer)
+    - Harter CTA-Trigger nach 3-4 qualifizierenden Fragen
+      (Demo-Termin / Call-Booking-Link)
+20. Widget-Input-Focus-Bug gefixt (zweistufig):
+    - Root-Cause 1: `disabled={isSending}` auf Textarea → Browser entfernt
+      Fokus automatisch bei Disable, `focus()` auf disabled Element ist
+      No-Op. Textarea bleibt jetzt enabled, nur SendButton disabled.
+    - Root-Cause 2: `matchMedia("(max-width: 767px)")` im iframe triggerte
+      Mobile-Path falsch (iframe-Breite 380-420px). Check entfernt.
+    - Zusaetzlich: `requestAnimationFrame`-Wrap fuer focus()-Call nach
+      Re-Render (robust gegen setState-Reihenfolge).
+21. Admin-UI Status-Toggle-Styling angeglichen an Widget-Toggle
+    (Label "Status" drueber, konsistente Struktur).
+22. Admin-UI Anlage/Bearbeiten konsolidiert (ueber alle 13.-14.04.-Iterationen):
+    - Plan-Selector in Anlage + Bearbeiten (Starter/Growth/Professional)
+    - Widget-Toggle mit Plan-Gate (nur Growth+) und Auto-Key-Generierung
+    - Welcome-Message-Feld (conditional bei Widget aktiv)
+    - Saubere Trennung: Detail-Modal = read-only, Edit-Modal = einziger
+      Edit-Surface (kein doppelter Prompt-Editor mehr)
+
+### Naechste Schritte (priorisiert fuer 15.04.2026)
+
+1. **Pilot-Blocker #4 — Datenschutzerklaerung Web-Widget** (2-3h, pilot-blockierend!)
+   - VOR erstem Pilot-Kunden zwingend erforderlich
+   - Sentry-Verarbeitung erwaehnen (TD-Compliance-02)
+   - Widget-Cookie-/IP-Verhalten dokumentieren
+2. **Pilot-Blocker #5 — Wix-Menuepfade verifizieren** (45 Min)
+   - Integration-Guide pruefen gegen aktuellen Wix-UI-Stand
+   - Screenshots im docs/integration-guide.md aktualisieren
+3. **Pilot-Blocker #6 — AVV-Template nach Art. 28 DSGVO** (3-6h, Anwalt-Check empfohlen)
+   - Template-Entwurf aus bestehenden Bausteinen
+   - Anwalts-Review vor Versand an Pilot-Kunden
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 
@@ -81,12 +123,12 @@ Pilot-Blocker #2 (Sentry).
 
 ### Pilot-Blocker-Status
 - ~~#1 Integration-Guide-Platzhalter~~ — erledigt 13.04.
-- ~~#2 Sentry / Error-Tracking~~ — erledigt 13.04. (SDK installiert +
-  in Production verifiziert, DSN-Scope auf Production beschraenkt)
+- ~~#2 Sentry / Error-Tracking~~ — erledigt 13.-14.04. (Server + Browser
+  production-verified, alle Sentry-Configs in src/, CSP angepasst)
 - ~~#3 DB-Dev/Prod-Split~~ — erledigt 13.04.
-- #4 Datenschutzerklaerung Web-Widget — offen
-- #5 Wix-Menuepfade verifizieren — offen
-- #6 AVV-Template nach Art. 28 DSGVO — offen
+- #4 Datenschutzerklaerung Web-Widget — offen (Prio 1 fuer 15.04.)
+- #5 Wix-Menuepfade verifizieren — offen (Prio 2 fuer 15.04.)
+- #6 AVV-Template nach Art. 28 DSGVO — offen (Prio 3 fuer 15.04.)
 
 **3 von 6 Pilot-Blockern verbleiben.**
 
