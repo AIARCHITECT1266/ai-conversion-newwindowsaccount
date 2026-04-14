@@ -4,9 +4,9 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-14 (Widget-Aktivierung im Admin-UI, Sentry Browser-SDK fix)
-> **Stand des Codes:** Commit folgt (Admin-UI Widget-Toggle,
-> Sentry Browser-Init korrigiert, alle Sentry-Configs in `src/`)
+> **Letzte Aktualisierung:** 2026-04-14 (Eigen-Marketing-Widget live, Admin-UI Widget-Toggle, Sentry Browser-SDK fix)
+> **Stand des Codes:** Commit folgt (Marketing-Widget auf ai-conversion.ai,
+> Admin-UI Widget-Toggle, Sentry Browser-Init korrigiert)
 
 ---
 
@@ -32,7 +32,11 @@ dasselbe CRM und dasselbe Lead-Scoring.
 ### Web-Frontend (Next.js 15 App Router, React 19, Tailwind 4)
 
 - **Marketing-Site** — `/`, `/pricing`, `/faq`, `/multi-ai`,
-  `/datenschutz`, `/impressum`, `/agb`, `/coming-soon`
+  `/datenschutz`, `/impressum`, `/agb`, `/coming-soon`. Eigenes
+  Web-Widget aktiv via `MarketingWidget`-Client-Komponente
+  (Tenant `ai-conversion-marketing`, Growth-Plan, seit 14.04.2026).
+  Ausgeschlossen auf `/admin`, `/dashboard`, `/embed`, `/api`,
+  `/onboarding` via `usePathname`-Gate
 - **Onboarding** — `/onboarding` (Self-Service-Tenant-Erstellung
   mit Paddle-Checkout)
 - **Admin-Konsole** — `/admin` (Tenant-CRUD, Stats, Plan-Prompts)

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { MarketingWidget } from "@/components/MarketingWidget";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -66,7 +67,10 @@ export default async function RootLayout({
 
   return (
     <html lang="de" className={`${inter.variable} dark`}>
-      <body className="noise-bg antialiased">{children}</body>
+      <body className="noise-bg antialiased">
+        {children}
+        <MarketingWidget />
+      </body>
     </html>
   );
 }

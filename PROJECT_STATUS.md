@@ -45,6 +45,12 @@
     Plan-Gate: nur Growth+ kann Widget aktivieren. Backend generiert
     Public-Key automatisch bei Erstaktivierung. Detail-Modal zeigt
     Widget-Status + Public-Key mit Copy-Button.
+16. Eigen-Marketing-Widget auf ai-conversion.ai eingebunden:
+    - Tenant `ai-conversion-marketing` (Growth-Plan)
+    - Client-Komponente `MarketingWidget` mit `usePathname`-Gate
+    - Widget erscheint auf /, /pricing, /faq, /datenschutz etc.
+    - Ausgeschlossen: /admin, /dashboard, /embed, /api, /onboarding
+    - Keine CSP-Aenderung noetig (same-origin, default-src 'self' deckt ab)
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 
