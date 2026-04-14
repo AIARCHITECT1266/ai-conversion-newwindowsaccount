@@ -220,22 +220,26 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
     }, MODAL_FADE_MS);
   }, []);
 
-  // ----- Fokus nach Bot-Antwort (Desktop only) -----
+  // ----- Fokus nach Bot-Antwort -----
   // Nach jedem neuen Message-Set pruefen ob die letzte Message eine Assistant-
   // Antwort ist und der aktuelle Fokus entweder auf Body oder auf der Textarea
-  // liegt (User hat sich nicht aktiv woandershin geklickt). Nur Desktop —
-  // Mobile koennte die User-Geste (Tastatur schliessen) ueberschreiben.
+  // liegt (User hat sich nicht aktiv woandershin geklickt).
+  // Kein matchMedia-Check: Widget laeuft in iframe mit Handy-aehnlicher Breite
+  // (380-420px), was (max-width: 767px) immer als true liefert — Desktop-User
+  // wuerden dadurch nie refokussiert. requestAnimationFrame stellt sicher,
+  // dass der focus()-Call NACH dem Re-Render passiert.
   const lastMessageForFocus = messages[messages.length - 1];
   useEffect(() => {
     if (!lastMessageForFocus || lastMessageForFocus.role !== "assistant") return;
     if (typeof window === "undefined") return;
-    if (window.matchMedia("(max-width: 767px)").matches) return;
     const active = document.activeElement;
     const onInputOrBody =
       !active || active === document.body || active === inputRef.current;
-    if (onInputOrBody) {
+    if (!onInputOrBody) return;
+    const raf = requestAnimationFrame(() => {
       inputRef.current?.focus();
-    }
+    });
+    return () => cancelAnimationFrame(raf);
   }, [lastMessageForFocus]);
 
   const handleSendMessage = useCallback(async () => {
@@ -256,9 +260,11 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
     setIsSending(true);
 
     // Fokus sofort wieder ins Input-Feld — User hat gerade getippt/gesendet,
-    // das ist eine klare Interaktion. Auf Mobile ist die Tastatur ohnehin
-    // aktiv, refocus haelt sie sichtbar.
-    inputRef.current?.focus();
+    // das ist eine klare Interaktion. Via requestAnimationFrame, damit der
+    // focus()-Call NACH dem Re-Render durch setIsSending/setMessages passiert.
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
 
     try {
       const res = await fetch("/api/widget/message", {
@@ -404,7 +410,6 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={isSending}
           aria-label="Nachricht eingeben"
           placeholder="Nachricht schreiben..."
           className="flex-1 resize-none rounded-xl px-4 py-3 text-base leading-relaxed focus:outline-none"
