@@ -5,6 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // ---------- Typen ----------
 
+interface WebWidgetConfig {
+  welcomeMessage?: string;
+  primaryColor?: string;
+  logoUrl?: string;
+  // weitere Felder moeglich (siehe src/lib/widget/publicKey.ts ResolvedTenantConfig)
+  [key: string]: unknown;
+}
+
 interface Tenant {
   id: string;
   name: string;
@@ -17,6 +25,7 @@ interface Tenant {
   systemPrompt: string;
   webWidgetEnabled: boolean;
   webWidgetPublicKey: string | null;
+  webWidgetConfig: WebWidgetConfig | null;
   isActive: boolean;
   createdAt: string;
   _count: {
@@ -610,20 +619,13 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* Modal: Tenant-Detail */}
+      {/* Modal: Tenant-Detail (read-only, Bearbeitung im Edit-Modal) */}
       {(selectedTenant || detailLoading) && !editingTenant && (
         <TenantDetailModal
           tenant={selectedTenant}
           loading={detailLoading}
           onClose={() => setSelectedTenant(null)}
           onEdit={() => setEditingTenant(selectedTenant)}
-          onSavePrompt={async (prompt) => {
-            if (!selectedTenant) return false;
-            try {
-              await saveTenant(selectedTenant.id, { systemPrompt: prompt });
-              return true;
-            } catch { return false; }
-          }}
         />
       )}
 
@@ -948,48 +950,20 @@ function TenantDetailModal({
   loading,
   onClose,
   onEdit,
-  onSavePrompt,
 }: {
   tenant: TenantDetail | null;
   loading: boolean;
   onClose: () => void;
   onEdit: () => void;
-  onSavePrompt: (prompt: string) => Promise<boolean>;
 }) {
-  const [activePlan, setActivePlan] = useState<string | null>(null);
-  const [selectedBranch, setSelectedBranch] = useState("");
-  const [loadingPrompt, setLoadingPrompt] = useState(false);
-  const [editedPrompt, setEditedPrompt] = useState(tenant?.systemPrompt || "");
-  const [promptDirty, setPromptDirty] = useState(false);
-  const [savingPrompt, setSavingPrompt] = useState(false);
   const [toast, setToast] = useState("");
-  const tenantIdRef = useRef(tenant?.id);
 
-  // Sync nur beim echten Tenant-Wechsel (nicht nach Speichern)
+  // Toast auto-hide nach 3s
   useEffect(() => {
-    if (tenant?.id !== tenantIdRef.current) {
-      tenantIdRef.current = tenant?.id;
-      setEditedPrompt(tenant?.systemPrompt || "");
-      setPromptDirty(false);
-      setToast("");
-    }
-  }, [tenant?.id, tenant?.systemPrompt]);
-
-  async function loadPlanPrompt(plan: string) {
-    setLoadingPrompt(true);
-    setActivePlan(plan);
-    try {
-      const params = new URLSearchParams({ plan });
-      if (selectedBranch) params.set("branch", selectedBranch);
-      const res = await fetch(`/api/admin/plan-prompts?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        setEditedPrompt(data.prompt);
-        setPromptDirty(true);
-      }
-    } catch { /* ignore */ }
-    finally { setLoadingPrompt(false); }
-  }
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   return (
     <div
@@ -1154,7 +1128,7 @@ function TenantDetailModal({
               Alle Einstellungen bearbeiten
             </button>
 
-            {/* System-Prompt mit Vorlage-Buttons */}
+            {/* System-Prompt: Read-Only-Vorschau (Bearbeitung im Edit-Modal) */}
             <div className="mb-6">
               <p
                 className="mb-1 text-xs uppercase tracking-wider"
@@ -1162,96 +1136,32 @@ function TenantDetailModal({
               >
                 System-Prompt
               </p>
-              <p className="mb-2 text-[10px] text-slate-500">
-                Lädt die optimierte Vorlage für den jeweiligen Plan – danach noch anpassbar.
-              </p>
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                {(["starter", "growth", "professional"] as const).map((plan) => (
-                  <button
-                    key={plan}
-                    type="button"
-                    disabled={loadingPrompt}
-                    onClick={() => loadPlanPrompt(plan)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs transition ${
-                      activePlan === plan
-                        ? "border-[rgba(201,168,76,0.3)] bg-[rgba(201,168,76,0.1)] text-[#c9a84c]"
-                        : "border-white/[0.08] text-gray-400 hover:border-white/[0.15] hover:text-white"
-                    }`}
-                    style={{ background: activePlan === plan ? undefined : "transparent" }}
-                  >
-                    {plan.charAt(0).toUpperCase() + plan.slice(1)}-Vorlage laden
-                  </button>
-                ))}
-                <select
-                  value={selectedBranch}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="rounded-lg border border-white/[0.08] bg-transparent px-3 py-1.5 text-xs text-gray-400 outline-none transition hover:border-white/[0.15] hover:text-white focus:border-[rgba(201,168,76,0.3)]"
-                >
-                  <option value="">Keine Branche</option>
-                  <option value="sanitaer">Sanitär &amp; Bad</option>
-                  <option value="immobilien">Immobilien</option>
-                  <option value="coaching">Coaching</option>
-                  <option value="finanzen">Finanzen</option>
-                  <option value="education">Bildung</option>
-                </select>
-              </div>
-              <textarea
-                value={editedPrompt}
-                onChange={(e) => {
-                  setEditedPrompt(e.target.value);
-                  setPromptDirty(true);
-                }}
-                rows={5}
-                placeholder="Du bist ein freundlicher Assistent…"
-                className="w-full resize-y rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:border-[rgba(201,168,76,0.35)]"
-                style={{
-                  background: "rgba(14,14,26,0.5)",
-                  border: "1px solid var(--gold-border)",
-                }}
-              />
-              {promptDirty && !savingPrompt && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setSavingPrompt(true);
-                    setToast("");
-                    try {
-                      const ok = await onSavePrompt(editedPrompt);
-                      if (ok) {
-                        setPromptDirty(false);
-                        setToast("Prompt gespeichert");
-                      } else {
-                        setToast("Fehler beim Speichern");
-                      }
-                    } catch {
-                      setToast("Fehler beim Speichern");
-                    } finally {
-                      setSavingPrompt(false);
-                      setTimeout(() => setToast(""), 3000);
-                    }
+              {tenant.systemPrompt ? (
+                <div
+                  className="max-h-[140px] overflow-y-auto rounded-lg px-4 py-2.5 text-xs leading-relaxed text-gray-300 whitespace-pre-wrap"
+                  style={{
+                    background: "rgba(14,14,26,0.5)",
+                    border: "1px solid var(--gold-border)",
                   }}
-                  className="mt-2 rounded-lg bg-[rgba(201,168,76,0.15)] px-4 py-1.5 text-xs font-medium text-[#c9a84c] transition hover:bg-[rgba(201,168,76,0.25)]"
-                  style={{ border: "1px solid rgba(201,168,76,0.3)" }}
                 >
-                  Prompt speichern
-                </button>
-              )}
-              {savingPrompt && (
-                <span className="mt-2 inline-block text-xs text-gray-400">Speichert…</span>
-              )}
-              {toast && (
-                <span className={`mt-2 inline-block rounded-lg px-3 py-1.5 text-xs font-medium ${
-                  toast.includes("Fehler")
-                    ? "bg-red-500/10 text-red-400"
-                    : "bg-emerald-500/10 text-emerald-400"
-                }`}>
-                  {toast}
-                </span>
+                  {tenant.systemPrompt}
+                </div>
+              ) : (
+                <p className="text-xs italic text-gray-500">
+                  (Kein System-Prompt gesetzt)
+                </p>
               )}
             </div>
 
+            {/* Toast-Feedback fuer Kopier-Aktionen */}
+            {toast && (
+              <div className="mb-4 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400">
+                {toast}
+              </div>
+            )}
+
             {/* Aktionen */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end">
               <button
                 onClick={onClose}
                 className="rounded-lg px-4 py-2 text-sm transition"
@@ -1261,31 +1171,6 @@ function TenantDetailModal({
                 }}
               >
                 Schliessen
-              </button>
-              <button
-                disabled={savingPrompt}
-                onClick={async () => {
-                  if (!promptDirty) { onClose(); return; }
-                  setSavingPrompt(true);
-                  setToast("");
-                  try {
-                    const ok = await onSavePrompt(editedPrompt);
-                    if (ok) {
-                      setPromptDirty(false);
-                      setToast("Prompt gespeichert");
-                    } else {
-                      setToast("Fehler beim Speichern");
-                    }
-                  } catch {
-                    setToast("Fehler beim Speichern");
-                  } finally {
-                    setSavingPrompt(false);
-                    setTimeout(() => setToast(""), 3000);
-                  }
-                }}
-                className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
-              >
-                {savingPrompt ? "Speichert…" : "Änderungen speichern"}
               </button>
             </div>
           </>
@@ -1341,8 +1226,12 @@ function EditTenantModal({
     retentionDays: String(tenant.retentionDays),
     systemPrompt: tenant.systemPrompt || "",
     webWidgetEnabled: tenant.webWidgetEnabled,
+    welcomeMessage:
+      (tenant.webWidgetConfig?.welcomeMessage as string | undefined) ?? "",
     isActive: tenant.isActive,
   });
+  const initialWelcomeMessage =
+    (tenant.webWidgetConfig?.welcomeMessage as string | undefined) ?? "";
   const [activePlan, setActivePlan] = useState<string | null>(() => {
     const pp = tenant.paddlePlan?.toLowerCase() ?? null;
     if (pp?.includes("professional") || pp?.includes("pro")) return "professional";
@@ -1397,6 +1286,11 @@ function EditTenantModal({
     // Widget-Aktivierung: Backend generiert Public-Key bei Erstaktivierung
     if (form.webWidgetEnabled !== tenant.webWidgetEnabled)
       updates.webWidgetEnabled = form.webWidgetEnabled;
+
+    // Welcome-Message: Backend mergt in bestehende webWidgetConfig
+    if (form.webWidgetEnabled && form.welcomeMessage !== initialWelcomeMessage) {
+      updates.webWidgetConfig = { welcomeMessage: form.welcomeMessage };
+    }
 
     if (Object.keys(updates).length === 0) {
       onClose();
@@ -1532,6 +1426,36 @@ function EditTenantModal({
               </p>
             )}
           </div>
+          {form.webWidgetEnabled && (
+            <div>
+              <label
+                className="mb-1 block text-xs"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Widget-Welcome-Message
+              </label>
+              <p className="mb-2 text-[10px] text-slate-500">
+                Wird im Widget als erste Nachricht angezeigt, bevor der User schreibt. Max. 500 Zeichen.
+              </p>
+              <textarea
+                value={form.welcomeMessage}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, welcomeMessage: e.target.value }))
+                }
+                rows={3}
+                maxLength={500}
+                placeholder="z.B. 'Hi 👋 Ich bin Mara von AI Conversion. Was bringt Sie auf unsere Seite?'"
+                className="w-full resize-y rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition focus:border-[rgba(201,168,76,0.35)]"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--gold-border)",
+                }}
+              />
+              <p className="mt-1 text-right text-[10px] text-gray-500">
+                {form.welcomeMessage.length} / 500
+              </p>
+            </div>
+          )}
           <div>
             <label
               className="mb-1 block text-xs"

@@ -51,6 +51,14 @@
     - Widget erscheint auf /, /pricing, /faq, /datenschutz etc.
     - Ausgeschlossen: /admin, /dashboard, /embed, /api, /onboarding
     - Keine CSP-Aenderung noetig (same-origin, default-src 'self' deckt ab)
+17. Admin-UI aufgeraeumt + Welcome-Message-Feld:
+    - TenantDetailModal: Prompt-Editor + Vorlage-Buttons + Branchen-Dropdown
+      entfernt; zeigt jetzt nur noch Read-Only-Prompt-Vorschau
+    - EditTenantModal: neues Welcome-Message-Feld (max 500 Zeichen),
+      sichtbar nur wenn Widget aktiv
+    - PATCH-Endpoint: `webWidgetConfig` partielles Merge-Update
+      (bestehende Felder wie primaryColor/logoUrl bleiben erhalten)
+    - TENANT_PUBLIC_SELECT um `webWidgetConfig` erweitert
 
 ### Production-Incident: DATABASE_URL korrumpiert (08.04.–13.04.2026)
 

@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
+import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/shared/db";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 import { auditLog } from "@/modules/compliance/audit-log";
@@ -28,6 +29,7 @@ const TENANT_PUBLIC_SELECT = {
   paddlePlan: true,
   webWidgetEnabled: true,
   webWidgetPublicKey: true,
+  webWidgetConfig: true,
   isActive: true,
   createdAt: true,
 } as const;
@@ -50,6 +52,13 @@ const updateTenantSchema = z.object({
   systemPrompt: z.string().max(30000).optional(),
   paddlePlan: z.enum(ALLOWED_PLANS).nullable().optional(),
   webWidgetEnabled: z.boolean().optional(),
+  // Partielles Config-Update — wird serverseitig in bestehendes JSON gemergt,
+  // damit andere Config-Felder (primaryColor, logoUrl etc.) nicht verloren gehen
+  webWidgetConfig: z
+    .object({
+      welcomeMessage: z.string().max(500).optional(),
+    })
+    .optional(),
   isActive: z.boolean().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "Mindestens ein Feld muss angegeben werden",
@@ -125,19 +134,34 @@ export async function PATCH(
     const data = parseResult.data;
 
     // Widget-Aktivierung: Plan pruefen + Public-Key generieren falls noch keiner da ist
-    type TenantUpdate = typeof data & { webWidgetPublicKey?: string };
-    const updateData: TenantUpdate = { ...data };
-    if (data.webWidgetEnabled === true) {
-      const current = await db.tenant.findUnique({
-        where: { id },
-        select: { paddlePlan: true, webWidgetPublicKey: true },
-      });
-      if (!current) {
-        return NextResponse.json(
-          { error: "Tenant nicht gefunden" },
-          { status: 404 }
-        );
-      }
+    // webWidgetConfig: partiell mergen statt ueberschreiben
+    const updateData: Prisma.TenantUpdateInput = {
+      ...data,
+      webWidgetConfig: undefined,
+    };
+
+    // Vorab-Lese nur wenn noetig (Activation oder Config-Merge)
+    const needsCurrent =
+      data.webWidgetEnabled === true || data.webWidgetConfig !== undefined;
+    const current = needsCurrent
+      ? await db.tenant.findUnique({
+          where: { id },
+          select: {
+            paddlePlan: true,
+            webWidgetPublicKey: true,
+            webWidgetConfig: true,
+          },
+        })
+      : null;
+
+    if (needsCurrent && !current) {
+      return NextResponse.json(
+        { error: "Tenant nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
+    if (data.webWidgetEnabled === true && current) {
       // Plan-Gate: nur Growth+ darf Widget aktivieren
       const effectivePlan = data.paddlePlan !== undefined ? data.paddlePlan : current.paddlePlan;
       if (!hasPlanFeature(effectivePlan, "web_widget")) {
@@ -150,6 +174,16 @@ export async function PATCH(
       if (!current.webWidgetPublicKey) {
         updateData.webWidgetPublicKey = generatePublicKey();
       }
+    }
+
+    // Config-Merge: bestehende Felder (primaryColor, logoUrl etc.) beibehalten
+    if (data.webWidgetConfig !== undefined && current) {
+      const currentConfig =
+        (current.webWidgetConfig as Prisma.JsonObject | null) ?? {};
+      updateData.webWidgetConfig = {
+        ...currentConfig,
+        ...data.webWidgetConfig,
+      } as Prisma.InputJsonValue;
     }
 
     const tenant = await db.tenant.update({

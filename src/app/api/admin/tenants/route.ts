@@ -45,6 +45,7 @@ const TENANT_PUBLIC_SELECT = {
   paddlePlan: true,
   webWidgetEnabled: true,
   webWidgetPublicKey: true,
+  webWidgetConfig: true,
   isActive: true,
   createdAt: true,
 } as const;
