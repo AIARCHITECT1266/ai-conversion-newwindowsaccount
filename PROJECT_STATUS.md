@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-15
-**Aktuelle Phase:** Pilot-Ready — DSGVO-Luecken geschlossen (Anthropic-AVV, transparenter Widget-Consent)
-**Letzter Commit:** fix(dsgvo): add anthropic to dpa subprocessors + transparent widget consent
+**Aktuelle Phase:** Pilot-Ready — DSGVO-Hauptluecken geschlossen, 3 Rest-Punkte pilot-blockierend offen (EU-Vertreter, Telefonnummer, SOC 2 Bridge Letter)
+**Letzter Commit:** docs: sync project status + tech-debt 2026-04-15 (dsgvo + sentry compliance)
 
 ---
 
@@ -37,6 +37,30 @@
    Z.19-21 erzwingt `dpaAccepted: true` (Zod-Literal), Z.93 schreibt
    `dpaAcceptedAt: new Date()`, Z.99 `auditLog("gdpr.dpa_accepted")`.
    `prisma/schema.prisma:28` enthaelt Feld. Keine Code-Aenderung noetig.
+8. **Sentry-Compliance-Verifikation in Sentry-UI (User-Action 13.04.2026,
+   dokumentiert 15.04.2026):**
+   - Data Processing Amendment v5.1.0 unterzeichnet 13.04.2026
+   - Privacy Policy + Terms of Service akzeptiert
+   - EU-Region Frankfurt aktiv
+   - Aggregated Identifying Data deaktiviert
+   - TD-Compliance-01 als ERLEDIGT markiert.
+9. **Doku-Sync:** PROJECT_STATUS, tech-debt, architecture konsistent auf
+   Stand 15.04.2026 gebracht.
+
+### Offen (Rest-DSGVO vor Pilot-Start)
+- **TD-Compliance-07 (pilot-blockierend):** EU-Vertreter nach Art. 27 DSGVO
+  — vor erstem Pilot-Vertragsabschluss erforderlich (Firmensitz Georgien).
+  Optionen: Service-Anbieter (200-600 €/Jahr) oder EU-Bekannter mit AVV.
+- **TD-Compliance-08 (nicht pilot-blockierend):** Sentry SOC 2 Bridge
+  Letter akzeptieren (2 Min, User-Action).
+- **TD-Compliance-09 (pilot-blockierend):** Telefonnummer in Impressum +
+  Datenschutz nachtragen (User liefert Nummer nach, § 5 TMG).
+- DPO-Pflicht: vermutlich nicht pflichtig, Klaerung offen.
+
+### Strategie-Dokument (Stand 14.04.2026)
+- `/mnt/user-data/outputs/PROSPECT_DEMO_PLATFORM_PLAN.md` — Konzept,
+  nicht implementiert. Voraussetzung fuer Bau: alle Pilot-Blocker (inkl.
+  TD-Compliance-07/09) erledigt + manueller MOD-Test mit AG.
 
 ---
 

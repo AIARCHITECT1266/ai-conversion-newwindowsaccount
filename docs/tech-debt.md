@@ -837,17 +837,23 @@ ODER Upgrade auf bezahlten Sentry-Plan.
 ## TD-Compliance-01: Sentry-AVV unterzeichnen (13.04.2026)
 
 ### Status
-Offen.
+ERLEDIGT am 13.04.2026 (verifiziert am 15.04.2026 in Sentry-UI).
 
 ### Pilot-blockierend
-Ja (fuer Pilot-Kunden mit DSGVO-Anforderungen).
+War ja.
 
 ### Aufwand
 5 Min.
 
-### Vorgehen
-Sentry-Settings → Legal & Compliance → Data Processing Addendum
-→ Online unterzeichnen. Datum + Bestaetigungs-Mail archivieren.
+### Vorgehen (erledigt)
+Sentry-Settings → Legal & Compliance → Data Processing Amendment v5.1.0
+unterzeichnet. Privacy Policy + Terms of Service akzeptiert. EU-Region
+Frankfurt aktiv. Aggregated Identifying Data deaktiviert.
+
+### Rest-Punkte (separat als Tech-Debt erfasst)
+- SOC 2 Bridge Letter noch nicht akzeptiert → TD-Compliance-08
+- EU-Vertreter Art. 27 DSGVO (Georgien-Sitz) → TD-Compliance-07
+- DPO-Pflicht: vermutlich nicht pflichtig (Klaerung offen)
 
 ## TD-Compliance-02: Sentry in Datenschutzerklaerung aufnehmen (13.04.2026)
 
@@ -952,6 +958,62 @@ Notice (h.M. deutscher Datenschutzbehoerden, EuGH-Linie), Kerninfo plus
 Link zur vollstaendigen Erklaerung. Begruendung: Conversion-Optimierung
 ohne Transparenz-Verlust. `max-h-[90vh] overflow-y-auto` bleibt als
 Sicherheitsnetz.
+
+## TD-Compliance-07: EU-Vertreter nach Art. 27 DSGVO (15.04.2026)
+
+### Status
+Offen.
+
+### Pilot-blockierend
+JA — vor erstem Pilot-Vertragsabschluss zwingend, weil Firmensitz Georgien
+(Drittland). Art. 27 DSGVO verpflichtet Nicht-EU-Verantwortliche, die
+Daten von EU-Buergern verarbeiten, zur Benennung eines schriftlichen
+Vertreters in der EU.
+
+### Aufwand
+1-2 Stunden Entscheidung + Vertrag, danach laufend.
+
+### Optionen
+- **Service-Anbieter** (z.B. EU Representative GmbH, Prighter, VeraSafe):
+  200-600 €/Jahr, schnell einsatzbereit, fuer Solo-Founder Standard
+- **EU-Bekannter mit Auftragsverarbeitungsvertrag + Vollmacht:** unentgeltlich
+  moeglich, aber vertragliche Absicherung noetig
+
+### Nachbereitung
+Kontaktdaten des Vertreters in `/datenschutz` §1 und Impressum aufnehmen.
+
+## TD-Compliance-08: Sentry SOC 2 Bridge Letter akzeptieren (15.04.2026)
+
+### Status
+Offen (User-Action).
+
+### Pilot-blockierend
+Nein — nur Compliance-Nachweis fuer B2B-Audits.
+
+### Aufwand
+2 Min.
+
+### Vorgehen
+sentry.io → Settings → Legal & Compliance → SOC 2 Bridge Letter
+→ akzeptieren. Bestaetigung archivieren.
+
+## TD-Compliance-09: Telefonnummer im Impressum nachtragen (15.04.2026)
+
+### Status
+Offen (User-Action, Nummer wird nachgeliefert).
+
+### Pilot-blockierend
+JA — § 5 TMG verlangt Telefonnummer oder gleichwertige elektronische
+Kontaktmoeglichkeit. Aktuell steht `Telefon: wird nachgereicht` in
+`src/app/impressum/page.tsx` + `src/app/datenschutz/page.tsx`.
+
+### Aufwand
+5 Min (Edit + Commit) sobald Nummer vorliegt.
+
+### Vorgehen
+- `src/app/impressum/page.tsx` Kontakt-Section: "wird nachgereicht" ersetzen
+- `src/app/datenschutz/page.tsx` §1 Verantwortlicher: gleiche Aenderung
+- Pro-Forma Commit: `docs(impressum): add phone number`
 
 ## TD-Monitoring-03: instrumentation.ts Lokation fuer Next.js 15 + src/ (13.04.2026)
 

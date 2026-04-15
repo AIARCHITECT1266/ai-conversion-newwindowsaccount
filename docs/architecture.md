@@ -91,7 +91,7 @@ Gruppiert nach Zweck:
 | **Notion** | Session-Notes (interne Arbeits-Doku) | `@notionhq/client ^5.16.0` |
 | **HubSpot** | Lead-Push für Hot-Leads (Score > 70) | Direkte REST-Calls, API-Key verschlüsselt |
 | **Vercel** | Hosting (Fluid Compute, Function-Region fra1 Frankfurt) | Plattform-Runtime |
-| **Sentry** | Error-Monitoring (Server + Client + Edge, EU-Region Frankfurt) | `@sentry/nextjs ^10.48.0`, KEIN Tracing/Replay (DSGVO + Free-Tier). Init: `src/instrumentation-client.ts` (Browser) + `src/instrumentation.ts` (Server/Edge) |
+| **Sentry** | Error-Monitoring (Server + Client + Edge, EU-Region Frankfurt) | `@sentry/nextjs ^10.48.0`, KEIN Tracing/Replay (DSGVO + Free-Tier). Init: `src/instrumentation-client.ts` (Browser) + `src/instrumentation.ts` (Server/Edge). DPA v5.1.0 unterzeichnet 13.04.2026, EU-Region Frankfurt aktiv, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt, SOC 2 Bridge Letter offen → TD-Compliance-08) |
 | **Better Stack** | Uptime-Monitoring (3 Monitore, Status-Page) | HTTP-Keyword-Checks |
 
 ---
@@ -370,11 +370,12 @@ sobald diese Datei angelegt wird.
 | **Tenant-Isolation** | Composite Keys auf DB-Query-Ebene, Pflicht in CLAUDE.md |
 | **Nachrichten-Verschlüsselung** | AES-256-GCM für `Message.contentEncrypted` via `encryptText()` / `decryptText()` aus `@/modules/encryption/aes` |
 | **Phone-Nummern** | Nur SHA-256-Hash in `Conversation.externalId`, nie im Klartext |
-| **DSGVO-Consent** | `Conversation.consentGiven/consentAt` — Modell: erste Nachricht löst Consent-Anfrage aus, zweite Nachricht = implizite Zustimmung. Web-Widget zeigt Consent-Modal zusätzlich UX-seitig (Phase 4b) |
+| **DSGVO-Consent** | `Conversation.consentGiven/consentAt` — Modell: erste Nachricht löst Consent-Anfrage aus, zweite Nachricht = implizite Zustimmung. Web-Widget zeigt Pre-Chat-Consent-Modal (Layered Notice: 3 Sätze Kerninfo + Links auf `/datenschutz` und `/dpa.md`, absolute URLs via `NEXT_PUBLIC_APP_URL` fuer iframe-Kontext). Zustimmung wird via `POST /api/widget/session` (`consentGiven: true`) an DB propagiert, Ablehnung führt zum `RejectedScreen`. Fallback: Server-seitiger Consent-Dance beim ersten Turn falls Frontend-Consent fehlt. |
+| **AVV-Akzeptanz (Tenant-Onboarding)** | `POST /api/onboarding` erzwingt `dpaAccepted: true` (Zod-Literal, 400 sonst), persistiert `Tenant.dpaAcceptedAt` und schreibt `auditLog("gdpr.dpa_accepted")`. AVV-Dokument unter `public/dpa.md` (Version 1.2, Stand 15.04.2026) |
 | **STOP-Befehl** | Jede User-Nachricht `"STOP"` setzt `status: CLOSED` + Audit-Log `bot.conversation_stopped` |
 | **Retention** | `Tenant.retentionDays` (Default 90), automatisch via `/api/cron/cleanup` (DSGVO-Pflicht-Löschung) |
 | **Audit-Log** | `auditLog()` aus `@/modules/compliance/audit-log` für jede sensitive Operation, `SENSITIVE_FIELDS` werden automatisch gefiltert |
-| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). In Datenschutz §6.5 + AVV §5 dokumentiert (TD-Compliance-05). AVV-Unterzeichnung via Sentry-Portal ausstehend (TD-Compliance-01) |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). In Datenschutz §6.5 + AVV §5 dokumentiert (TD-Compliance-05). DPA v5.1.0 unterzeichnet 13.04.2026, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt). SOC 2 Bridge Letter offen (TD-Compliance-08) |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
 | **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
 | **Zahlungen** | Paddle als Merchant of Record (übernimmt EU-Umsatzsteuer + PCI-Compliance) |
@@ -417,6 +418,12 @@ Folgenscheidungen:
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
 `WEB_WIDGET_INTEGRATION.md` § "Änderungs-Protokoll".
+
+**Strategie-Dokumente (geplant, noch nicht implementiert):**
+- `/mnt/user-data/outputs/PROSPECT_DEMO_PLATFORM_PLAN.md` (14.04.2026) —
+  Konzept fuer Prospect-Demo-Plattform. Voraussetzung fuer Bau: alle
+  Pilot-Blocker (inkl. TD-Compliance-07 EU-Vertreter, TD-Compliance-09
+  Telefonnummer) erledigt + manueller MOD-Test mit AG.
 
 ---
 
