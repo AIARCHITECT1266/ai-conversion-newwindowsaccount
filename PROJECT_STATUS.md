@@ -19,6 +19,10 @@
    Datenschutzerklaerung + AVV (iframe-kompatibel via NEXT_PUBLIC_APP_URL).
    Modal scrollbar auf Mobile (`max-h-[90vh] overflow-y-auto`).
 3. TD-Compliance-03 als erledigt in `docs/tech-debt.md` dokumentiert.
+4. **Folge-Iteration Consent-Modal:** Text auf Layered-Notice-Pattern
+   gekuerzt (3 Saetze + 2 Links). Provider-Liste und LOESCHEN-Hinweis
+   entfernt — Conversion-Optimierung, rechtlich via Layered Notice
+   ausreichend (Details in Datenschutzerklaerung/AVV verlinkt).
 
 ---
 

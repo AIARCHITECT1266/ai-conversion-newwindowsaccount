@@ -896,6 +896,15 @@ War ja — zwei kritische DSGVO-Luecken vor Pilot-Start.
 `/dpa.md` (public-Datei), da keine `/dpa`-Route als Next-Page existiert.
 Bei Anlage einer HTML-Route spaeter: Link in ChatClient.tsx DPA_URL anpassen.
 
+### Folge-Iteration 15.04.2026 — Layered Notice
+Consent-Modal-Text auf Layered-Notice-Pattern eingedampft: 3 Saetze +
+2 Links (Datenschutzerklaerung, AVV). Provider-Liste (Anthropic/OpenAI)
+und LOESCHEN-Hinweis entfernt — rechtlich ausreichend via Layered
+Notice (h.M. deutscher Datenschutzbehoerden, EuGH-Linie), Kerninfo plus
+Link zur vollstaendigen Erklaerung. Begruendung: Conversion-Optimierung
+ohne Transparenz-Verlust. `max-h-[90vh] overflow-y-auto` bleibt als
+Sicherheitsnetz.
+
 ## TD-Monitoring-03: instrumentation.ts Lokation fuer Next.js 15 + src/ (13.04.2026)
 
 ### Status

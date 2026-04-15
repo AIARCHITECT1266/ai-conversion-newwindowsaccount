@@ -735,28 +735,9 @@ function ConsentModal({
             className="mt-2 text-sm leading-relaxed"
             style={{ color: config.mutedTextColor }}
           >
-            Mit Klick auf Akzeptieren stimmen Sie zu, dass Ihre
-            Chat-Nachrichten zur Lead-Qualifizierung verarbeitet werden.
-          </p>
-          <p
-            className="mt-3 text-sm leading-relaxed"
-            style={{ color: config.mutedTextColor }}
-          >
-            Verarbeitung erfolgt durch:
-          </p>
-          <ul
-            className="mt-1 list-disc space-y-1 pl-5 text-sm leading-relaxed"
-            style={{ color: config.mutedTextColor }}
-          >
-            <li>Anthropic (USA, EU-SCCs) – KI-Generierung der Antworten</li>
-            <li>OpenAI (USA, EU-SCCs) – Lead-Scoring</li>
-          </ul>
-          <p
-            className="mt-3 text-sm leading-relaxed"
-            style={{ color: config.mutedTextColor }}
-          >
-            Speicherdauer: 90 Tage. Sie koennen Ihre Daten jederzeit mit
-            &bdquo;LOESCHEN&ldquo; entfernen lassen.
+            Ihre Chat-Nachrichten werden zur Lead-Qualifizierung
+            verarbeitet. Wir nutzen externe KI-Anbieter und speichern
+            Konversationen 90 Tage.
           </p>
           <p
             className="mt-3 text-sm leading-relaxed"
