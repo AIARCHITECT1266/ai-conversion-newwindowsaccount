@@ -985,17 +985,17 @@ Kontaktdaten des Vertreters in `/datenschutz` §1 und Impressum aufnehmen.
 ## TD-Compliance-08: Sentry SOC 2 Bridge Letter akzeptieren (15.04.2026)
 
 ### Status
-Offen (User-Action).
+ERLEDIGT am 15.04.2026 (User-Action im Sentry-Portal).
 
 ### Pilot-blockierend
 Nein — nur Compliance-Nachweis fuer B2B-Audits.
 
 ### Aufwand
-2 Min.
+2 Min (erledigt).
 
-### Vorgehen
+### Vorgehen (erledigt)
 sentry.io → Settings → Legal & Compliance → SOC 2 Bridge Letter
-→ akzeptieren. Bestaetigung archivieren.
+akzeptiert. Bestaetigung archivieren.
 
 ## TD-Compliance-09: Telefonnummer im Impressum nachtragen (15.04.2026)
 

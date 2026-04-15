@@ -51,8 +51,8 @@
 - **TD-Compliance-07 (pilot-blockierend):** EU-Vertreter nach Art. 27 DSGVO
   — vor erstem Pilot-Vertragsabschluss erforderlich (Firmensitz Georgien).
   Optionen: Service-Anbieter (200-600 €/Jahr) oder EU-Bekannter mit AVV.
-- **TD-Compliance-08 (nicht pilot-blockierend):** Sentry SOC 2 Bridge
-  Letter akzeptieren (2 Min, User-Action).
+- **TD-Compliance-08:** Sentry SOC 2 Bridge Letter — ERLEDIGT 15.04.2026
+  (User-Action im Sentry-Portal).
 - **TD-Compliance-09 (pilot-blockierend):** Telefonnummer in Impressum +
   Datenschutz nachtragen (User liefert Nummer nach, § 5 TMG).
 - DPO-Pflicht: vermutlich nicht pflichtig, Klaerung offen.

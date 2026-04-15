@@ -91,7 +91,7 @@ Gruppiert nach Zweck:
 | **Notion** | Session-Notes (interne Arbeits-Doku) | `@notionhq/client ^5.16.0` |
 | **HubSpot** | Lead-Push für Hot-Leads (Score > 70) | Direkte REST-Calls, API-Key verschlüsselt |
 | **Vercel** | Hosting (Fluid Compute, Function-Region fra1 Frankfurt) | Plattform-Runtime |
-| **Sentry** | Error-Monitoring (Server + Client + Edge, EU-Region Frankfurt) | `@sentry/nextjs ^10.48.0`, KEIN Tracing/Replay (DSGVO + Free-Tier). Init: `src/instrumentation-client.ts` (Browser) + `src/instrumentation.ts` (Server/Edge). DPA v5.1.0 unterzeichnet 13.04.2026, EU-Region Frankfurt aktiv, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt, SOC 2 Bridge Letter offen → TD-Compliance-08) |
+| **Sentry** | Error-Monitoring (Server + Client + Edge, EU-Region Frankfurt) | `@sentry/nextjs ^10.48.0`, KEIN Tracing/Replay (DSGVO + Free-Tier). Init: `src/instrumentation-client.ts` (Browser) + `src/instrumentation.ts` (Server/Edge). DPA v5.1.0 unterzeichnet 13.04.2026, EU-Region Frankfurt aktiv, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt), SOC 2 Bridge Letter akzeptiert 15.04.2026 (TD-Compliance-08 erledigt) |
 | **Better Stack** | Uptime-Monitoring (3 Monitore, Status-Page) | HTTP-Keyword-Checks |
 
 ---
@@ -375,7 +375,7 @@ sobald diese Datei angelegt wird.
 | **STOP-Befehl** | Jede User-Nachricht `"STOP"` setzt `status: CLOSED` + Audit-Log `bot.conversation_stopped` |
 | **Retention** | `Tenant.retentionDays` (Default 90), automatisch via `/api/cron/cleanup` (DSGVO-Pflicht-Löschung) |
 | **Audit-Log** | `auditLog()` aus `@/modules/compliance/audit-log` für jede sensitive Operation, `SENSITIVE_FIELDS` werden automatisch gefiltert |
-| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). In Datenschutz §6.5 + AVV §5 dokumentiert (TD-Compliance-05). DPA v5.1.0 unterzeichnet 13.04.2026, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt). SOC 2 Bridge Letter offen (TD-Compliance-08) |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). In Datenschutz §6.5 + AVV §5 dokumentiert (TD-Compliance-05). DPA v5.1.0 unterzeichnet 13.04.2026, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt), SOC 2 Bridge Letter akzeptiert 15.04.2026 (TD-Compliance-08 erledigt) |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
 | **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
 | **Zahlungen** | Paddle als Merchant of Record (übernimmt EU-Umsatzsteuer + PCI-Compliance) |
