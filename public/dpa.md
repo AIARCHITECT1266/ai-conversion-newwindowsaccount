@@ -78,10 +78,25 @@ Der Auftraggeber stimmt dem Einsatz folgender Unterauftragsverarbeiter zu:
 | Vercel Inc. | Hosting & Infrastruktur | USA (SCCs) |
 | Neon Tech | Datenbankhosting | EU |
 | Upstash | Redis Cache / Rate-Limiting | EU |
+| Anthropic, PBC | KI-Verarbeitung (Bot-Konversationen, Lead-Qualifizierung) | USA (SCCs) |
 | OpenAI | KI-Verarbeitung (Lead-Scoring) | USA (SCCs) |
 | Meta (WhatsApp) | Nachrichtenübermittlung | USA (SCCs) |
 
 SCCs = EU-Standardvertragsklauseln gemäß Art. 46 DSGVO
+
+### 5.1 Anthropic, PBC — Details
+
+- **Anbieter:** Anthropic, PBC
+- **Sitz:** San Francisco, CA, USA
+- **Zweck:** Verarbeitung der Bot-Konversationen (Lead-Qualifizierung,
+  Antwortgenerierung via Claude-Sprachmodell)
+- **Daten:** Chat-Inhalte, System-Prompts, Konversations-Metadaten
+- **Rechtsgrundlage Drittlandtransfer:** EU-Standardvertragsklauseln (SCCs)
+  gemäß Art. 46 Abs. 2 lit. c DSGVO + Anthropic DPA
+  (https://www.anthropic.com/legal/dpa)
+- **Aufbewahrung beim Subprozessor:** Zero Data Retention bei API-Nutzung
+  gemäß Anthropic-Policy (keine Speicherung über die Request-Dauer hinaus,
+  keine Verwendung zum Modell-Training)
 
 ---
 
@@ -123,5 +138,5 @@ gespeichert) kommt dieser Vertrag rechtswirksam zustande.*
 
 ---
 
-*Letzte Aktualisierung: April 2026*
-*Version: 1.0*
+*Letzte Aktualisierung: 15. April 2026*
+*Version: 1.1 (Anthropic als Subprozessor ergänzt)*

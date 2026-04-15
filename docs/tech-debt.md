@@ -866,6 +866,36 @@ Verarbeitete Daten: Stack-Traces, URL-Pfade, User-Agent,
 Browser-Version. `sendDefaultPii: false` → keine IP-Adressen,
 keine Cookies.
 
+## TD-Compliance-03: AVV-Anthropic ergaenzt + Widget-Consent transparent (15.04.2026)
+
+### Status
+Erledigt.
+
+### Pilot-blockierend
+War ja — zwei kritische DSGVO-Luecken vor Pilot-Start.
+
+### Kontext
+1. `public/dpa.md` listete OpenAI als Subprozessor, aber nicht Anthropic —
+   obwohl Anthropic (claude-sonnet-4-20250514) primaerer Bot-Processor ist.
+2. Widget-Consent-Modal nannte weder Drittanbieter noch Drittland-Transfer
+   noch Links zu Datenschutzerklaerung/AVV → Art. 13 DSGVO unvollstaendig.
+
+### Loesung
+1. `public/dpa.md` §5: Anthropic, PBC (USA/SCCs, Zero Data Retention via
+   API) VOR OpenAI in Subprozessor-Tabelle ergaenzt + §5.1 mit Details
+   (Anthropic DPA-Link, Rechtsgrundlage, Aufbewahrung). Version auf 1.1
+   erhoeht, Datum auf 15.04.2026.
+2. `src/app/embed/widget/ChatClient.tsx` ConsentModal: Text erweitert um
+   Provider-Liste (Anthropic, OpenAI), Speicherdauer (90 Tage), LOESCHEN-
+   Hinweis, absolute Links auf `${NEXT_PUBLIC_APP_URL}/datenschutz` und
+   `/dpa.md` (iframe-kompatibel, target="_blank"). Modal-Karte auf
+   `max-h-[90vh] overflow-y-auto` umgestellt, damit erweiterter Text auf
+   Mobile (<400px) scrollbar bleibt.
+
+### AVV-Link-Ziel
+`/dpa.md` (public-Datei), da keine `/dpa`-Route als Next-Page existiert.
+Bei Anlage einer HTML-Route spaeter: Link in ChatClient.tsx DPA_URL anpassen.
+
 ## TD-Monitoring-03: instrumentation.ts Lokation fuer Next.js 15 + src/ (13.04.2026)
 
 ### Status

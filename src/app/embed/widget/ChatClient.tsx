@@ -39,6 +39,15 @@ const POLL_INTERVAL_MS = 2000;
 const MODAL_FADE_MS = 200;
 const OFFLINE_THRESHOLD = 5;
 
+// Widget laeuft in iframe auf Kunden-Domains — Consent-Modal-Links zur
+// Datenschutzerklaerung und zum AVV muessen absolut sein, sonst wuerden
+// sie gegen die Kunden-Domain aufgeloest. NEXT_PUBLIC_APP_URL ist an den
+// Browser exponiert, Fallback auf die Produktiv-URL.
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://ai-conversion.ai";
+const PRIVACY_URL = `${APP_URL}/datenschutz`;
+const DPA_URL = `${APP_URL}/dpa.md`;
+
 export function ChatClient({ config, publicKey }: ChatClientProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [showConsentModal, setShowConsentModal] = useState(true);
@@ -681,12 +690,14 @@ function ConsentModal({
         style={{ backgroundColor: withAlpha("#000000", "66"), backdropFilter: "blur(4px)" }}
         aria-hidden="true"
       />
-      {/* Modal-Karte */}
+      {/* Modal-Karte — max-h-[90vh] + overflow-y-auto damit auf kleinen
+          Screens (<400px Breite, flache Tastatur) der erweiterte Consent-
+          Text inkl. Provider-Liste scrollbar bleibt und Buttons sichtbar. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="widget-consent-title"
-        className={`relative flex w-full max-w-sm flex-col gap-5 rounded-2xl p-6 transition-all duration-300 ease-out ${cardTransition}`}
+        className={`relative flex max-h-[90vh] w-full max-w-sm flex-col gap-5 overflow-y-auto rounded-2xl p-6 transition-all duration-300 ease-out ${cardTransition}`}
         style={{
           backgroundColor: withAlpha(config.textColor, "14"),
           border: `1px solid ${withAlpha(config.primaryColor, "4D")}`,
@@ -724,9 +735,53 @@ function ConsentModal({
             className="mt-2 text-sm leading-relaxed"
             style={{ color: config.mutedTextColor }}
           >
-            Mit Klick auf Akzeptieren stimmen Sie zu, dass Ihre Nachrichten
-            verarbeitet werden, um Ihnen zu antworten. Es werden keine
-            personenbezogenen Daten an Dritte weitergegeben.
+            Mit Klick auf Akzeptieren stimmen Sie zu, dass Ihre
+            Chat-Nachrichten zur Lead-Qualifizierung verarbeitet werden.
+          </p>
+          <p
+            className="mt-3 text-sm leading-relaxed"
+            style={{ color: config.mutedTextColor }}
+          >
+            Verarbeitung erfolgt durch:
+          </p>
+          <ul
+            className="mt-1 list-disc space-y-1 pl-5 text-sm leading-relaxed"
+            style={{ color: config.mutedTextColor }}
+          >
+            <li>Anthropic (USA, EU-SCCs) – KI-Generierung der Antworten</li>
+            <li>OpenAI (USA, EU-SCCs) – Lead-Scoring</li>
+          </ul>
+          <p
+            className="mt-3 text-sm leading-relaxed"
+            style={{ color: config.mutedTextColor }}
+          >
+            Speicherdauer: 90 Tage. Sie koennen Ihre Daten jederzeit mit
+            &bdquo;LOESCHEN&ldquo; entfernen lassen.
+          </p>
+          <p
+            className="mt-3 text-sm leading-relaxed"
+            style={{ color: config.mutedTextColor }}
+          >
+            Details:{" "}
+            <a
+              href={PRIVACY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:brightness-125"
+              style={{ color: config.primaryColor }}
+            >
+              Datenschutzerkl&auml;rung
+            </a>
+            {" · "}
+            <a
+              href={DPA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:brightness-125"
+              style={{ color: config.primaryColor }}
+            >
+              AVV
+            </a>
           </p>
         </div>
         {errorMessage && (

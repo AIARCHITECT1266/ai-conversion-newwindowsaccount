@@ -1,8 +1,24 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-14
-**Aktuelle Phase:** Pilot-Ready — Eigen-Marketing-Widget live, Admin-UI konsolidiert, Mara kalibriert
-**Letzter Commit:** docs: session summary 2026-04-14 (widget live + mara calibrated)
+**Letzte Aktualisierung:** 2026-04-15
+**Aktuelle Phase:** Pilot-Ready — DSGVO-Luecken geschlossen (Anthropic-AVV, transparenter Widget-Consent)
+**Letzter Commit:** fix(dsgvo): add anthropic to dpa subprocessors + transparent widget consent
+
+---
+
+## Tages-Zusammenfassung 15.04.2026
+
+### Erledigt
+1. **DSGVO-Luecke 1 — AVV-Subprozessor-Liste:** Anthropic, PBC als
+   Subprozessor in `public/dpa.md` §5 ergaenzt (USA/SCCs, Zero Data
+   Retention via API, Anthropic DPA-Link). Neuer §5.1 mit Details.
+   AVV-Version auf 1.1 erhoeht.
+2. **DSGVO-Luecke 2 — Widget-Consent-Transparenz:** `ChatClient.tsx`
+   ConsentModal zeigt jetzt Provider-Liste (Anthropic, OpenAI),
+   Speicherdauer (90 Tage), LOESCHEN-Hinweis und absolute Links zu
+   Datenschutzerklaerung + AVV (iframe-kompatibel via NEXT_PUBLIC_APP_URL).
+   Modal scrollbar auf Mobile (`max-h-[90vh] overflow-y-auto`).
+3. TD-Compliance-03 als erledigt in `docs/tech-debt.md` dokumentiert.
 
 ---
 
