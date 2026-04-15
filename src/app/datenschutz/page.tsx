@@ -33,7 +33,7 @@ export default function Datenschutz() {
           Datenschutzerklärung
         </h1>
         <p className="mb-16 text-sm text-slate-600">
-          Stand: April 2026 · Gültig ab Nutzung unserer Website und Dienste
+          Stand: 15. April 2026 · Gültig ab Nutzung unserer Website und Dienste
         </p>
 
         {/* Content */}
@@ -184,18 +184,63 @@ export default function Datenschutz() {
             </p>
 
             <h3 className="mb-2 mt-6 text-[15px] font-medium text-slate-300">
-              6.3 KI-Modelle – Anthropic, OpenAI, xAI
+              6.3 KI-Sprachmodelle – Anthropic (primär) und OpenAI
             </h3>
             <p>
-              Zur intelligenten Verarbeitung von Nutzeranfragen setzen wir
-              KI-Sprachmodelle ein, darunter Claude (Anthropic, USA),
-              GPT-Modelle (OpenAI, USA) und Grok (xAI, USA). Nachrichten
-              werden zur Generierung von Antworten an diese Dienste
-              übermittelt. Es gelten jeweils die DPAs der Anbieter. Die
-              Übermittlung in die USA erfolgt auf Grundlage von
-              EU-Standardvertragsklauseln. Wir nutzen ausschließlich
+              Zur intelligenten Verarbeitung von Chat-Konversationen setzen
+              wir folgende KI-Sprachmodelle ein:
+            </p>
+            <ul className="mt-3 list-inside list-disc space-y-1 text-slate-400">
+              <li>
+                <strong className="text-slate-300">Anthropic, PBC (USA)</strong>
+                {" "}– Claude-Modelle für die Antwort-Generierung im
+                Chat-Bot (primärer Processor)
+              </li>
+              <li>
+                <strong className="text-slate-300">OpenAI (USA)</strong>
+                {" "}– GPT-Modelle für automatisches Lead-Scoring
+              </li>
+            </ul>
+            <p className="mt-3">
+              Nachrichten werden zur Generierung von Antworten bzw. zur
+              Bewertung an diese Dienste übermittelt. Es gelten jeweils die
+              DPAs der Anbieter. Die Übermittlung in die USA erfolgt auf
+              Grundlage von EU-Standardvertragsklauseln (SCCs) gemäß
+              Art. 46 Abs. 2 lit. c DSGVO. Wir nutzen ausschließlich
               API-Zugänge, bei denen Nutzerdaten nicht zum Training der
-              Modelle verwendet werden.
+              Modelle verwendet werden (Zero Data Retention).
+            </p>
+
+            <h3 className="mb-2 mt-6 text-[15px] font-medium text-slate-300">
+              6.4 KI-Bildgenerierung – Asset-Studio (xAI, Google, Black Forest Labs)
+            </h3>
+            <p>
+              Für das optionale Asset-Studio (interne Bild-Generierung)
+              setzen wir separat KI-Bildmodelle ein: Grok (xAI, USA),
+              Gemini (Google, USA) und Flux (Black Forest Labs, DE).
+              Diese Anbieter werden <strong className="text-slate-300">ausschließlich</strong>
+              {" "}im Asset-Studio genutzt und erhalten
+              <strong className="text-slate-300"> keine Chat-Nachrichten</strong>
+              {" "}oder Lead-Daten. Übertragung in die USA erfolgt auf
+              Grundlage von EU-Standardvertragsklauseln.
+            </p>
+
+            <h3 className="mb-2 mt-6 text-[15px] font-medium text-slate-300">
+              6.5 Error-Monitoring – Sentry
+            </h3>
+            <p>
+              Zur Aufrechterhaltung der Stabilität unserer Dienste nutzen
+              wir Sentry (Functional Software, Inc. dba Sentry, USA). Daten
+              werden in der EU-Region (Frankfurt) gespeichert, der
+              Anbieter-Sitz ist jedoch die USA — die Übermittlung erfolgt
+              auf Grundlage von EU-Standardvertragsklauseln (SCCs).
+              Verarbeitet werden ausschließlich technische Fehler-Metadaten
+              (Stack-Traces, URL-Pfade, Browser-Version, User-Agent).
+              <strong className="text-slate-300"> Keine personenbezogenen Daten</strong>
+              {" "}(`sendDefaultPii: false`, keine IP-Adressen, keine
+              Cookies). Speicherdauer: 30 Tage. Rechtsgrundlage:
+              Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an
+              Betriebsstabilität).
             </p>
 
             <p className="mt-6">
@@ -312,7 +357,7 @@ export default function Datenschutz() {
         {/* Footer divider */}
         <div className="mt-20 border-t border-white/[0.04] pt-8">
           <p className="text-xs text-slate-700">
-            Stand: April 2026
+            Stand: 15. April 2026
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-14 (Eigen-Marketing-Widget live, Admin-UI Widget-Toggle, Sentry Browser-SDK fix)
+> **Letzte Aktualisierung:** 2026-04-15 (DSGVO-Compliance: Anthropic/Sentry in AVV, Sentry + xAI-Klarstellung in Datenschutz)
 > **Stand des Codes:** Commit folgt (Marketing-Widget auf ai-conversion.ai,
 > Admin-UI Widget-Toggle, Sentry Browser-Init korrigiert)
 
@@ -374,7 +374,7 @@ sobald diese Datei angelegt wird.
 | **STOP-Befehl** | Jede User-Nachricht `"STOP"` setzt `status: CLOSED` + Audit-Log `bot.conversation_stopped` |
 | **Retention** | `Tenant.retentionDays` (Default 90), automatisch via `/api/cron/cleanup` (DSGVO-Pflicht-Löschung) |
 | **Audit-Log** | `auditLog()` aus `@/modules/compliance/audit-log` für jede sensitive Operation, `SENSITIVE_FIELDS` werden automatisch gefiltert |
-| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). AVV-Unterzeichnung ausstehend (TD-Compliance-01) |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). In Datenschutz §6.5 + AVV §5 dokumentiert (TD-Compliance-05). AVV-Unterzeichnung via Sentry-Portal ausstehend (TD-Compliance-01) |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
 | **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
 | **Zahlungen** | Paddle als Merchant of Record (übernimmt EU-Umsatzsteuer + PCI-Compliance) |

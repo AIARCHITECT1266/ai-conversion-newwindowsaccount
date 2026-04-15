@@ -81,6 +81,7 @@ Der Auftraggeber stimmt dem Einsatz folgender Unterauftragsverarbeiter zu:
 | Anthropic, PBC | KI-Verarbeitung (Bot-Konversationen, Lead-Qualifizierung) | USA (SCCs) |
 | OpenAI | KI-Verarbeitung (Lead-Scoring) | USA (SCCs) |
 | Meta (WhatsApp) | Nachrichtenübermittlung | USA (SCCs) |
+| Functional Software, Inc. dba Sentry | Error-Monitoring (Server + Browser), Daten-Hosting EU/Frankfurt | USA (SCCs) |
 
 SCCs = EU-Standardvertragsklauseln gemäß Art. 46 DSGVO
 
@@ -139,4 +140,4 @@ gespeichert) kommt dieser Vertrag rechtswirksam zustande.*
 ---
 
 *Letzte Aktualisierung: 15. April 2026*
-*Version: 1.1 (Anthropic als Subprozessor ergänzt)*
+*Version: 1.2 (Sentry als Subprozessor ergänzt)*

@@ -23,6 +23,20 @@
    gekuerzt (3 Saetze + 2 Links). Provider-Liste und LOESCHEN-Hinweis
    entfernt — Conversion-Optimierung, rechtlich via Layered Notice
    ausreichend (Details in Datenschutzerklaerung/AVV verlinkt).
+5. **xAI-Klarstellung (TD-Compliance-04):** `/datenschutz` §6.3 auf
+   Anthropic (primaer) + OpenAI (Lead-Scoring) reduziert. Neuer §6.4
+   "Asset-Studio" mit xAI/Gemini/Flux — explizit klargestellt dass
+   diese Provider keine Chat/Lead-Daten erhalten.
+6. **Sentry in Datenschutz + AVV (TD-Compliance-05):** `/datenschutz`
+   §6.5 mit Sentry-Details (SCCs, EU-Region, `sendDefaultPii: false`,
+   30d Retention, Art. 6 Abs. 1 lit. f). `public/dpa.md` §5:
+   "Functional Software, Inc. dba Sentry" ergaenzt. AVV-Version 1.2.
+   TD-Compliance-02 abgeschlossen.
+7. **AVV-Akzeptanz-Verifikation (TD-Compliance-06):** Befund Fall A —
+   Timestamp wird bereits persistiert. `src/app/api/onboarding/route.ts`
+   Z.19-21 erzwingt `dpaAccepted: true` (Zod-Literal), Z.93 schreibt
+   `dpaAcceptedAt: new Date()`, Z.99 `auditLog("gdpr.dpa_accepted")`.
+   `prisma/schema.prisma:28` enthaelt Feld. Keine Code-Aenderung noetig.
 
 ---
 

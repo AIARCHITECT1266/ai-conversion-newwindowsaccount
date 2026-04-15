@@ -852,7 +852,7 @@ Sentry-Settings → Legal & Compliance → Data Processing Addendum
 ## TD-Compliance-02: Sentry in Datenschutzerklaerung aufnehmen (13.04.2026)
 
 ### Status
-Offen.
+Erledigt am 15.04.2026 — siehe TD-Compliance-05.
 
 ### Pilot-blockierend
 Ja (kommt mit Pilot-Blocker #4).
@@ -895,6 +895,54 @@ War ja — zwei kritische DSGVO-Luecken vor Pilot-Start.
 ### AVV-Link-Ziel
 `/dpa.md` (public-Datei), da keine `/dpa`-Route als Next-Page existiert.
 Bei Anlage einer HTML-Route spaeter: Link in ChatClient.tsx DPA_URL anpassen.
+
+## TD-Compliance-04: xAI-Klarstellung in Datenschutzerklaerung (15.04.2026)
+
+### Status
+Erledigt.
+
+### Pilot-blockierend
+Ja — falsche Provider-Zuordnung im Datenschutz vor Pilot-Start.
+
+### Kontext
+`/datenschutz` §6.3 listete Grok (xAI) gleichrangig mit Anthropic und
+OpenAI als Bot-Provider. Tatsaechlich wird xAI nur im Asset-Studio fuer
+Bild-Generierung genutzt, nicht im Chat-Bot.
+
+### Loesung
+- §6.3 auf Anthropic (primaer) + OpenAI (Lead-Scoring) reduziert,
+  jeweils als Liste mit klarer Rollen-Zuordnung
+- Neuer §6.4 "Asset-Studio" mit xAI/Gemini/Flux, explizite Klarstellung
+  dass diese Provider keine Chat-Nachrichten/Lead-Daten erhalten
+- Datum auf 15.04.2026 aktualisiert
+
+## TD-Compliance-05: Sentry in /datenschutz + AVV ergaenzt (15.04.2026)
+
+### Status
+Erledigt. Ersetzt TD-Compliance-02.
+
+### Pilot-blockierend
+Ja — Sentry-Verarbeitung musste vor Pilot-Start transparent gemacht werden.
+
+### Loesung
+- `src/app/datenschutz/page.tsx` §6.5: Sentry als eigener Drittanbieter
+  dokumentiert. Sitz USA, Daten-Hosting Frankfurt, SCCs, `sendDefaultPii:
+  false`, 30 Tage Retention, Rechtsgrundlage Art. 6 Abs. 1 lit. f.
+- `public/dpa.md` §5: "Functional Software, Inc. dba Sentry" in
+  Subprozessor-Tabelle. AVV-Version auf 1.2 erhoeht.
+
+## TD-Compliance-06: AVV-Akzeptanz-Verifikation (15.04.2026)
+
+### Status
+Nur-Verifikation, keine Code-Aenderung noetig.
+
+### Befund
+`src/app/api/onboarding/route.ts` Z.19-21 erzwingt `dpaAccepted: true` via
+Zod-Literal (Request wird ohne Akzeptanz mit 400 abgelehnt). Z.93
+persistiert `dpaAcceptedAt: new Date()` in `Tenant`-Tabelle
+(`prisma/schema.prisma:28` — Feld existiert). Zusaetzlich Audit-Log
+`gdpr.dpa_accepted` (Z.99-102). AVV-Akzeptanz ist DSGVO-konform
+dokumentiert; kein Fix noetig.
 
 ### Folge-Iteration 15.04.2026 — Layered Notice
 Consent-Modal-Text auf Layered-Notice-Pattern eingedampft: 3 Saetze +
