@@ -54,11 +54,11 @@ export default function Navigation() {
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
-            src="/logo1.png"
+            src="/logo.png"
             alt="AI Conversion"
-            width={1024}
-            height={1024}
-            className="h-20 w-auto sm:h-24 lg:h-28"
+            width={160}
+            height={40}
+            className="h-8 w-auto sm:h-9 lg:h-10"
             priority
           />
         </Link>
