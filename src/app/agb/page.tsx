@@ -308,8 +308,7 @@ export default function AGB() {
               zwischen dem Anbieter und dem Kunden.
             </p>
             <p className={paragraph}>
-              (5) Die Zahlung erfolgt im Voraus – monatlich, je nach
-              gewähltem Abrechnungszeitraum.
+              (5) Die Zahlung erfolgt monatlich im Voraus.
             </p>
             <p className={paragraph}>
               (6) Die einmalige Setup-Gebühr deckt die individuelle

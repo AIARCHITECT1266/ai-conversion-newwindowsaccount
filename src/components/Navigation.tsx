@@ -100,15 +100,15 @@ export default function Navigation() {
             Anmelden
           </Link>
 
-          {/* CTA */}
+          {/* CTA — Calendly statt mailto seit 16.04.2026 (Paddle-Deaktivierung, Founding-Phase) */}
           <a
-            href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
+            href="https://calendly.com/philipp-ai-conversion/30min"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
           >
             <MessageCircle className="h-4 w-4" />
-            Demo buchen
+            Demo-Call buchen
           </a>
         </div>
 
@@ -170,15 +170,15 @@ export default function Navigation() {
                 Anmelden
               </Link>
 
-              {/* CTA (Mobile) */}
+              {/* CTA (Mobile) — Calendly statt mailto seit 16.04.2026 */}
               <a
-                href="mailto:hello@ai-conversion.ai?subject=Demo%20Anfrage"
+                href="https://calendly.com/philipp-ai-conversion/30min"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 flex items-center justify-center gap-2 rounded-full bg-purple-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500"
               >
                 <MessageCircle className="h-4 w-4" />
-                Demo buchen
+                Demo-Call buchen
               </a>
             </div>
           </motion.div>

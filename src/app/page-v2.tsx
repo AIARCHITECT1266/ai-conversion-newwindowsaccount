@@ -9,7 +9,7 @@ import {
   TrendingUp, Send, Brain, Sparkles, BarChart3, CalendarClock,
   QrCode, FileSignature, Rocket, Shield, Check, ArrowRight,
   Building2, Hammer, GraduationCap, Briefcase, BookOpen,
-  SlidersHorizontal, Euro, Clock, Globe, Lock, Users,
+  SlidersHorizontal, Clock, Globe, Lock, Users,
   AlertTriangle,
 } from "lucide-react";
 
@@ -457,7 +457,7 @@ export default function LandingPage() {
               color: "text-[#c9a84c]",
               border: "border-[rgba(201,168,76,0.15)]",
               bg: "bg-[rgba(201,168,76,0.03)]",
-              title: "Eine Plattform statt fuenf",
+              title: "Eine Plattform statt fünf",
               body: "WhatsApp, Web-Widget, CRM, Pipeline und Marketing in einem System statt HubSpot + Superchat + Calendly + Mailchimp. Kein Tool-Dschungel, keine Daten-Silos, eine Login-Oberflaeche.",
             },
             {
@@ -491,10 +491,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════ 4. ROI-RECHNER ═══════ */}
-      <RoiCalculator />
-
-      {/* ═══════ 5. BRANCHEN ═══════ */}
+      {/* ═══════ 4. BRANCHEN ═══════ */}
       <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
         <div className="text-center mb-12">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Branchen</p>
@@ -527,6 +524,9 @@ export default function LandingPage() {
           })}
         </div>
       </section>
+
+      {/* ═══════ 5. ROI-RECHNER ═══════ */}
+      <RoiCalculator />
 
       {/* ═══════ 6. INTEGRATIONEN ═══════ */}
       <section className="relative z-10 mx-auto max-w-4xl px-6 py-24">
@@ -676,36 +676,6 @@ export default function LandingPage() {
               className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#c9a84c] to-purple-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:opacity-90">
               Founding-Partner werden &mdash; 30-Min-Call buchen <ArrowRight className="h-4 w-4" />
             </a>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ═══════ 8. FINAL CTA ═══════ */}
-      <section className="relative z-10 mx-auto max-w-4xl px-6 py-20">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.6 }}
-          className="rounded-2xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.02)] p-12 text-center">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
-            Bereit, <span className="bg-gradient-to-r from-[#c9a84c] to-purple-400 bg-clip-text text-transparent">Founding Partner</span> zu werden?
-          </h2>
-          <p className="mt-4 text-sm text-slate-400 max-w-lg mx-auto">
-            Von WhatsApp-Lead bis zum gewonnenen Kunden &ndash; AI Conversion automatisiert Ihren kompletten Vertriebsprozess.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <a href={CALENDLY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#c9a84c] to-purple-500 px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:opacity-90">
-              Demo-Call buchen (30 Min) <ArrowRight className="h-4 w-4" />
-            </a>
-            <a href="#roi" className="flex items-center gap-2 rounded-xl border border-[#c9a84c]/30 bg-[#c9a84c]/[0.05] px-6 py-3 text-sm font-semibold text-[#c9a84c] transition-all hover:bg-[#c9a84c]/[0.1]">
-              ROI-Rechner ausprobieren <Euro className="h-4 w-4" />
-            </a>
-          </div>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500">
-            <span className="flex items-center gap-1"><Rocket className="h-3.5 w-3.5" /> Persönliches Onboarding</span>
-            <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> DSGVO-konform</span>
-            <span className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> Monatlich kündbar</span>
           </div>
         </motion.div>
       </section>
