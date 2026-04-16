@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-16
 **Aktuelle Phase:** Pilot-Ready — Website-Relaunch fuer MOD-Outreach abgeschlossen, Paddle deaktiviert, Founding-Phase ueber SEPA
-**Letzter Commit:** (wird nach User-Verifikation gesetzt)
+**Letzter Commit:** 8370b74 — refactor(marketing): pre-MOD website relaunch + paddle checkout deactivation + umlauts + AGB pricing
 
 ---
 
