@@ -56,9 +56,9 @@ export default function Navigation() {
           <Image
             src="/logo.png"
             alt="AI Conversion"
-            width={160}
-            height={40}
-            className="h-8 w-auto sm:h-9 lg:h-10"
+            width={600}
+            height={381}
+            className="h-10 w-auto object-contain sm:h-12"
             priority
           />
         </Link>
