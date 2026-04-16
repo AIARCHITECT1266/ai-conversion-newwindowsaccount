@@ -219,7 +219,7 @@ export default function AGB() {
                 Gesprächslogik)
               </li>
               <li className={listItem}>
-                Zahlung der Setup-Gebühr und ersten Monatsgebühr über Paddle
+                Zahlung der ersten Monatsgebühr per SEPA-Überweisung
               </li>
               <li className={listItem}>
                 Freischaltung des WhatsApp-Bots und Zugang zum Dashboard
@@ -264,22 +264,22 @@ export default function AGB() {
                 <tbody className="divide-y divide-white/[0.04] text-slate-400">
                   <tr>
                     <td className="px-4 py-2.5 font-medium text-slate-300">Starter</td>
-                    <td className="px-4 py-2.5 text-right">497 €</td>
-                    <td className="px-4 py-2.5 text-right">497 €</td>
+                    <td className="px-4 py-2.5 text-right">349 €</td>
+                    <td className="px-4 py-2.5 text-right">349 €</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-medium text-slate-300">Growth</td>
-                    <td className="px-4 py-2.5 text-right">1.497 €</td>
-                    <td className="px-4 py-2.5 text-right">997 €</td>
+                    <td className="px-4 py-2.5 text-right">699 €</td>
+                    <td className="px-4 py-2.5 text-right">699 €</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-medium text-slate-300">Professional</td>
-                    <td className="px-4 py-2.5 text-right">2.997 €</td>
-                    <td className="px-4 py-2.5 text-right">1.997 €</td>
+                    <td className="px-4 py-2.5 text-right">1.299 €</td>
+                    <td className="px-4 py-2.5 text-right">1.299 €</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-medium text-slate-300">Enterprise</td>
-                    <td className="px-4 py-2.5 text-right">ab 5.000 €</td>
+                    <td className="px-4 py-2.5 text-right">auf Anfrage</td>
                     <td className="px-4 py-2.5 text-right">individuell</td>
                   </tr>
                 </tbody>
@@ -300,19 +300,16 @@ export default function AGB() {
             </p>
             <p className={paragraph}>
               (4){" "}
-              <strong className="text-slate-300">Paddle als Merchant of Record:</strong>{" "}
-              Die Zahlungsabwicklung erfolgt über Paddle.com Market Ltd
-              (nachfolgend „Paddle"). Paddle tritt als Merchant of Record auf,
-              d.h. Paddle ist der Vertragspartner des Kunden für die
-              Zahlungsabwicklung, stellt die Rechnung und ist für die korrekte
-              Erhebung und Abführung der Umsatzsteuer verantwortlich. Der
-              Servicevertrag über die Nutzung der Plattform besteht
+              <strong className="text-slate-300">Zahlungsabwicklung:</strong>{" "}
+              Die Zahlungsabwicklung erfolgt per SEPA-Überweisung auf
+              Rechnungsbasis. Der Anbieter stellt dem Kunden eine Rechnung,
+              die innerhalb von 14 Tagen nach Rechnungsdatum zu begleichen ist.
+              Der Servicevertrag über die Nutzung der Plattform besteht
               zwischen dem Anbieter und dem Kunden.
             </p>
             <p className={paragraph}>
-              (5) Die Zahlung erfolgt im Voraus – monatlich oder jährlich, je
-              nach gewähltem Abrechnungszeitraum. Bei jährlicher Zahlung wird
-              ein Rabatt von zwei Monatsgebühren gewährt.
+              (5) Die Zahlung erfolgt im Voraus – monatlich, je nach
+              gewähltem Abrechnungszeitraum.
             </p>
             <p className={paragraph}>
               (6) Die einmalige Setup-Gebühr deckt die individuelle
@@ -320,14 +317,23 @@ export default function AGB() {
               ist nicht erstattungsfähig, auch nicht bei vorzeitiger Kündigung.
             </p>
             <p className={paragraph}>
-              (7) Zusätzlich zu den Plattformgebühren fallen
+              (7){" "}
+              <strong className="text-slate-300">Sonderkonditionen Pilotphase:</strong>{" "}
+              Founding Partner, die in der aktuellen Pilotphase einen Vertrag
+              abschließen, zahlen dauerhaft 33% weniger auf alle oben genannten
+              Listenpreise, solange der Vertrag ungekündigt bleibt. Zusätzlich
+              erhalten Founding Partner die ersten 30 Tage kostenlos und sind
+              in der Pilotphase von der Setup-Gebühr befreit.
+            </p>
+            <p className={paragraph}>
+              (8) Zusätzlich zu den Plattformgebühren fallen
               WhatsApp-Nachrichtenkosten direkt bei Meta an (derzeit ca. 0,11 €
               pro Marketing-Nachricht, kostenlose Service-Antworten innerhalb
               von 24 Stunden). Diese Kosten werden nicht über AI Conversion
               abgerechnet.
             </p>
             <p className={paragraph}>
-              (8) Bei Zahlungsverzug ist der Anbieter berechtigt, den Zugang
+              (9) Bei Zahlungsverzug ist der Anbieter berechtigt, den Zugang
               zur Plattform nach Mahnung und Setzung einer angemessenen
               Nachfrist vorübergehend zu sperren.
             </p>

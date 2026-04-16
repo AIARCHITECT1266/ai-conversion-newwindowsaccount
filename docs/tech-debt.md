@@ -1124,3 +1124,78 @@ ueberdecken, die erst bei echtem User-Traffic sichtbar werden.
   (kein Match in `git branch -a`)
 - Status: moeglicherweise bereits gemergt oder verworfen, kein
   Action-Item
+
+## TD-Billing-01: Payment-Provider-Ersatz fuer Paddle (16.04.2026)
+
+### Status
+Offen.
+
+### Pilot-blockierend
+Ja — aktuell laeuft Founding-Phase manuell ueber SEPA. Fuer Skalierung
+ueber 5-10 Kunden wird automatisierter Checkout benoetigt.
+
+### Kontext
+Paddle hat am 07.04.2026 die Application fuer ai-conversion.ai abgelehnt
+(Kategorien "AI Chatbots" + "Marketing Software" ausserhalb Paddle
+Acceptable Use Policy). Payouts nicht aktiviert, kein Checkout moeglich.
+User-facing Checkout auf der Website komplett deaktiviert (503 mit
+Calendly-Verweis). Backend-Code (src/modules/billing/paddle.ts) bleibt
+fuer eventuelle spaetere Wiedernutzung.
+
+### Optionen
+- (a) Lemon Squeezy (MoR, AI-friendly, 1-2 Wochen Setup)
+- (b) Stripe nach US-LLC-Setup (2-4 Monate)
+- (c) Weiter manuell per SEPA (Demo-Call → PDF-Vertrag → SEPA-Rechnung)
+
+### Entscheidung
+Nach 3-5 Pilot-Kunden evaluieren. Aktuell reicht SEPA.
+
+## TD-Billing-02: Paddle-Einspruch versuchen (16.04.2026)
+
+### Status
+Offen.
+
+### Pilot-blockierend
+Nein.
+
+### Kontext
+Paddle-Einspruch koennte versucht werden. Geschaetzter Aufwand: 30 Min.
+Erfolgswahrscheinlichkeit 15-25% laut ConvArch-Einschaetzung.
+
+### Wann
+Optionaler 30-Min-Task, keine Prioritaet.
+
+## TD-Marketing-01: AGB-Passage zu Setup-Gebuehr anpassen (16.04.2026)
+
+### Status
+ERLEDIGT am 16.04.2026.
+
+### Pilot-blockierend
+War ja — inkonsistent mit Website ("0 EUR in Pilotphase").
+
+### Kontext
+src/app/agb/page.tsx §4 Preistabelle auf neue Listenpreise (349/699/1.299)
+aktualisiert. Paddle-MoR-Absatz durch SEPA-Zahlungsabwicklung ersetzt.
+Neue Founding-Partner-Sonderkonditionen-Klausel als §4 Abs. 7 eingefuegt.
+Onboarding-Schritt "Paddle" durch "SEPA" ersetzt.
+
+### Aufwand
+Erledigt in ~15 Min.
+
+## TD-Admin-01: Admin-UI fuer manuelle Tenant-Aktivierung (16.04.2026)
+
+### Status
+Offen.
+
+### Pilot-blockierend
+Nein — wird relevant bei erstem zahlenden Pilot.
+
+### Kontext
+Founding-Phase laeuft ohne automatisierten Checkout: Demo-Call via
+Calendly → PDF-Vertrag + PDF-Rechnung per Mail → Kunde zahlt per SEPA →
+Tenant wird manuell aktiviert. Aktuell: Direct-DB-Access via Admin-UI
+(paddlePlan-Selector) reicht. Spaeter: dedizierter "Activate after
+SEPA payment" Flow im Admin-UI.
+
+### Aufwand
+2-3 Stunden (UI + API-Endpoint fuer Plan-Setzung nach Zahlungseingang).

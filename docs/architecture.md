@@ -4,7 +4,7 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-15 (DSGVO-Compliance: Anthropic/Sentry in AVV, Sentry + xAI-Klarstellung in Datenschutz)
+> **Letzte Aktualisierung:** 2026-04-16 (Website-Relaunch pre-MOD + Paddle-Deaktivierung)
 > **Stand des Codes:** Commit folgt (Marketing-Widget auf ai-conversion.ai,
 > Admin-UI Widget-Toggle, Sentry Browser-Init korrigiert)
 
@@ -85,7 +85,7 @@ Gruppiert nach Zweck:
 | **Anthropic Claude** | Verkaufsgespräche (Bot-Antworten) | `@anthropic-ai/sdk ^0.82.0` |
 | **OpenAI GPT-4o** | Lead-Scoring (Score, Qualification) | `openai ^6.33.0` |
 | **WhatsApp Cloud API v21** | Messaging-Kanal 1 | REST + HMAC-Webhook |
-| **Paddle** | Billing (MoR, Checkout, Subscriptions, Webhooks) | Direkte REST-Calls, kein SDK |
+| **Paddle** | Billing — DEAKTIVIERT seit 07.04.2026 (Application abgelehnt, Kategorien AI Chatbots + Marketing Software ausserhalb AUP). Backend-Code bleibt fuer spaetere Wiedernutzung. Founding-Phase laeuft manuell ueber SEPA (Demo-Call → Vertrag → Rechnung) | Direkte REST-Calls, kein SDK. Checkout-Route gibt 503 mit Calendly-Verweis zurueck |
 | **Resend** | Transactional Emails (Lead-Alerts, Welcome) | `resend ^6.10.0` |
 | **Upstash Redis** | Rate-Limiting (Sliding Window) | `@upstash/ratelimit` |
 | **Notion** | Session-Notes (interne Arbeits-Doku) | `@notionhq/client ^5.16.0` |
@@ -378,7 +378,7 @@ sobald diese Datei angelegt wird.
 | **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). In Datenschutz §6.5 + AVV §5 dokumentiert (TD-Compliance-05). DPA v5.1.0 unterzeichnet 13.04.2026, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt), SOC 2 Bridge Letter akzeptiert 15.04.2026 (TD-Compliance-08 erledigt) |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
 | **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
-| **Zahlungen** | Paddle als Merchant of Record (übernimmt EU-Umsatzsteuer + PCI-Compliance) |
+| **Zahlungen** | Paddle DEAKTIVIERT (Application abgelehnt 07.04.2026). Founding-Phase: manuelle SEPA-Rechnungsstellung nach Demo-Call. Payment-Provider-Ersatz als TD-Billing-01 erfasst |
 
 **Verweis:** Sicherheits-Entscheidungen sind dokumentiert in
 `docs/decisions/phase-0-decisions.md` (CSP-Nonce, crypto.randomBytes,
@@ -414,6 +414,7 @@ Folgenscheidungen:
 | — | Dev/Prod-DB-Split mit zwei Prisma-Postgres-Instanzen (13.04.2026) | teal-battery=Prod (nur Vercel), red-mirror=Dev (nur .env.local). Verhindert Cross-Env-Datenlecks. ADR: `docs/decisions/vercel-storage-minimal-config.md` |
 | — | Vercel-Storage Production-only (13.04.2026) | Preview/Dev-Environments haben bewusst keine DATABASE_URL. Verhindert versehentliche Prod-DB-Zugriffe durch Preview-Branches |
 | — | Sentry Minimal-Config: Error-Only, kein Tracing/Replay (13.04.2026) | `tracesSampleRate: 0`, `replaysSessionSampleRate: 0`, `sendDefaultPii: false`. DSGVO-Minimierung + Free-Tier-Budget. Source-Maps-Upload deaktiviert (TD-Monitoring-02) |
+| — | Paddle-Checkout deaktiviert, Founding-Phase manuell per SEPA (16.04.2026) | Paddle-Application abgelehnt (AI Chatbots + Marketing Software ausserhalb AUP). Checkout-Route gibt 503 zurueck. Backend-Code bleibt. Alle CTAs auf Calendly umgebogen. TD-Billing-01 fuer Provider-Ersatz |
 
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
@@ -439,7 +440,7 @@ Re-Evaluations-Prozess (ADR-Workflow) in
 | **Styling** | Tailwind CSS 4 | Utility-First, Tree-Shaking, `@source`-Direktive für Widget-Route |
 | **Bot-LLM** | Anthropic Claude | Verkaufsqualität, deutsche Sprache, Retry-basiertes `withRetry` mit 2 Retries + 12s Timeout |
 | **Scoring-LLM** | OpenAI GPT-4o | Struktur­basiertes Lead-Scoring mit JSON-Output |
-| **Billing** | Paddle (MoR) | EU-konforme Umsatzsteuer, PCI-Compliance, Subscriptions + One-Time für Setup-Fees |
+| **Billing** | Paddle (MoR) — DEAKTIVIERT | Application abgelehnt 07.04.2026. Founding-Phase: manuell per SEPA. Optionen: Lemon Squeezy oder Stripe nach US-LLC (TD-Billing-01) |
 | **Email** | Resend | Transactional, einfache API, gute Deliverability |
 | **Rate-Limit** | Upstash Redis + `@upstash/ratelimit` | Sliding Window, Multi-Region, In-Memory-Fallback lokal |
 | **Verschlüsselung** | Node `crypto` (AES-256-GCM) | Message-Content, HubSpot-API-Key (im Tenant-Feld) |

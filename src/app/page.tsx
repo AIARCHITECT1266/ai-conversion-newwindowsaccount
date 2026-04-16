@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import LandingPage from "./page-v2";
 
 export const metadata: Metadata = {
-  title: "AI Conversion | Das Revenue Operating System für DACH-Unternehmen",
+  title: "KI-Vertrieb für DACH-KMU | AI Conversion",
   description:
-    "Von der ersten WhatsApp-Nachricht bis zum gewonnenen Kunden – vollautomatisch. Sales Agent, CRM Pipeline, Marketing Suite und Client Portal in einer Plattform.",
+    "KI-Vertrieb für DACH-KMU. WhatsApp-Bot, Web-Widget, CRM und Pipeline in einem System — qualifiziert Leads automatisch, übergibt nur die heißen. DSGVO-nativ, Frankfurt-Hosting.",
   alternates: {
     canonical: "https://ai-conversion.ai",
   },

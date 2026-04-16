@@ -1,8 +1,64 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-15
-**Aktuelle Phase:** Pilot-Ready — DSGVO-Hauptluecken geschlossen, 3 Rest-Punkte pilot-blockierend offen (EU-Vertreter, Telefonnummer, SOC 2 Bridge Letter)
-**Letzter Commit:** docs: sync project status + tech-debt 2026-04-15 (dsgvo + sentry compliance)
+**Letzte Aktualisierung:** 2026-04-16
+**Aktuelle Phase:** Pilot-Ready — Website-Relaunch fuer MOD-Outreach abgeschlossen, Paddle deaktiviert, Founding-Phase ueber SEPA
+**Letzter Commit:** (wird nach User-Verifikation gesetzt)
+
+---
+
+## Tages-Zusammenfassung 16.04.2026
+
+### Erledigt
+1. **Website-Relaunch pre-MOD-Outreach:**
+   - Headline neu: "KI-Vertrieb fuer DACH-KMU"
+   - Fake-Testimonials entfernt, Founding-Partner-Ersatz-Sektion
+   - Vergleichstabelle → 3 Karten (Eine Plattform, KI-Verkaeufer, Made in Germany)
+   - Branchen: E-Commerce raus, Bildung & Weiterbildung rein (nur Marketing, Produkt unveraendert)
+   - ROI-Disclaimer ueber Rechner, Footer-Hinweis zur Pilotphase
+2. **Pricing komplett umgebaut (Homepage + /pricing):**
+   - Listenpreise 349/699/1.299, Founding 233/467/869 (33% Rabatt, lebenslang solange Vertrag ungekuendigt)
+   - 30 Tage kostenlos als Founding-Vorteil
+   - Setup-Fee: "0 EUR in Pilotphase" ausgewiesen
+   - Yearly-Toggle komplett entfernt (nur Monthly in Pilotphase)
+   - Enterprise: "Auf Anfrage" statt konkretem Preis
+   - Value-Banner: generisches Statement statt Gehalts-Vergleich
+3. **Paddle-Checkout deaktiviert:**
+   - Application abgelehnt 07.04.2026 (AI Chatbots + Marketing Software ausserhalb AUP)
+   - POST /api/paddle/checkout gibt 503 mit Calendly-Verweis zurueck
+   - Webhook-Route unangetastet (fuer historische Events)
+   - Backend-Code (paddle.ts) bleibt fuer spaetere Wiedernutzung
+4. **CTAs auf Calendly umgebogen:**
+   - Alle "Jetzt starten" / mailto-CTAs → "Demo-Call buchen (30 Min)" mit Calendly-Link
+   - Nur 3 CTA-Typen erlaubt: Demo-Call, Founding-Partner-Programm, ROI-Rechner
+5. **Founding-Partner-Banner (dismissible):**
+   - Neue Komponente FoundingPartnerBanner.tsx
+   - LocalStorage-Key `ai-conversion-banner-dismissed`
+   - Path-Gate: nur auf /, /pricing, /features, /faq, /multi-ai
+6. **Founding-Partner-Detail-Sektion mit Anchor #founding-partner**
+7. **Garantie-Versprechen entfernt** ("100 qualifizierte Leads in 30 Tagen — oder Geld zurueck")
+8. **Doku:** 4 neue Tech-Debt-Eintraege (TD-Billing-01/02, TD-Marketing-01, TD-Admin-01), architecture.md Paddle-Status aktualisiert
+9. **Umlaute-Fix:** ue/oe/ae → ü/ö/ä in page-v2.tsx (26), PricingClient.tsx (22), FoundingPartnerBanner.tsx (2). Nur User-facing Text, keine Code-Kommentare
+10. **AGB-Preistabelle aktualisiert (TD-Marketing-01):** Neue Listenpreise 349/699/1.299, Paddle-Paragraph durch SEPA ersetzt, Founding-Partner-Sonderkonditionen-Klausel eingefuegt (§4 Abs. 7), Onboarding-Schritt "Paddle" → "SEPA"
+11. **Verifikations-Audit A.1-A.12:** Alle 12 Checks bestanden (Paddle deaktiviert, Calendly 9 Nutzungen, 0 alte CTAs, 0 Fake-Testimonials, 0 Garantie-Versprechen, Footer-Hinweis 2x, Meta-Tags korrekt, keine /onboarding-Links auf Marketing)
+
+### Paddle-Status
+Application abgelehnt 07.04.2026 (Kategorien AI Chatbots + Marketing Software
+ausserhalb AUP). User-facing Checkout komplett deaktiviert, Backend-Code bleibt.
+
+### Founding-Partner-Phase
+Laeuft komplett ohne automatisierten Checkout:
+- Prospect bucht Demo-Call via Calendly (30 Min)
+- Im Call: Qualifizierung + Vertragsbesprechung
+- Nach Call: PDF-Vertrag + PDF-Rechnung per Mail
+- Kunde zahlt per SEPA-Ueberweisung
+- Tenant wird manuell aktiviert (Admin-UI paddlePlan-Selector)
+
+### Offen (Rest-DSGVO + neue Tech-Debt)
+- **TD-Compliance-07 (pilot-blockierend):** EU-Vertreter nach Art. 27 DSGVO
+- **TD-Compliance-09 (pilot-blockierend):** Telefonnummer im Impressum
+- **TD-Billing-01 (pilot-skalierungsrelevant):** Payment-Provider-Ersatz
+- **TD-Marketing-01:** AGB-Preistabelle anpassen
+- **TD-Admin-01:** Admin-UI fuer manuelle Tenant-Aktivierung nach SEPA
 
 ---
 

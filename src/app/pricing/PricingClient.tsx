@@ -11,7 +11,6 @@ import {
   Shield,
   Mic,
   Mail,
-  Instagram,
   BarChart3,
   Sparkles,
   Zap,
@@ -33,30 +32,27 @@ import {
   SlidersHorizontal,
   Link2,
   Server,
-  Phone,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 
 // ═══════════════════════════════════════════════════════
 // DATEN
-// ══════════════════════════════════════════════════��════
+// ═══════════════════════════════════════════════════════
 
-const CONTACT_LINK = "mailto:hello@ai-conversion.ai";
+const CALENDLY_URL = "https://calendly.com/philipp-ai-conversion/30min";
 
 interface Plan {
   name: string;
   icon: React.ReactNode;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  setupFee: string;
+  listPrice: number;
+  foundingPrice: number;
   tagline: string;
   description: string;
   bots: string;
   tenants: string;
   conversations: string;
   features: { text: string; icon: React.ReactNode }[];
-  cta: string;
-  ctaMsg: string;
   popular: boolean;
 }
 
@@ -64,11 +60,10 @@ const plans: Plan[] = [
   {
     name: "Starter",
     icon: <Zap className="h-5 w-5" />,
-    monthlyPrice: 497,
-    yearlyPrice: 4970,
-    setupFee: "697",
-    tagline: "Dein erster KI-Vertriebsmitarbeiter",
-    description: "Perfekt fuer den Einstieg in automatisierten KI-Vertrieb",
+    listPrice: 349,
+    foundingPrice: 233,
+    tagline: "Ihr erster KI-Vertriebsmitarbeiter",
+    description: "Perfekt für den Einstieg in automatisierten KI-Vertrieb",
     bots: "1 KI-Bot",
     tenants: "1 Mandant",
     conversations: "500 Konversationen/Monat",
@@ -76,79 +71,59 @@ const plans: Plan[] = [
       { text: "WhatsApp KI-Vertriebsbot (Claude Sonnet)", icon: <Bot className="h-3.5 w-3.5" /> },
       { text: "Multisprachen-Bot (erkennt Sprache automatisch)", icon: <Globe className="h-3.5 w-3.5" /> },
       { text: "Lead-Scoring 0-100 automatisch", icon: <Target className="h-3.5 w-3.5" /> },
-      { text: "Lead-Pipeline Uebersicht (MQL → SQL → Customer)", icon: <TrendingUp className="h-3.5 w-3.5" /> },
+      { text: "Lead-Pipeline Übersicht (MQL → SQL → Customer)", icon: <TrendingUp className="h-3.5 w-3.5" /> },
       { text: "ROI-Rechner im Tenant-Dashboard", icon: <BarChart3 className="h-3.5 w-3.5" /> },
       { text: "DSGVO-konforme Datenspeicherung (Frankfurt)", icon: <Shield className="h-3.5 w-3.5" /> },
       { text: "E-Mail Support", icon: <Mail className="h-3.5 w-3.5" /> },
     ],
-    cta: "Jetzt starten",
-    ctaMsg: "Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20den%20Starter-Plan!",
     popular: false,
   },
   {
     name: "Growth",
     icon: <Rocket className="h-5 w-5" />,
-    monthlyPrice: 1297,
-    yearlyPrice: 12970,
-    setupFee: "1.297",
-    tagline: "Ersetzt 1\u20132 Vertriebsmitarbeiter",
-    description: "Spart 5.000\u20138.000\u20ac/Monat bei 24/7 Verfuegbarkeit",
+    listPrice: 699,
+    foundingPrice: 467,
+    tagline: "Skaliert Ihren Vertrieb",
+    description: "Erweiterte KI-Features für wachsende Teams",
     bots: "3 KI-Bots",
     tenants: "3 Mandanten",
     conversations: "2.000 Konversationen/Monat",
     features: [
       { text: "Alles aus Starter, plus:", icon: <Sparkles className="h-3.5 w-3.5" /> },
-      { text: "Lead-Persoenlichkeitsanalyse (analytisch/emotional/dominant)", icon: <Brain className="h-3.5 w-3.5" /> },
+      { text: "Lead-Persönlichkeitsanalyse (analytisch/emotional/dominant)", icon: <Brain className="h-3.5 w-3.5" /> },
       { text: "Einwand-Bibliothek (lernt aus jedem Nein)", icon: <BookOpen className="h-3.5 w-3.5" /> },
-      { text: "Gespraechs-Heatmap (wo springen Leads ab?)", icon: <BarChart3 className="h-3.5 w-3.5" /> },
+      { text: "Gesprächs-Heatmap (wo springen Leads ab?)", icon: <BarChart3 className="h-3.5 w-3.5" /> },
       { text: "Termin-Intelligenz (optimiert nach Tag/Zeit)", icon: <Calendar className="h-3.5 w-3.5" /> },
-      { text: "A/B Testing fuer Bot-Prompts", icon: <SlidersHorizontal className="h-3.5 w-3.5" /> },
+      { text: "A/B Testing für Bot-Prompts", icon: <SlidersHorizontal className="h-3.5 w-3.5" /> },
       { text: "WhatsApp-Broadcast an alle aktiven Leads", icon: <Megaphone className="h-3.5 w-3.5" /> },
       { text: "Multi-AI Dashboard (Claude + GPT-4o)", icon: <Sparkles className="h-3.5 w-3.5" /> },
       { text: "Priority Support (24h Reaktionszeit)", icon: <Headphones className="h-3.5 w-3.5" /> },
     ],
-    cta: "Jetzt starten",
-    ctaMsg: "Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20den%20Growth-Plan!",
     popular: true,
   },
   {
     name: "Professional",
     icon: <Building2 className="h-5 w-5" />,
-    monthlyPrice: 2497,
-    yearlyPrice: 24970,
-    setupFee: "1.997",
-    tagline: "Dein komplettes KI-Vertriebsteam",
-    description: "Maximale Power fuer grosse Vertriebsorganisationen",
+    listPrice: 1299,
+    foundingPrice: 869,
+    tagline: "Ihr komplettes KI-Vertriebsteam",
+    description: "Maximale Power für große Vertriebsorganisationen",
     bots: "10 KI-Bots",
     tenants: "10 Mandanten",
     conversations: "Unbegrenzte Konversationen",
     features: [
       { text: "Alles aus Growth, plus:", icon: <Sparkles className="h-3.5 w-3.5" /> },
-      { text: "Gespraechs-Coaching (Bot analysiert sich selbst)", icon: <Users className="h-3.5 w-3.5" /> },
+      { text: "Gesprächs-Coaching (Bot analysiert sich selbst)", icon: <Users className="h-3.5 w-3.5" /> },
       { text: "CRM-Sync (HubSpot, Salesforce, Pipedrive)", icon: <Link2 className="h-3.5 w-3.5" /> },
       { text: "Kalender-Integration (Google/Outlook direkt buchen)", icon: <Calendar className="h-3.5 w-3.5" /> },
       { text: "Bot-Persona Designer (visuell ohne Prompt)", icon: <Palette className="h-3.5 w-3.5" /> },
-      { text: "Voice Agent Add-on verfuegbar", icon: <Mic className="h-3.5 w-3.5" /> },
+      { text: "Voice Agent Add-on verfügbar", icon: <Mic className="h-3.5 w-3.5" /> },
       { text: "Dediziertes Onboarding durch unser Team", icon: <Rocket className="h-3.5 w-3.5" /> },
-      { text: "SLA & persoenlicher Ansprechpartner", icon: <Shield className="h-3.5 w-3.5" /> },
+      { text: "SLA & persönlicher Ansprechpartner", icon: <Shield className="h-3.5 w-3.5" /> },
     ],
-    cta: "Jetzt starten",
-    ctaMsg: "Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20den%20Professional-Plan!",
     popular: false,
   },
 ];
-
-const enterprise = {
-  name: "Enterprise",
-  monthlyPrice: "ab 6.000",
-  features: [
-    "Unbegrenzt Bots & Mandanten",
-    "White-Label Loesung",
-    "Custom Integrationen",
-    "Eigene Serverinfrastruktur moeglich",
-    "Dediziertes Onboarding & persoenlicher Ansprechpartner",
-  ],
-};
 
 interface AddOn {
   name: string;
@@ -160,7 +135,7 @@ interface AddOn {
 const addons: AddOn[] = [
   { name: "Marketing Booster", price: "299", icon: <Megaphone className="h-5 w-5" />, description: "KI-Kampagnen-Generator, A/B Testing, QR-Codes & Broadcast Manager" },
   { name: "HubSpot Sync", price: "199", icon: <Link2 className="h-5 w-5" />, description: "Automatischer Lead-Push bei Score >70 mit Lifecycle-Stage Mapping" },
-  { name: "Weekly Report", price: "99", icon: <BarChart3 className="h-5 w-5" />, description: "Woechentlicher KI-Report: Trends, Top-Leads, Pipeline-Analyse per E-Mail" },
+  { name: "Weekly Report", price: "99", icon: <BarChart3 className="h-5 w-5" />, description: "Wöchentlicher KI-Report: Trends, Top-Leads, Pipeline-Analyse per E-Mail" },
   { name: "White-Label", price: "500", icon: <Palette className="h-5 w-5" />, description: "Eigenes Branding, eigene Domain, kein AI Conversion Logo" },
 ];
 
@@ -185,16 +160,16 @@ const comparisonRows: ComparisonRow[] = [
   { feature: "Multisprachen-Bot", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "Lead-Scoring 0\u2013100", tooltip: "KI bewertet jeden Lead 0-100 automatisch", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "Competitor-Mentions Erkennung", starter: true, growth: true, professional: true, enterprise: true },
-  { feature: "Lead-Persoenlichkeitsanalyse", starter: false, growth: true, professional: true, enterprise: true },
+  { feature: "Lead-Persönlichkeitsanalyse", starter: false, growth: true, professional: true, enterprise: true },
   { feature: "Einwand-Bibliothek", starter: false, growth: true, professional: true, enterprise: true },
-  { feature: "Gespraechs-Heatmap", tooltip: "Zeigt wo Leads abspringen", starter: false, growth: true, professional: true, enterprise: true },
+  { feature: "Gesprächs-Heatmap", tooltip: "Zeigt wo Leads abspringen", starter: false, growth: true, professional: true, enterprise: true },
   { feature: "A/B Testing Bot-Prompts", starter: false, growth: true, professional: true, enterprise: true },
-  { feature: "Gespraechs-Coaching", starter: false, growth: false, professional: true, enterprise: true },
+  { feature: "Gesprächs-Coaching", starter: false, growth: false, professional: true, enterprise: true },
   { feature: "Bot-Persona Designer", tooltip: "Bot visuell konfigurieren ohne Prompts", starter: false, growth: false, professional: true, enterprise: true },
   { feature: "Vertrieb & Pipeline", category: true, starter: "", growth: "", professional: "", enterprise: "" },
-  { feature: "Lead-Pipeline Uebersicht", starter: true, growth: true, professional: true, enterprise: true },
+  { feature: "Lead-Pipeline Übersicht", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "ROI-Rechner", tooltip: "Zeigt live wie viel der Bot einspart", starter: true, growth: true, professional: true, enterprise: true },
-  { feature: "Termin-Intelligenz", tooltip: "Optimiert Terminvorschlaege nach Tag/Zeit", starter: false, growth: true, professional: true, enterprise: true },
+  { feature: "Termin-Intelligenz", tooltip: "Optimiert Terminvorschläge nach Tag/Zeit", starter: false, growth: true, professional: true, enterprise: true },
   { feature: "WhatsApp-Broadcast", starter: false, growth: true, professional: true, enterprise: true },
   { feature: "CRM-Sync (HubSpot, Salesforce, Pipedrive)", starter: false, growth: false, professional: true, enterprise: true },
   { feature: "Kalender-Integration", starter: false, growth: false, professional: true, enterprise: true },
@@ -206,16 +181,8 @@ const comparisonRows: ComparisonRow[] = [
   { feature: "Eigene Serverinfrastruktur", starter: false, growth: false, professional: false, enterprise: true },
   { feature: "E-Mail Support", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "Priority Support (24h)", starter: false, growth: true, professional: true, enterprise: true },
-  { feature: "SLA & persoenlicher Ansprechpartner", starter: false, growth: false, professional: true, enterprise: true },
+  { feature: "SLA & persönlicher Ansprechpartner", starter: false, growth: false, professional: true, enterprise: true },
   { feature: "Dediziertes Onboarding", starter: false, growth: false, professional: true, enterprise: true },
-];
-
-// Chat-Nachrichten fuer Hero-Animation
-const chatMessages = [
-  { from: "user", text: "Hi, ich suche eine Loesung fuer Lead-Qualifizierung" },
-  { from: "bot", text: "Willkommen! Ich helfe Ihnen gerne. Wie viele Leads erhalten Sie aktuell pro Monat?" },
-  { from: "user", text: "Ca. 200, aber wir schaffen es nicht alle zu kontaktieren" },
-  { from: "bot", text: "Verstehe. Mit unserer KI qualifizieren wir alle 200 automatisch in unter 2 Minuten. Soll ich Ihnen einen Termin vorschlagen?" },
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -226,147 +193,12 @@ function formatPrice(price: number): string {
   return price.toLocaleString("de-DE");
 }
 
-function formatMonthlyFromYearly(yearlyPrice: number): string {
-  return Math.round(yearlyPrice / 12).toLocaleString("de-DE");
-}
-
 // ═══════════════════════════════════════════════════════
 // KOMPONENTEN
 // ═══════════════════════════════════════════════════════
 
-// Animierter Counter
-function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
-  const [display, setDisplay] = useState("0");
-
-  useEffect(() => {
-    if (!isInView) return;
-    const num = parseInt(target, 10);
-    if (isNaN(num)) { setDisplay(target); return; }
-    const duration = 1200;
-    const start = performance.now();
-    function animate(now: number) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(eased * num).toString());
-      if (progress < 1) requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-  }, [isInView, target]);
-
-  return <span ref={ref}>{display}{suffix}</span>;
-}
-
-// Chat-Mockup im Hero
-function ChatMockup() {
-  const [visibleCount, setVisibleCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true });
-
-  useEffect(() => {
-    if (!isInView) return;
-    const timers = chatMessages.map((_, i) =>
-      setTimeout(() => setVisibleCount(i + 1), 600 + i * 1200)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [isInView]);
-
-  return (
-    <div ref={ref} className="mx-auto w-full max-w-sm">
-      {/* Handy-Rahmen */}
-      <div className="rounded-3xl border border-white/[0.08] bg-navy-900/80 p-1 shadow-2xl shadow-purple-500/[0.06]">
-        {/* Status-Bar */}
-        <div className="flex items-center justify-between rounded-t-[20px] bg-navy-800/80 px-5 py-2.5">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/20">
-              <Bot className="h-4 w-4 text-purple-400" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-white">AI Conversion Bot</p>
-              <p className="text-[10px] text-emerald-400">Online</p>
-            </div>
-          </div>
-          <Phone className="h-4 w-4 text-slate-600" />
-        </div>
-        {/* Chat-Bereich */}
-        <div className="space-y-2.5 px-4 py-4" style={{ minHeight: 200 }}>
-          {chatMessages.slice(0, visibleCount).map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 12, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-[12px] leading-relaxed ${
-                  msg.from === "user"
-                    ? "rounded-br-sm bg-purple-500/20 text-purple-100"
-                    : "rounded-bl-sm bg-white/[0.06] text-slate-300"
-                }`}
-              >
-                {msg.text}
-              </div>
-            </motion.div>
-          ))}
-          {visibleCount < chatMessages.length && visibleCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start"
-            >
-              <div className="flex gap-1 rounded-2xl bg-white/[0.06] px-4 py-2.5">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-500" style={{ animationDelay: "0ms" }} />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-500" style={{ animationDelay: "150ms" }} />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-500" style={{ animationDelay: "300ms" }} />
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Billing-Toggle
-function BillingToggle({ isYearly, onToggle }: { isYearly: boolean; onToggle: () => void }) {
-  return (
-    <div className="mx-auto inline-flex items-center gap-5 rounded-full border border-[#C9A84C]/20 bg-navy-900/60 px-6 py-3 backdrop-blur-sm">
-      <span className={`text-base font-semibold transition-colors ${!isYearly ? "text-white" : "text-slate-500"}`}>
-        Monatlich
-      </span>
-      <button
-        onClick={onToggle}
-        className="relative h-9 w-[4.5rem] rounded-full bg-navy-800 border border-[#C9A84C]/30 transition-colors hover:border-[#C9A84C]/50"
-        aria-label="Abrechnungszeitraum wechseln"
-      >
-        <motion.div
-          className="absolute top-1 h-7 w-7 rounded-full shadow-lg"
-          style={{ background: "linear-gradient(135deg, #C9A84C, #a8893a)" }}
-          animate={{ left: isYearly ? 37 : 3 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        />
-      </button>
-      <span className={`text-base font-semibold transition-colors ${isYearly ? "text-white" : "text-slate-500"}`}>
-        Jaehrlich
-      </span>
-      <span className={`rounded-full px-4 py-1.5 text-sm font-bold transition-all duration-300 ${
-        isYearly ? "bg-[#C9A84C]/15 text-[#C9A84C]" : "bg-white/[0.04] text-slate-500"
-      }`}>
-        2 Monate gratis &ndash; 17% sparen
-      </span>
-    </div>
-  );
-}
-
 // Plan-Karte
-function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; index: number }) {
-  const displayPrice = isYearly ? formatMonthlyFromYearly(plan.yearlyPrice) : formatPrice(plan.monthlyPrice);
-  const totalYearly = isYearly ? formatPrice(plan.yearlyPrice) : null;
-  const saved = isYearly ? formatPrice(plan.monthlyPrice * 12 - plan.yearlyPrice) : null;
-
+function PlanCard({ plan, index }: { plan: Plan; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 32 }}
@@ -416,22 +248,31 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
         </p>
         <p className="mt-1 text-xs text-slate-500">{plan.description}</p>
 
-        {/* Preis */}
+        {/* Preis — Founding-Partner-Darstellung */}
         <div className="mt-5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#C9A84C]/70 mb-1">Founding Partner</p>
           <div className="flex items-baseline gap-1.5">
             <span className={`text-4xl font-extrabold tracking-tight ${plan.popular ? "text-[#C9A84C]" : "text-white"}`}>
-              {displayPrice}€
+              {formatPrice(plan.foundingPrice)}€
             </span>
             <span className="text-sm text-slate-500">/Monat</span>
           </div>
-          {totalYearly && (
-            <p className="mt-1 text-xs text-[#C9A84C]/80">
-              {totalYearly}€/Jahr &ndash; {saved}€ gespart
-            </p>
-          )}
-          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/15 bg-amber-500/[0.06] px-3 py-1 text-xs font-medium text-amber-400/90">
-            + {plan.setupFee}€ einmalige Setup-Fee
+          <p className="mt-1 text-xs text-slate-600">
+            statt <span className="line-through">{formatPrice(plan.listPrice)}€/Monat</span>
           </p>
+
+          {/* Founding-Vorteile */}
+          <div className="mt-3 space-y-1">
+            <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+              <Check className="h-3 w-3 shrink-0" /> 33% Rabatt (lebenslang, solange Vertrag ungekündigt)
+            </p>
+            <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+              <Check className="h-3 w-3 shrink-0" /> 30 Tage kostenlos starten
+            </p>
+            <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+              <Check className="h-3 w-3 shrink-0" /> 0€ Setup-Gebühr in der Pilotphase
+            </p>
+          </div>
         </div>
 
         {/* Eckdaten */}
@@ -468,7 +309,7 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
       {/* CTA */}
       <div className="p-8 pt-0">
         <a
-          href={`${CONTACT_LINK}?subject=${encodeURIComponent(plan.name + ' Plan Anfrage')}`}
+          href={CALENDLY_URL}
           target="_blank"
           rel="noopener noreferrer"
           className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-semibold transition-all duration-300 ${
@@ -478,7 +319,7 @@ function PlanCard({ plan, isYearly, index }: { plan: Plan; isYearly: boolean; in
           }`}
         >
           <MessageCircle className="h-4 w-4" />
-          {plan.cta}
+          Demo-Call buchen (30 Min)
           <ArrowRight className="h-4 w-4" />
         </a>
       </div>
@@ -499,10 +340,6 @@ function ComparisonCell({ value }: { value: boolean | string }) {
 }
 
 // ═══════════════════════════════════════════════════════
-// SEITE
-// ═══════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════
 // ROI-RECHNER
 // ═══════════════════════════════════════════════════════
 
@@ -513,17 +350,19 @@ function RoiCalculator() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
-  const CONVERSION_BOOST = 1.4; // +40% Conversion-Verbesserung
+  const CONVERSION_BOOST = 1.4;
   const boostedRate = Math.min(currentRate * CONVERSION_BOOST, 100);
 
   const currentRevenue = leadsPerMonth * (currentRate / 100) * avgDeal;
   const boostedRevenue = leadsPerMonth * (boostedRate / 100) * avgDeal;
   const monthlyGain = boostedRevenue - currentRevenue;
 
+  // ROI-Baseline: Listenpreise, Setup=0 in Pilotphase
+  // Laut ConvArch-Entscheidung vom 16.04.2026, Frage #3
   const planCosts = [
-    { name: "Starter", monthly: 497, setup: 697 },
-    { name: "Growth", monthly: 1297, setup: 1297 },
-    { name: "Professional", monthly: 2497, setup: 1997 },
+    { name: "Starter", monthly: 349, setup: 0 },
+    { name: "Growth", monthly: 699, setup: 0 },
+    { name: "Professional", monthly: 1299, setup: 0 },
   ];
 
   function SliderInput({ label, value, onChange, min, max, step, unit, format }: {
@@ -570,6 +409,16 @@ function RoiCalculator() {
         transition={{ duration: 0.6 }}
         className="text-center mb-10"
       >
+        {/* ROI-Disclaimer */}
+        <div className="mx-auto mb-6 max-w-2xl rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-5 py-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400/70" />
+            <p className="text-xs text-amber-200/80 leading-relaxed text-left">
+              <span className="font-semibold text-amber-200">Beispielrechnung — noch keine echten Pilot-Daten.</span>{" "}
+              Diese Rechnung zeigt theoretische Einsparungen basierend auf branchenueblichen Annahmen. Echte Pilot-Daten werden ab Q3 2026 hier publiziert.
+            </p>
+          </div>
+        </div>
         <p className="text-[13px] font-medium uppercase tracking-[0.12em]" style={{ color: "#C9A84C" }}>
           Return on Investment
         </p>
@@ -587,7 +436,6 @@ function RoiCalculator() {
         transition={{ duration: 0.6, delay: 0.2 }}
         className="grid gap-6 lg:grid-cols-2"
       >
-        {/* Eingabe-Slider */}
         <div className="rounded-2xl border border-white/[0.06] p-6 space-y-6" style={{ background: "#0e0e1a" }}>
           <div className="flex items-center gap-2 mb-2">
             <SlidersHorizontal className="h-4 w-4 text-[#C9A84C]" />
@@ -601,14 +449,12 @@ function RoiCalculator() {
             min={1} max={30} step={1} unit="%" />
         </div>
 
-        {/* Ergebnis */}
         <div className="rounded-2xl border border-[rgba(201,168,76,0.15)] p-6" style={{ background: "rgba(201,168,76,0.02)" }}>
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp className="h-4 w-4 text-[#C9A84C]" />
             <span className="text-sm font-semibold text-slate-200">Ihr Potenzial mit AI Conversion</span>
           </div>
 
-          {/* Vorher / Nachher */}
           <div className="grid grid-cols-2 gap-3 mb-5">
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
               <p className="text-[10px] text-slate-500 mb-1">Aktuell ({currentRate}%)</p>
@@ -626,7 +472,6 @@ function RoiCalculator() {
             </div>
           </div>
 
-          {/* Mehreinnahmen */}
           <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-4 text-center mb-5">
             <p className="text-[10px] text-emerald-400/60 mb-1">Mehreinnahmen pro Monat</p>
             <p className="text-3xl font-bold text-emerald-400" style={{ fontFamily: "Georgia, serif" }}>
@@ -634,8 +479,7 @@ function RoiCalculator() {
             </p>
           </div>
 
-          {/* Amortisierung pro Plan */}
-          <p className="text-[10px] text-slate-500 mb-2">Amortisierung (Setup + 1. Monat):</p>
+          <p className="text-[10px] text-slate-500 mb-2">Amortisierung (1. Monat):</p>
           <div className="space-y-2">
             {planCosts.map((plan) => {
               const totalFirstMonth = plan.monthly + plan.setup;
@@ -663,14 +507,16 @@ function RoiCalculator() {
   );
 }
 
-export default function PricingPage() {
-  const [isYearly, setIsYearly] = useState(false);
+// ═══════════════════════════════════════════════════════
+// SEITE
+// ═══════════════════════════════════════════════════════
 
+export default function PricingPage() {
   return (
     <div className="min-h-screen bg-navy-950">
       <Navigation />
 
-      {/* ── Ambient Glows ── */}
+      {/* Ambient Glows */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-purple-500/[0.04] blur-[140px]" />
         <div className="absolute right-[10%] top-[60%] h-[400px] w-[400px] rounded-full bg-[#C9A84C]/[0.02] blur-[120px]" />
@@ -679,122 +525,54 @@ export default function PricingPage() {
       {/* ═══════ HERO ═══════ */}
       <section className="relative z-10 overflow-hidden pt-36 pb-16 sm:pt-40">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            {/* Links: Copy */}
-            <div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/15 bg-[#C9A84C]/[0.05] px-4 py-1.5">
-                  <Shield className="h-3.5 w-3.5 text-[#C9A84C]" />
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#C9A84C]/80">
-                    Made in Germany &bull; DSGVO &bull; Frankfurt hosted
-                  </span>
-                </div>
-              </motion.div>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="font-extrabold tracking-tight text-white"
-                style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", lineHeight: 1.15 }}
-              >
-                Dein Vertrieb arbeitet{" "}
-                <span style={{ color: "#C9A84C" }}>24/7 automatisch</span>
-                {" "}&ndash; auch ohne dich
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="mt-5 max-w-lg text-lg leading-relaxed text-slate-400"
-              >
-                WhatsApp-first KI Sales Agent, der Leads qualifiziert, Termine bucht
-                und Einwaende behandelt. Waehrend du schlaefst.
-              </motion.p>
-
-              {/* Risiko-Umkehr */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="mt-6 inline-flex items-center gap-3 rounded-xl border border-[#C9A84C]/20 bg-[#C9A84C]/[0.06] px-5 py-3"
-              >
-                <Shield className="h-5 w-5 shrink-0 text-[#C9A84C]" />
-                <p className="text-sm font-medium text-[#C9A84C]/90">
-                  Bis zu 100 qualifizierte Leads in 30 Tagen &ndash; oder Geld zurueck
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="mt-8 flex flex-wrap items-center gap-4"
-              >
-                <a
-                  href={`${CONTACT_LINK}?subject=Demo%20Anfrage`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-full bg-purple-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Demo anfragen
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-                <a href="#pricing" className="text-sm font-medium text-slate-500 transition hover:text-white">
-                  Preise ansehen &darr;
-                </a>
-              </motion.div>
-            </div>
-
-            {/* Rechts: Chat-Mockup */}
+          <div className="max-w-3xl mx-auto text-center">
             <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="hidden lg:flex lg:items-center lg:justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
             >
-              <ChatMockup />
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/15 bg-[#C9A84C]/[0.05] px-4 py-1.5">
+                <Shield className="h-3.5 w-3.5 text-[#C9A84C]" />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#C9A84C]/80">
+                  Made in Germany &bull; DSGVO &bull; Frankfurt hosted
+                </span>
+              </div>
             </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="font-extrabold tracking-tight text-white"
+              style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", lineHeight: 1.15 }}
+            >
+              Transparente Preise fuer{" "}
+              <span style={{ color: "#C9A84C" }}>Founding Partner</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mt-5 max-w-lg mx-auto text-lg leading-relaxed text-slate-400"
+            >
+              Monatlich kündbar. Keine versteckten Kosten. 33% Founding-Partner-Rabatt, lebenslang.
+            </motion.p>
           </div>
         </div>
       </section>
 
-      {/* ═══════ ROI COUNTER ═══════ */}
-      <section className="relative z-10 mx-auto max-w-4xl px-6 py-12">
-        <div className="grid grid-cols-3 gap-6">
-          {[
-            { value: "24/7", label: "Immer verfuegbar", icon: <Clock className="h-6 w-6" /> },
-            { value: "80", label: "Leads automatisch qualifiziert", suffix: "%", icon: <Target className="h-6 w-6" /> },
-            { value: "48", label: "Bis zum ersten Termin", suffix: "h", icon: <Calendar className="h-6 w-6" /> },
-          ].map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.12 }}
-              className="text-center"
-            >
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C9A84C]/10 text-[#C9A84C]">
-                {item.icon}
-              </div>
-              <p className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                {item.value === "24/7" ? "24/7" : <AnimatedCounter target={item.value} suffix={item.suffix} />}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">{item.label}</p>
-            </motion.div>
-          ))}
+      {/* ═══════ FOUNDING DISCLAIMER ═══════ */}
+      <section className="relative z-10 mx-auto max-w-3xl px-6 pb-8">
+        <div className="rounded-xl border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.03)] px-6 py-4">
+          <p className="text-xs text-slate-300 leading-relaxed text-center">
+            Founding Partner zahlen 33% weniger, solange der Vertrag ungekündigt bleibt. Die durchgestrichenen Preise gelten ab Vollverfügbarkeit. Founding Partner aus der aktuellen Pilotphase sichern sich ihre Konditionen dauerhaft.
+          </p>
         </div>
       </section>
 
-      {/* ═══════ PRICING TOGGLE ═══════ */}
-      <section id="pricing" className="relative z-10 mx-auto max-w-6xl px-6 pt-8 pb-4">
+      {/* ═══════ PRICING HEADER ═══════ */}
+      <section id="pricing" className="relative z-10 mx-auto max-w-6xl px-6 pt-4 pb-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -806,21 +584,8 @@ export default function PricingPage() {
             Transparente Preise
           </p>
           <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Waehle deinen Plan
+            Wählen Sie Ihren Plan
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm text-slate-500">
-            Monatlich kuendbar. Keine versteckten Kosten. 30-Tage-Geld-zurueck-Garantie.
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mt-8 text-center"
-        >
-          <BillingToggle isYearly={isYearly} onToggle={() => setIsYearly(!isYearly)} />
         </motion.div>
       </section>
 
@@ -828,18 +593,17 @@ export default function PricingPage() {
       <section className="relative z-10 mx-auto max-w-6xl px-6 pt-8 pb-8">
         <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
           {plans.map((plan, i) => (
-            <PlanCard key={plan.name} plan={plan} isYearly={isYearly} index={i} />
+            <PlanCard key={plan.name} plan={plan} index={i} />
           ))}
         </div>
 
-        {/* Meta-Kosten Hinweis */}
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           className="mt-6 text-center text-xs text-slate-600"
         >
-          Zusaetzlich fallen WhatsApp-Nachrichtenkosten an (ca. 0,11€ pro Marketing-Nachricht in DE, direkt ueber Meta).
+          Zusätzlich fallen WhatsApp-Nachrichtenkosten an (ca. 0,11€ pro Marketing-Nachricht in DE, direkt über Meta).
           Service-Antworten innerhalb 24h sind kostenlos.
         </motion.p>
       </section>
@@ -853,13 +617,8 @@ export default function PricingPage() {
           className="rounded-2xl border border-[#C9A84C]/15 bg-gradient-to-r from-[#C9A84C]/[0.04] via-navy-900/80 to-[#C9A84C]/[0.04] px-8 py-6 text-center"
         >
           <p className="text-base leading-relaxed text-slate-300 sm:text-lg">
-            <span className="font-bold" style={{ color: "#C9A84C" }}>Growth</span> ersetzt
-            1&ndash;2 Vertriebsmitarbeiter
-            <span className="text-slate-500"> (Kosten: 4.000&ndash;8.000€/Monat)</span>
-            {" "}&ndash; bei{" "}
-            <span className="font-bold text-white">1.497€/Monat</span>
-            {" "}und{" "}
-            <span className="font-semibold text-purple-400">24/7 Verfuegbarkeit</span>.
+            <span className="font-bold" style={{ color: "#C9A84C" }}>Growth</span>{" "}
+            skaliert Ihren Vertrieb, ohne ein weiteres Teammitglied einzustellen.
           </p>
         </motion.div>
       </section>
@@ -883,16 +642,22 @@ export default function PricingPage() {
                 <div>
                   <h3 className="text-2xl font-bold text-white sm:text-3xl">Enterprise</h3>
                   <p className="text-sm" style={{ color: "rgba(201,168,76,0.6)" }}>
-                    {enterprise.monthlyPrice}��/Monat &bull; individuell angepasst
+                    Auf Anfrage &mdash; individuelle Konditionen für größere Teams
                   </p>
                 </div>
               </div>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-400">
-                Massgeschneiderte Loesung fuer Unternehmen mit hohem Volumen.
+                Maßgeschneiderte Lösung für Unternehmen mit hohem Volumen.
                 White-Label, eigene Infrastruktur und dedizierter Support.
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {enterprise.features.map((f, i) => (
+                {[
+                  "Unbegrenzt Bots & Mandanten",
+                  "White-Label Lösung",
+                  "Custom Integrationen",
+                  "Eigene Serverinfrastruktur moeglich",
+                  "Dediziertes Onboarding & persönlicher Ansprechpartner",
+                ].map((f, i) => (
                   <span key={i} className="inline-flex items-center gap-2 text-sm text-slate-300">
                     <Check className="h-4 w-4 shrink-0 text-[#C9A84C]" />
                     {f}
@@ -902,14 +667,14 @@ export default function PricingPage() {
             </div>
             <div className="flex flex-col items-center gap-4 lg:items-end">
               <a
-                href={`${CONTACT_LINK}?subject=Enterprise%20Anfrage`}
+                href={CALENDLY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-full px-8 py-4 text-sm font-bold text-white shadow-lg transition hover:scale-[1.02]"
                 style={{ background: "linear-gradient(135deg, #C9A84C, #a8893a)", boxShadow: "0 4px 24px rgba(201,168,76,0.2)" }}
               >
                 <MessageCircle className="h-4 w-4" />
-                Demo buchen
+                Demo-Call buchen (30 Min)
                 <ArrowRight className="h-4 w-4" />
               </a>
               <span className="text-xs text-slate-600">Antwort innerhalb 24 Stunden</span>
@@ -927,7 +692,6 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* ═══════ ADD-ONS ═══════ */}
       {/* ═══════ ROI-RECHNER ═══════ */}
       <RoiCalculator />
 
@@ -946,7 +710,7 @@ export default function PricingPage() {
             Optionale Add-ons
           </h2>
           <p className="mt-3 text-sm text-slate-500">
-            Fuer alle Pakete buchbar. Jederzeit hinzufueg- und kuendbar.
+            Für alle Pakete buchbar. Jederzeit hinzufüg- und kündbar.
           </p>
         </motion.div>
 
@@ -1061,24 +825,24 @@ export default function PricingPage() {
           style={{ boxShadow: "0 0 80px rgba(201,168,76,0.04), 0 0 160px rgba(201,168,76,0.02)" }}
         >
           <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Bereit, deinen Vertrieb zu automatisieren?
+            Bereit, Founding Partner zu werden?
           </h2>
           <p className="mx-auto mt-4 max-w-md text-base text-slate-500">
-            Starte in unter 48 Stunden. Monatlich kuendbar. 30-Tage-Geld-zurueck-Garantie.
+            Persönliches Onboarding. Monatlich kündbar. 33% Founding-Partner-Rabatt.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <a
-              href={`${CONTACT_LINK}?subject=AI%20Conversion%20Anfrage`}
+              href={CALENDLY_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-full bg-purple-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-500 hover:scale-[1.02]"
             >
               <MessageCircle className="h-4 w-4" />
-              Jetzt per E-Mail anfragen
+              Demo-Call buchen (30 Min)
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link href="/faq" className="text-sm text-slate-500 transition hover:text-[#C9A84C]">
-              Haeufige Fragen &rarr;
+              Häufige Fragen &rarr;
             </Link>
           </div>
         </motion.div>
@@ -1106,21 +870,26 @@ export default function PricingPage() {
 
       {/* ═══════ FOOTER ═══════ */}
       <footer className="relative z-10 border-t border-white/[0.04] py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 sm:flex-row sm:justify-between">
-          <p className="text-xs text-slate-600">
-            &copy; 2026 AI Conversion. Alle Rechte vorbehalten.
+        <div className="mx-auto max-w-6xl px-6">
+          <p className="mb-4 text-center text-[11px] text-slate-500">
+            AI Conversion befindet sich in der Founding-Partner-Phase. Erste Case Studies werden ab Q3 2026 publiziert.
           </p>
-          <div className="flex items-center gap-6">
-            <Link href="/impressum" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
-              Impressum
-            </Link>
-            <Link href="/datenschutz" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
-              Datenschutz
-            </Link>
-            <Link href="/agb" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
-              AGB
-            </Link>
-            <span className="text-xs text-slate-600">hello@ai-conversion.ai</span>
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+            <p className="text-xs text-slate-600">
+              &copy; 2026 AI Conversion. Alle Rechte vorbehalten.
+            </p>
+            <div className="flex items-center gap-6">
+              <Link href="/impressum" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
+                Impressum
+              </Link>
+              <Link href="/datenschutz" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
+                Datenschutz
+              </Link>
+              <Link href="/agb" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
+                AGB
+              </Link>
+              <span className="text-xs text-slate-600">hello@ai-conversion.ai</span>
+            </div>
           </div>
         </div>
       </footer>
