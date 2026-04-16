@@ -5,11 +5,10 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
 import {
-  Bot, Kanban, Megaphone, UserCheck, MessageSquare, Target,
-  TrendingUp, Send, Brain, Sparkles, BarChart3, CalendarClock,
-  QrCode, FileSignature, Rocket, Shield, Check, ArrowRight,
-  Building2, Hammer, GraduationCap, Briefcase, BookOpen,
-  SlidersHorizontal, Clock, Globe, Lock, Users,
+  Bot, Kanban, Megaphone, UserCheck, Target,
+  TrendingUp, Sparkles, Shield, Check, ArrowRight,
+  Building2, Hammer, GraduationCap, Briefcase,
+  SlidersHorizontal, Globe, Users,
   AlertTriangle,
 } from "lucide-react";
 
@@ -346,97 +345,6 @@ export default function LandingPage() {
             </a>
           </div>
         </motion.div>
-      </section>
-
-      {/* ═══════ 3. FEATURE DEEP-DIVE ═══════ */}
-      <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
-        <div className="text-center mb-14">
-          <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Features</p>
-          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
-            Alles was Ihr Vertrieb <span className="text-[#c9a84c]">braucht</span>
-          </h2>
-        </div>
-
-        {[
-          {
-            title: "Sales Agent", color: "text-emerald-400", icon: Bot,
-            features: [
-              { icon: MessageSquare, name: "WhatsApp KI-Gespräche", desc: "Claude führt empathische Verkaufsgespräche in der Sie-Form, 24/7, in 50+ Sprachen" },
-              { icon: Target, name: "Lead-Scoring 0-100", desc: "GPT-4o bewertet jeden Lead automatisch nach Kaufbereitschaft, Budget und Dringlichkeit" },
-              { icon: Send, name: "Follow-Up Scheduler", desc: "3 Eskalationsstufen (24h/48h/72h) senden automatisch Nachfass-Nachrichten" },
-              { icon: Shield, name: "DSGVO-konform", desc: "AES-256 Verschlüsselung, Consent-Tracking, automatische Datenlöschung" },
-            ],
-          },
-          {
-            title: "CRM Pipeline", color: "text-purple-400", icon: Kanban,
-            features: [
-              { icon: Kanban, name: "5-Spalten Kanban", desc: "Drag & Drop von Neu bis Gewonnen mit Deal-Wert Tracking pro Spalte" },
-              { icon: Brain, name: "Predictive Score", desc: "Claude berechnet Abschlusswahrscheinlichkeit aus 8 Metriken mit Next-Best-Action" },
-              { icon: Sparkles, name: "AI Lead-Analyse", desc: "Interesse, Budget-Signal, Kaufbereitschaft, Einwände und empfohlener nächster Schritt" },
-              { icon: FileSignature, name: "Proposal Generator", desc: "Maßgeschneidertes Angebot + Begleit-E-Mail aus Chat-Historie, als HTML downloadbar" },
-            ],
-          },
-          {
-            title: "Marketing Suite", color: "text-[#c9a84c]", icon: Megaphone,
-            features: [
-              { icon: Megaphone, name: "Kampagnen-Tracking", desc: "Tracking-Links, Funnel-Attribution, KPI-Dashboard und Pipeline-Wert pro Kampagne" },
-              { icon: BarChart3, name: "A/B Testing", desc: "WhatsApp-Opener Varianten testen, automatischer Gewinner-Vorschlag nach 14 Tagen" },
-              { icon: Sparkles, name: "AI Content Creator", desc: "Claude generiert WhatsApp-Opener, Ad Copy, E-Mails, Social Posts und Follow-Up Sequenzen" },
-              { icon: QrCode, name: "QR-Codes & Broadcast", desc: "Tracking-QR-Codes als PNG/Druckvorlage + Segment-basierter WhatsApp-Broadcast" },
-            ],
-          },
-          {
-            title: "Client Portal", color: "text-blue-400", icon: UserCheck,
-            features: [
-              { icon: Rocket, name: "5-Schritte Onboarding", desc: "Kick-off, Bot-Config, WhatsApp-Verifikation, Testphase, Go-Live mit Klick-Checkliste" },
-              { icon: Sparkles, name: "KI-Onboarding-Dokumente", desc: "Claude generiert Begrüßungsmail, Projektplan und FAQ aus dem Gesprächsverlauf" },
-              { icon: Clock, name: "Meilenstein-Tracker", desc: "Manuelle Timeline mit Datum, automatische Status-Änderung bei Abschluss" },
-              { icon: Bot, name: "Auto-Client-Erstellung", desc: "Wird automatisch angelegt wenn ein Lead auf Gewonnen gesetzt wird" },
-            ],
-          },
-        ].map((module, mi) => {
-          const ModIcon = module.icon;
-          const isLeft = mi % 2 === 0;
-          return (
-            <motion.div key={module.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ duration: 0.5 }}
-              className={`mb-16 flex flex-col gap-8 lg:flex-row ${!isLeft ? "lg:flex-row-reverse" : ""} items-center`}>
-              {/* Text */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04]">
-                    <ModIcon className={`h-5 w-5 ${module.color}`} />
-                  </div>
-                  <h3 className="text-xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>{module.title}</h3>
-                </div>
-                <div className="space-y-4">
-                  {module.features.map((f) => {
-                    const FIcon = f.icon;
-                    return (
-                      <div key={f.name} className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
-                          <FIcon className={`h-4 w-4 ${module.color}`} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-200">{f.name}</p>
-                          <p className="text-xs text-slate-500">{f.desc}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              {/* Visual */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className={`rounded-2xl border border-white/[0.06] bg-white/[0.015] p-8 w-full max-w-sm text-center`}>
-                  <ModIcon className={`mx-auto h-16 w-16 ${module.color} opacity-20`} />
-                  <p className="mt-4 text-sm font-semibold text-slate-300">{module.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">{module.features.length} Features</p>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
       </section>
 
       {/* ═══════ DIFFERENZIERUNG — 3 Karten (ersetzt alte Vergleichstabelle) ═══════ */}
