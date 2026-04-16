@@ -189,12 +189,12 @@ export default function LandingPage() {
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
                 className="text-4xl font-bold leading-tight sm:text-5xl" style={{ fontFamily: "Georgia, serif" }}>
                 <span className="bg-gradient-to-r from-[#c9a84c] via-[#e8d5a0] to-[#c9a84c] bg-clip-text text-transparent">KI-Vertrieb</span>
-                <br /><span className="text-white">für DACH-KMU</span>
+                <br /><span className="text-white">für den DACH-Mittelstand</span>
               </motion.h1>
 
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
                 className="mt-4 text-xl text-slate-300 leading-relaxed" style={{ fontFamily: "Georgia, serif" }}>
-                WhatsApp, Web, CRM und Pipeline in einem System &ndash; qualifiziert Ihre Leads automatisch und übergibt nur die heißen.
+                WhatsApp, Web, CRM und Pipeline in einem System &ndash; qualifiziert Ihre Anfragen automatisch und übergibt nur die heißen an Ihren Vertrieb.
               </motion.p>
 
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
@@ -573,7 +573,7 @@ export default function LandingPage() {
 
           <div className="mt-8 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 max-w-2xl mx-auto">
             <p className="text-xs text-slate-400 leading-relaxed text-center">
-              Im Gegenzug erwarten wir: Aktive Mitarbeit über 60 Tage, ehrliches Feedback, und — im Erfolgsfall — ein Testimonial mit echten Zahlen.
+              Im Gegenzug begleiten Sie uns aktiv über 60 Tage als Pilotpartner — mit ehrlichem Feedback und, im Erfolgsfall, einem Testimonial mit echten Zahlen.
             </p>
           </div>
 
