@@ -602,12 +602,23 @@ der Tastatur.
   Focus (Tastatur-Animation abwarten)
 - Alle 3 Views (Chat, ConsentModal, RejectedScreen) auf --vh umgestellt
 
+### Iteration 2 (18.04.2026 — nach Android-Chrome-User-Test)
+Erster Fix (visualViewport im iframe-Inneren) war unzureichend:
+Der iframe-Host-Container (.frame-wrap in widget.js) blieb auf voller
+Hoehe, Android Chrome schob die Page nach oben → Header und fruehe
+Messages unerreichbar.
+
+Korrektur: visualViewport-Listener in widget.js (dem Host-Script)
+statt im iframe-Inneren. .frame-wrap.height und .top werden dynamisch
+auf visualViewport.height/offsetTop gesetzt. Innerer ChatClient
+nutzt jetzt einfach height:100%. Nur auf Mobile (<=767px) aktiv.
+
 ### Frueherer Fehlversuch (dokumentiert fuer Kontext)
 `100dvh` allein war wirkungslos, weil der iframe in einem
-`position:fixed; inset:0` Container sitzt — das wurde in Phase 7
-getestet und revertiert. Die `visualViewport`-API loest das Problem
-korrekt, weil sie die echte sichtbare Hoehe liefert, unabhaengig
-vom iframe-Hosting-Kontext.
+`position:fixed; inset:0` Container sitzt. visualViewport im
+iframe-Inneren (--vh Custom Property) half teilweise auf iOS,
+aber NICHT auf Android Chrome wo der Browser die Page statt
+den Viewport verschiebt.
 
 ## DB-Umgebung: Dev/Prod-Split (erledigt 13.04.2026)
 

@@ -19,36 +19,10 @@ import type { ResolvedTenantConfig } from "@/lib/widget/publicKey";
 import { withAlpha } from "@/lib/widget/colors";
 import { Avatar } from "./Avatar";
 
-// ============================================================
-// useVisualViewportHeight — setzt CSS Custom Property --vh auf
-// die tatsaechlich sichtbare Viewport-Hoehe (exkl. iOS-Tastatur).
-//
-// iOS Safari meldet 100vh inkl. Bereich hinter der Tastatur.
-// Die visualViewport-API liefert die echte sichtbare Hoehe.
-// CSS-Fallback: 100dvh (iOS 15.4+, Android Chrome 108+).
-// ============================================================
-function useVisualViewportHeight() {
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    function update() {
-      document.documentElement.style.setProperty(
-        "--vh",
-        `${vv!.height}px`,
-      );
-    }
-
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, []);
-}
+// Viewport-Hoehen-Fix: Der iframe-Host (widget.js) setzt die
+// .frame-wrap Hoehe dynamisch auf visualViewport.height bei
+// geoeffneter Tastatur. Der innere Container nutzt deshalb
+// einfach height:100% — keine eigene visualViewport-Logik noetig.
 
 type MessageRole = "user" | "assistant";
 
@@ -96,8 +70,6 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
   const acceptButtonRef = useRef<HTMLButtonElement>(null);
   const lastPolledTimestampRef = useRef<number>(0);
 
-  // Setzt --vh auf die sichtbare Viewport-Hoehe (exkl. iOS-Tastatur)
-  useVisualViewportHeight();
 
   // ----- Modal Fade-in beim ersten Render -----
   useEffect(() => {
@@ -395,9 +367,8 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
     <div
       className="flex w-full flex-col overflow-hidden"
       style={{
-        // --vh wird von useVisualViewportHeight gesetzt (exkl. iOS-Tastatur).
-        // Fallback-Kette: --vh → 100dvh (iOS 15.4+) → 100vh (Legacy)
-        height: "var(--vh, 100dvh)",
+        // iframe-Host (widget.js) setzt .frame-wrap auf visualViewport.height
+        height: "100%",
         backgroundColor: config.backgroundColor,
         color: config.textColor,
       }}
@@ -733,7 +704,7 @@ function ConsentModal({
   return (
     <div
       className="relative flex w-full items-center justify-center p-6"
-      style={{ height: "var(--vh, 100dvh)", backgroundColor: config.backgroundColor }}
+      style={{ height: "100%", backgroundColor: config.backgroundColor }}
     >
       {/* Backdrop */}
       <div
@@ -873,7 +844,7 @@ function RejectedScreen({ config }: { config: ResolvedTenantConfig }) {
   return (
     <div
       className="flex w-full items-center justify-center p-6"
-      style={{ height: "var(--vh, 100dvh)", backgroundColor: config.backgroundColor }}
+      style={{ height: "100%", backgroundColor: config.backgroundColor }}
     >
       <div
         className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl p-6 text-center"

@@ -329,6 +329,32 @@
     }
   }
 
+  // ---------- Mobile Keyboard Viewport Fix ----------
+  // Auf Android Chrome/iOS Safari bleibt der iframe bei geoeffneter
+  // Tastatur auf voller Viewport-Hoehe. Der Browser schiebt die Page
+  // nach oben, Header und fruehe Messages werden abgeschnitten.
+  // Fix: .frame-wrap Hoehe + top dynamisch auf visualViewport setzen.
+  var vv = window.visualViewport;
+  var isMobileQuery = window.matchMedia("(max-width:767px)");
+
+  function updateFrameForKeyboard() {
+    if (!vv || !isMobileQuery.matches || !isOpen) return;
+    frameWrap.style.height = vv.height + "px";
+    frameWrap.style.top = vv.offsetTop + "px";
+    frameWrap.style.bottom = "auto";
+  }
+
+  function resetFrameSize() {
+    frameWrap.style.height = "";
+    frameWrap.style.top = "";
+    frameWrap.style.bottom = "";
+  }
+
+  if (vv) {
+    vv.addEventListener("resize", updateFrameForKeyboard);
+    vv.addEventListener("scroll", updateFrameForKeyboard);
+  }
+
   // ---------- Open / Close ----------
 
   function openWidget() {
@@ -345,6 +371,9 @@
       iframe.src =
         baseUrl + "/embed/widget?key=" + encodeURIComponent(publicKey);
     }
+
+    // Mobile: Frame sofort an Visual Viewport anpassen
+    updateFrameForKeyboard();
   }
 
   function closeWidget() {
@@ -355,6 +384,9 @@
     frameWrap.classList.remove("visible");
     bubble.setAttribute("aria-label", "Chat oeffnen");
     bubble.setAttribute("aria-expanded", "false");
+
+    // Mobile: Frame-Groesse zuruecksetzen
+    resetFrameSize();
   }
 
   bubble.addEventListener("click", function () {
