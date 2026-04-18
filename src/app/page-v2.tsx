@@ -174,7 +174,7 @@ export default function LandingPage() {
       </div>
 
       {/* ═══════ 1. HERO ═══════ */}
-      <section className="relative z-10 pt-36 pb-28 sm:pt-40">
+      <section className="relative z-10 pt-44 pb-28 sm:pt-48">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
             {/* Links: Copy */}
@@ -194,7 +194,7 @@ export default function LandingPage() {
 
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
                 className="mt-4 text-xl text-slate-300 leading-relaxed" style={{ fontFamily: "Georgia, serif" }}>
-                WhatsApp, Web, CRM und Pipeline in einem System &ndash; qualifiziert Ihre Anfragen automatisch und übergibt nur die heißen an Ihren Vertrieb.
+                WhatsApp, Web, CRM und Pipeline in einem System &ndash; qualifiziert Ihre Anfragen automatisch und übergibt nur die heißen Leads an Ihren Vertrieb.
               </motion.p>
 
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}

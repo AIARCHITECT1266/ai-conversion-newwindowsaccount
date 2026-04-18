@@ -46,9 +46,10 @@ export default function Navigation() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
+      className={`fixed left-0 right-0 z-50 transition-all duration-700 ${
         scrolled ? "glass shadow-2xl shadow-black/40" : "bg-transparent"
       }`}
+      style={{ top: "var(--banner-h, 0px)" }}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8 lg:py-5">
         {/* Logo */}
@@ -58,7 +59,7 @@ export default function Navigation() {
             alt="AI Conversion"
             width={600}
             height={381}
-            className="h-10 w-auto object-contain sm:h-12"
+            className="h-7 w-auto object-contain sm:h-8"
             priority
           />
         </Link>
