@@ -59,7 +59,7 @@ export default function Navigation() {
             alt="AI Conversion"
             width={600}
             height={381}
-            className="h-7 w-auto object-contain sm:h-8"
+            className="h-9 w-auto object-contain sm:h-10"
             priority
           />
         </Link>
