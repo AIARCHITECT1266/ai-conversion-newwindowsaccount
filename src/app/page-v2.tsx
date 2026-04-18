@@ -91,7 +91,7 @@ function RoiCalculator() {
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400/70" />
             <p className="text-xs text-amber-200/80 leading-relaxed text-left">
               <span className="font-semibold text-amber-200">Beispielrechnung — noch keine echten Pilot-Daten.</span>{" "}
-              Diese Rechnung zeigt theoretische Einsparungen basierend auf branchenueblichen Annahmen. Echte Pilot-Daten werden ab Q3 2026 hier publiziert.
+              Diese Rechnung zeigt theoretische Einsparungen basierend auf branchenüblichen Annahmen. Echte Pilot-Daten werden ab Q3 2026 hier publiziert.
             </p>
           </div>
         </div>
@@ -366,14 +366,14 @@ export default function LandingPage() {
               border: "border-[rgba(201,168,76,0.15)]",
               bg: "bg-[rgba(201,168,76,0.03)]",
               title: "Eine Plattform statt fünf",
-              body: "WhatsApp, Web-Widget, CRM, Pipeline und Marketing in einem System statt HubSpot + Superchat + Calendly + Mailchimp. Kein Tool-Dschungel, keine Daten-Silos, eine Login-Oberflaeche.",
+              body: "WhatsApp, Web-Widget, CRM, Pipeline und Marketing in einem System statt HubSpot + Superchat + Calendly + Mailchimp. Kein Tool-Dschungel, keine Daten-Silos, eine Login-Oberfläche.",
             },
             {
               icon: Target,
               color: "text-purple-400",
               border: "border-purple-500/15",
               bg: "bg-purple-500/[0.03]",
-              title: "Ein KI-Verkaeufer, kein Antwort-Bot",
+              title: "Ein KI-Verkäufer, kein Antwort-Bot",
               body: "Aktive Qualifizierung nach Budget, Zeitrahmen und Entscheidungsstruktur. Der Bot führt Verkaufsgespräche, nicht FAQ-Dialoge — und übergibt nur die heißen Leads an Ihren Vertrieb.",
             },
             {
@@ -560,7 +560,7 @@ export default function LandingPage() {
               "Founding-Partner-Preise — 33% Rabatt auf den regulären Listenpreis, lebenslang (solange Vertrag ungekündigt bleibt)",
               "30 Tage kostenlos zum Start",
               "Kein Setup-Fee in der Pilotphase",
-              "Direkter Einfluss auf die Roadmap — Ihre Anforderungen praegen das Produkt",
+              "Direkter Einfluss auf die Roadmap — Ihre Anforderungen prägen das Produkt",
               "Wöchentliche Strategie-Calls in der ersten Pilotphase",
               "Vollständige Datensouveränität — AVV, Frankfurt-Hosting, AES-256",
             ].map((point) => (

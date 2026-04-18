@@ -415,7 +415,7 @@ function RoiCalculator() {
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400/70" />
             <p className="text-xs text-amber-200/80 leading-relaxed text-left">
               <span className="font-semibold text-amber-200">Beispielrechnung — noch keine echten Pilot-Daten.</span>{" "}
-              Diese Rechnung zeigt theoretische Einsparungen basierend auf branchenueblichen Annahmen. Echte Pilot-Daten werden ab Q3 2026 hier publiziert.
+              Diese Rechnung zeigt theoretische Einsparungen basierend auf branchenüblichen Annahmen. Echte Pilot-Daten werden ab Q3 2026 hier publiziert.
             </p>
           </div>
         </div>
@@ -546,7 +546,7 @@ export default function PricingPage() {
               className="font-extrabold tracking-tight text-white"
               style={{ fontSize: "clamp(2.5rem, 5vw, 3.5rem)", lineHeight: 1.15 }}
             >
-              Transparente Preise fuer{" "}
+              Transparente Preise für{" "}
               <span style={{ color: "#C9A84C" }}>Founding Partner</span>
             </motion.h1>
 
@@ -655,7 +655,7 @@ export default function PricingPage() {
                   "Unbegrenzt Bots & Mandanten",
                   "White-Label Lösung",
                   "Custom Integrationen",
-                  "Eigene Serverinfrastruktur moeglich",
+                  "Eigene Serverinfrastruktur möglich",
                   "Dediziertes Onboarding & persönlicher Ansprechpartner",
                 ].map((f, i) => (
                   <span key={i} className="inline-flex items-center gap-2 text-sm text-slate-300">
