@@ -578,54 +578,36 @@ denkbar, aber nur wenn Tests haeufiger scheitern.
 ## Phase 7 — Mobile-Tastatur-Keyboard-Avoidance (Chromium-Default)
 
 ### Status
-Akzeptiert als Plattform-Standardverhalten. Prioritaet niedrig.
+ERLEDIGT am 18.04.2026.
 
 ### Datum
-2026-04-12 (Phase 7, Test-Gruppe B, Szenario B3 Mobile)
+Ersterfassung 2026-04-12 (Phase 7). Fix 2026-04-18.
 
-### Symptom
-Beim aktiven Tippen ins Chat-Input-Feld scrollt Chromium nativ
-den fokussierten Input ueber die virtuelle Tastatur. Dabei werden
-Header und Welcome-Message kurzzeitig aus dem sichtbaren Viewport
-geschoben. Nach Bot-Antwort oder Tastatur-Schliessen normalisiert
-sich das Layout.
+### Symptom (vor Fix)
+Beim aktiven Tippen ins Chat-Input-Feld scrollte die Welcome-Message
+aus dem sichtbaren Viewport. Input-Leiste verschwand beim Hochscrollen.
+Root-Cause: `h-screen` (100vh) auf iOS inkludiert den Bereich hinter
+der Tastatur.
 
-### Bereits umgesetzte Mitigationen
-- **F1 (Auto-Fokus-Unterdrueckung):** `matchMedia`-Check im
-  Fokus-useEffect in `src/app/embed/widget/ChatClient.tsx` —
-  auf Mobile (≤767px) kein automatischer Fokus ins Input-Feld
-  beim Oeffnen. Loest das Problem beim initialen Widget-Oeffnen.
-- **F2 (Smart-Scroll):** `overflow <= 100` Guard im Auto-Scroll-
-  useEffect — verhindert programmatisches Scroll-to-Bottom bei
-  kurzen Message-Listen. Ergaenzende Massnahme.
+### Loesung (18.04.2026)
+- `useVisualViewportHeight()` Hook: setzt CSS Custom Property `--vh`
+  auf `window.visualViewport.height` bei jedem resize/scroll-Event
+- Container-Hoehe: `height: var(--vh, 100dvh)` statt `h-screen`
+  (Fallback-Kette: --vh → 100dvh → implizit 100vh)
+- `overscroll-contain` auf Messages-Container (verhindert Scroll-Leak)
+- `min-h-0` auf Messages-Container (Flexbox-Overflow-Fix)
+- Auto-Scroll-Guard (100px threshold) entfernt — scrollt jetzt immer
+  zur letzten Nachricht
+- Neuer Input-Focus-Listener: scrollToBottom mit 150ms Delay nach
+  Focus (Tastatur-Animation abwarten)
+- Alle 3 Views (Chat, ConsentModal, RejectedScreen) auf --vh umgestellt
 
-### Was NICHT funktioniert hat
-- `100dvh` statt `100vh`/`h-screen`: Wirkungslos, weil der
-  iframe in einem `position:fixed; inset:0` Container sitzt
-  (sowohl in `widget.js` Host als auch in `embed/layout.tsx`).
-  Fixed-Elemente reagieren auf iOS/Android nicht auf die Tastatur.
-  Aenderungen wurden vollstaendig revertiert.
-
-### Vollstaendige Loesung (nicht implementiert)
-Visual Viewport API (`window.visualViewport`) wuerde das
-vollstaendig loesen:
-- `visualViewport.height` gibt die tatsaechliche sichtbare
-  Hoehe zurueck (exkl. Tastatur)
-- `resize`-Event feuert bei Tastatur-Oeffnung/-Schliessung
-- Container-Hoehe dynamisch auf `visualViewport.height` setzen
-
-Geschaetzter Aufwand: 150-300 Zeilen mit iOS/Android-Edge-Cases
-(Safari hat andere Timing-Semantik als Chrome, `resize`-Event
-feuert auf iOS waehrend der Animation, auf Android erst danach).
-
-### Akzeptanz-Begruendung
-Identisches Verhalten bei Intercom, Crisp, Drift und anderen
-Chat-Widgets. Kein Pilot-Kunde wird dieses Verhalten als Bug
-melden, weil es dem Plattform-Standard entspricht.
-
-### Wann fixen
-Nachfrage-getrieben: implementieren wenn ein Pilot-Kunde
-explizit Feedback dazu gibt. Kein Blocker fuer Go-Live.
+### Frueherer Fehlversuch (dokumentiert fuer Kontext)
+`100dvh` allein war wirkungslos, weil der iframe in einem
+`position:fixed; inset:0` Container sitzt — das wurde in Phase 7
+getestet und revertiert. Die `visualViewport`-API loest das Problem
+korrekt, weil sie die echte sichtbare Hoehe liefert, unabhaengig
+vom iframe-Hosting-Kontext.
 
 ## DB-Umgebung: Dev/Prod-Split (erledigt 13.04.2026)
 

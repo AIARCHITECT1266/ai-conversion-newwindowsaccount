@@ -19,6 +19,37 @@ import type { ResolvedTenantConfig } from "@/lib/widget/publicKey";
 import { withAlpha } from "@/lib/widget/colors";
 import { Avatar } from "./Avatar";
 
+// ============================================================
+// useVisualViewportHeight — setzt CSS Custom Property --vh auf
+// die tatsaechlich sichtbare Viewport-Hoehe (exkl. iOS-Tastatur).
+//
+// iOS Safari meldet 100vh inkl. Bereich hinter der Tastatur.
+// Die visualViewport-API liefert die echte sichtbare Hoehe.
+// CSS-Fallback: 100dvh (iOS 15.4+, Android Chrome 108+).
+// ============================================================
+function useVisualViewportHeight() {
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    function update() {
+      document.documentElement.style.setProperty(
+        "--vh",
+        `${vv!.height}px`,
+      );
+    }
+
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+}
+
 type MessageRole = "user" | "assistant";
 
 interface ChatMessage {
@@ -65,6 +96,9 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
   const acceptButtonRef = useRef<HTMLButtonElement>(null);
   const lastPolledTimestampRef = useRef<number>(0);
 
+  // Setzt --vh auf die sichtbare Viewport-Hoehe (exkl. iOS-Tastatur)
+  useVisualViewportHeight();
+
   // ----- Modal Fade-in beim ersten Render -----
   useEffect(() => {
     if (!showConsentModal) return;
@@ -92,20 +126,34 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
   }, [sessionToken, showConsentModal]);
 
   // ----- Auto-Scroll auf neue Messages -----
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
-    // Smart-Scroll: nur triggern wenn Container wirklich
-    // scrollbar ist. Bei kurzen Message-Listen (z.B. nur
-    // Welcome-Message) wuerde scrollTop=scrollHeight auf
-    // Mobile die Message oberhalb des sichtbaren Bereichs
-    // verschwinden lassen, besonders wenn die Tastatur den
-    // Viewport schrumpft. Schwellwert: mindestens 100px
-    // Differenz, sonst passt Content ohnehin in den Viewport.
-    const overflow = el.scrollHeight - el.clientHeight;
-    if (overflow <= 100) return;
-    el.scrollTop = el.scrollHeight;
-  }, [messages]);
+    // requestAnimationFrame garantiert dass der Scroll NACH dem
+    // DOM-Update passiert (React-Render + Browser-Layout).
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // ----- Scroll nach Input-Focus (Tastatur-Animation abwarten) -----
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    function onFocus() {
+      // 150ms Delay: iOS-Tastatur-Animation dauert ~250ms,
+      // nach 150ms ist genug Platz fuer den Scroll sichtbar.
+      setTimeout(scrollToBottom, 150);
+    }
+
+    input.addEventListener("focus", onFocus);
+    return () => input.removeEventListener("focus", onFocus);
+  }, [scrollToBottom]);
 
   // ----- Polling-Loop -----
   useEffect(() => {
@@ -345,8 +393,11 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
   // ---------- Render: Aktiver Chat ----------
   return (
     <div
-      className="flex h-screen w-full flex-col overflow-hidden"
+      className="flex w-full flex-col overflow-hidden"
       style={{
+        // --vh wird von useVisualViewportHeight gesetzt (exkl. iOS-Tastatur).
+        // Fallback-Kette: --vh → 100dvh (iOS 15.4+) → 100vh (Legacy)
+        height: "var(--vh, 100dvh)",
         backgroundColor: config.backgroundColor,
         color: config.textColor,
       }}
@@ -384,7 +435,7 @@ export function ChatClient({ config, publicKey }: ChatClientProps) {
         role="log"
         aria-live="polite"
         aria-label="Konversationsverlauf"
-        className="flex-1 space-y-4 overflow-y-auto px-4 py-6"
+        className="flex-1 min-h-0 space-y-4 overflow-y-auto overscroll-contain px-4 py-6"
       >
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} config={config} />
@@ -681,8 +732,8 @@ function ConsentModal({
 
   return (
     <div
-      className="relative flex h-screen w-full items-center justify-center p-6"
-      style={{ backgroundColor: config.backgroundColor }}
+      className="relative flex w-full items-center justify-center p-6"
+      style={{ height: "var(--vh, 100dvh)", backgroundColor: config.backgroundColor }}
     >
       {/* Backdrop */}
       <div
@@ -821,8 +872,8 @@ function RejectedScreen({ config }: { config: ResolvedTenantConfig }) {
 
   return (
     <div
-      className="flex h-screen w-full items-center justify-center p-6"
-      style={{ backgroundColor: config.backgroundColor }}
+      className="flex w-full items-center justify-center p-6"
+      style={{ height: "var(--vh, 100dvh)", backgroundColor: config.backgroundColor }}
     >
       <div
         className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl p-6 text-center"
