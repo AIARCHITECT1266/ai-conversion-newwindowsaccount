@@ -285,7 +285,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ 2. PRODUKT-MODULE ═══════ */}
-      <section className="relative z-10 mx-auto max-w-6xl px-6 py-28">
+      <section id="how-it-works" className="relative z-10 mx-auto max-w-6xl px-6 py-28">
         <div className="text-center mb-12">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Plattform</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "Georgia, serif" }}>
@@ -348,7 +348,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ DIFFERENZIERUNG — 3 Karten (ersetzt alte Vergleichstabelle) ═══════ */}
-      <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
+      <section id="features" className="relative z-10 mx-auto max-w-5xl px-6 py-28">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} transition={{ duration: 0.6 }}
           className="text-center mb-14">
