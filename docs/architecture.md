@@ -4,9 +4,8 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-16 (Website-Relaunch pre-MOD + Paddle-Deaktivierung)
-> **Stand des Codes:** Commit folgt (Marketing-Widget auf ai-conversion.ai,
-> Admin-UI Widget-Toggle, Sentry Browser-Init korrigiert)
+> **Letzte Aktualisierung:** 2026-04-19 (Mobile-Keyboard-Fix widget.js + Website-Relaunch)
+> **Stand des Codes:** Commit d8098e9 (Mobile-Keyboard-Fix v2)
 
 ---
 
@@ -257,9 +256,13 @@ Entwicklungs-Status.
   `mutedTextColor`, `logoUrl`, `botName`, `botSubtitle`,
   `welcomeMessage`, `avatarInitials`) mit defensivem `parseConfig`
   in `src/lib/widget/publicKey.ts`
-- **UX-Features (Phase 4b + 4c):** Consent-Modal vor Chat-Start,
-  optimistic UI, Typing-Indicator, Network-Error-Handling mit
-  Offline-Banner, ARIA-Accessibility, Mobile-Touch-Targets 44×44
+- **UX-Features (Phase 4b + 4c + Keyboard-Fix 18.04.):**
+  Consent-Modal vor Chat-Start, optimistic UI, Typing-Indicator,
+  Network-Error-Handling mit Offline-Banner, ARIA-Accessibility,
+  Mobile-Touch-Targets 44×44. Chat-Container nutzt `height:100%`
+  (iframe-Host steuert Viewport-Hoehe), Messages-Container mit
+  `overscroll-contain` + `min-h-0`, Auto-Scroll via
+  `requestAnimationFrame` + Input-Focus-Scroll mit 150ms Delay
 - **Token-Hashing:** `widgetSessionToken` wird als Hash im
   Rate-Limit-Key verwendet, um Klartext-Tokens aus dem
   Upstash-Cache fernzuhalten
@@ -278,12 +281,19 @@ Entwicklungs-Status.
   CSS-Transition
 - **Lazy-Loading:** Config-Fetch und iframe werden erst beim
   ersten Klick geladen (kein Performance-Impact auf Host-Seite)
-- **Mobile-Optimierung (Phase 7):**
+- **Mobile-Optimierung (Phase 7 + Fix 18.04.2026):**
   - Close-X-Button wandert im geoeffneten Zustand nach oben-rechts
     (44x44px Touch-Target), damit kein Overlap mit dem
     Senden-Button im iframe-Footer
   - Auto-Fokus ins Input-Feld auf Mobile unterdrueckt, damit die
     virtuelle Tastatur nicht sofort den Viewport schrumpft
+  - **Mobile-Keyboard-Viewport-Fix:** `visualViewport`-Listener in
+    widget.js setzt `.frame-wrap` height/top dynamisch auf
+    `visualViewport.height`/`offsetTop` bei geoeffneter Tastatur
+    (nur Mobile <=767px). Verhindert dass Android Chrome Header
+    und fruehe Messages nach oben abschneidet. Innerer ChatClient
+    nutzt `height:100%`, Messages-Container hat `overscroll-contain`
+    + `min-h-0` gegen Scroll-Leak
 - **CSP:** Host-Seiten mit striktem CSP muessen
   `script-src https://ai-conversion.ai`, `connect-src
   https://ai-conversion.ai`, `frame-src https://ai-conversion.ai`
@@ -415,6 +425,7 @@ Folgenscheidungen:
 | — | Vercel-Storage Production-only (13.04.2026) | Preview/Dev-Environments haben bewusst keine DATABASE_URL. Verhindert versehentliche Prod-DB-Zugriffe durch Preview-Branches |
 | — | Sentry Minimal-Config: Error-Only, kein Tracing/Replay (13.04.2026) | `tracesSampleRate: 0`, `replaysSessionSampleRate: 0`, `sendDefaultPii: false`. DSGVO-Minimierung + Free-Tier-Budget. Source-Maps-Upload deaktiviert (TD-Monitoring-02) |
 | — | Paddle-Checkout deaktiviert, Founding-Phase manuell per SEPA (16.04.2026) | Paddle-Application abgelehnt (AI Chatbots + Marketing Software ausserhalb AUP). Checkout-Route gibt 503 zurueck. Backend-Code bleibt. Alle CTAs auf Calendly umgebogen. TD-Billing-01 fuer Provider-Ersatz |
+| — | Mobile-Keyboard-Viewport-Fix im Host-Script statt iframe-Inneren (18.04.2026) | `visualViewport`-Listener in widget.js setzt `.frame-wrap` height/top dynamisch. Erster Versuch (--vh im iframe-Inneren) scheiterte: iframe-Container blieb auf voller Hoehe, Android Chrome schnitt oben ab. Fix muss im Host-Script sein, weil der iframe-Container die Viewport-Begrenzung definiert |
 
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
