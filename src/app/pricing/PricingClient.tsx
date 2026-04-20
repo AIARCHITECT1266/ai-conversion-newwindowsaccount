@@ -888,6 +888,9 @@ export default function PricingPage() {
               <Link href="/agb" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
                 AGB
               </Link>
+              <Link href="/widerrufsbelehrung" className="text-xs text-slate-600 transition hover:text-[#C9A84C]">
+                Widerruf
+              </Link>
               <span className="text-xs text-slate-600">hello@ai-conversion.ai</span>
             </div>
           </div>

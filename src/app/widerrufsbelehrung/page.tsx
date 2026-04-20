@@ -6,14 +6,14 @@ import Navigation from "@/components/Navigation";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Impressum | AI Conversion",
+  title: "Widerrufsbelehrung | AI Conversion",
   description:
-    "Impressum von AI Conversion — Angaben gemäß § 5 TMG und Informationen zum EU-Vertreter.",
+    "Widerrufsbelehrung von AI Conversion — Informationen zu Ihrem Widerrufsrecht.",
 };
 
-export default async function ImpressumPage() {
+export default async function WiderrufsbelehrungPage() {
   const content = readFileSync(
-    join(process.cwd(), "content/legal/impressum.md"),
+    join(process.cwd(), "content/legal/widerrufsbelehrung.md"),
     "utf-8",
   );
 
@@ -28,9 +28,9 @@ export default async function ImpressumPage() {
       />
       <footer className="border-t border-white/[0.04] py-8">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-6 px-6 text-xs text-slate-600">
+          <Link href="/impressum" className="hover:text-slate-400 transition-colors">Impressum</Link>
           <Link href="/datenschutz" className="hover:text-slate-400 transition-colors">Datenschutz</Link>
           <Link href="/agb" className="hover:text-slate-400 transition-colors">AGB</Link>
-          <Link href="/widerrufsbelehrung" className="hover:text-slate-400 transition-colors">Widerruf</Link>
           <Link href="/" className="hover:text-slate-400 transition-colors">Startseite</Link>
         </div>
       </footer>

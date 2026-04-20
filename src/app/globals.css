@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* Phase 4a-Bug-Fix: Tailwind 4 Auto-Source-Detection greift
    nicht zuverlaessig fuer nachtraeglich angelegte Verzeichnisse

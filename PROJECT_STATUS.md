@@ -1,8 +1,21 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-16
-**Aktuelle Phase:** Pilot-Ready — Website-Relaunch fuer MOD-Outreach abgeschlossen, Paddle deaktiviert, Founding-Phase ueber SEPA
-**Letzter Commit:** 8370b74 — refactor(marketing): pre-MOD website relaunch + paddle checkout deactivation + umlauts + AGB pricing
+**Letzte Aktualisierung:** 2026-04-20
+**Aktuelle Phase:** Pilot-Ready — Rechtstexte live, Website-Relaunch abgeschlossen, Founding-Phase ueber SEPA
+**Letzter Commit:** (wird nach Commit gesetzt)
+
+---
+
+## 20.04.2026 — Rechtstexte live
+
+- Alle 4 Rechtstexte (Impressum, Datenschutz, AGB, Widerrufsbelehrung) von IT-Recht-Kanzlei live auf ai-conversion.ai
+- Datenschutz-Ergaenzungen (Sentry, Resend, Chat-Widget, Google-Fonts-Hinweis) als separater Abschnitt unter Kanzlei-Text
+- EU-Vertreter Prighter bereits im Impressum enthalten (iuro Rechtsanwaelte GmbH t/a Prighter, Wien)
+- IT-Recht-Kanzlei-Abmahnschutz aktiviert
+- Erledigt: TD-Compliance-07 (EU-Vertreter), TD-Compliance-09 (Telefonnummer im Impressum)
+- Neue Route /widerrufsbelehrung angelegt, Footer-Links auf allen Seiten ergaenzt
+- Markdown-basierte Legal-Pages mit remark + @tailwindcss/typography (prose prose-invert)
+- Pending: Kanzlei-Review der Ergaenzungstexte (Antwort erwartet 1-3 Werktage)
 
 ---
 

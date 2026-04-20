@@ -955,13 +955,11 @@ Sicherheitsnetz.
 ## TD-Compliance-07: EU-Vertreter nach Art. 27 DSGVO (15.04.2026)
 
 ### Status
-Offen.
+ERLEDIGT am 20.04.2026.
 
 ### Pilot-blockierend
-JA — vor erstem Pilot-Vertragsabschluss zwingend, weil Firmensitz Georgien
-(Drittland). Art. 27 DSGVO verpflichtet Nicht-EU-Verantwortliche, die
-Daten von EU-Buergern verarbeiten, zur Benennung eines schriftlichen
-Vertreters in der EU.
+War JA — jetzt erledigt. EU-Vertreter Prighter (iuro Rechtsanwaelte GmbH
+t/a Prighter, Schellinggasse 3, 1010 Wien) im Impressum eingetragen.
 
 ### Aufwand
 1-2 Stunden Entscheidung + Vertrag, danach laufend.
@@ -993,12 +991,11 @@ akzeptiert. Bestaetigung archivieren.
 ## TD-Compliance-09: Telefonnummer im Impressum nachtragen (15.04.2026)
 
 ### Status
-Offen (User-Action, Nummer wird nachgeliefert).
+ERLEDIGT am 20.04.2026.
 
 ### Pilot-blockierend
-JA — § 5 TMG verlangt Telefonnummer oder gleichwertige elektronische
-Kontaktmoeglichkeit. Aktuell steht `Telefon: wird nachgereicht` in
-`src/app/impressum/page.tsx` + `src/app/datenschutz/page.tsx`.
+War JA — jetzt erledigt. Telefonnummer ist im Kanzlei-Impressum
+(content/legal/impressum.md) enthalten.
 
 ### Aufwand
 5 Min (Edit + Commit) sobald Nummer vorliegt.
@@ -1192,3 +1189,22 @@ SEPA payment" Flow im Admin-UI.
 
 ### Aufwand
 2-3 Stunden (UI + API-Endpoint fuer Plan-Setzung nach Zahlungseingang).
+
+## TD-Compliance-12: Ergaenzungstexte nach Kanzlei-Review uebernehmen (20.04.2026)
+
+### Status
+Offen (wartet auf Antwort).
+
+### Pilot-blockierend
+Nein — Texte sind live, Kanzlei-Review kann nachtraeglich Anpassungen
+bringen.
+
+### Kontext
+E-Mail an IT-Recht-Kanzlei (Keller) am 20.04.2026 mit Bitte um Review
+der Datenschutz-Ergaenzungstexte (Sentry, Resend, Chat-Widget,
+Google-Fonts-Hinweis). Antwort erwartet in 1-3 Werktagen.
+
+Betrifft: content/legal/datenschutz-ergaenzung.md
+
+### Aufwand
+15-30 Min (Textanpassungen nach Kanzlei-Feedback).
