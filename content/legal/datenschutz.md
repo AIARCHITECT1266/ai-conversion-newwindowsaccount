@@ -1,35 +1,42 @@
-Datenschutzerklärung
-1) Einleitung und Kontaktdaten des Verantwortlichen
-1.1 Wir freuen uns, dass Sie unsere Website besuchen, und bedanken uns für Ihr Interesse. Im Folgenden informieren wir Sie über den Umgang mit Ihren personenbezogenen Daten bei der Nutzung unserer Website. Personenbezogene Daten sind hierbei alle Daten, mit denen Sie persönlich identifiziert werden können.
+# Datenschutzerklärung
 
-1.2 Verantwortlicher für die Datenverarbeitung auf dieser Website im Sinne der Datenschutz-Grundverordnung (DSGVO) ist Philipp Motzer, AI Conversion, Village Ruispiri, Telavi District 1, 2212 Ruispiri, Georgien, Tel.: +1 415 475 3826, E-Mail: philipp@ai-conversion.ai. Der für die Verarbeitung von personenbezogenen Daten Verantwortliche ist diejenige natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet.
+## 1) Einleitung und Kontaktdaten des Verantwortlichen
 
-2) Datenerfassung beim Besuch unserer Website
-2.1 Bei der bloß informatorischen Nutzung unserer Website, also wenn Sie sich nicht registrieren oder uns anderweitig Informationen übermitteln, erheben wir nur solche Daten, die Ihr Browser an den Seitenserver übermittelt (sog. „Server-Logfiles“). Wenn Sie unsere Website aufrufen, erheben wir die folgenden Daten, die für uns technisch erforderlich sind, um Ihnen die Website anzuzeigen:
+**1.1** Wir freuen uns, dass Sie unsere Website besuchen, und bedanken uns für Ihr Interesse. Im Folgenden informieren wir Sie über den Umgang mit Ihren personenbezogenen Daten bei der Nutzung unserer Website. Personenbezogene Daten sind hierbei alle Daten, mit denen Sie persönlich identifiziert werden können.
 
-Unsere besuchte Website
-Datum und Uhrzeit zum Zeitpunkt des Zugriffes
-Menge der gesendeten Daten in Byte
-Quelle/Verweis, von welchem Sie auf die Seite gelangten
-Verwendeter Browser
-Verwendetes Betriebssystem
-Verwendete IP-Adresse (ggf.: in anonymisierter Form)
+**1.2** Verantwortlicher für die Datenverarbeitung auf dieser Website im Sinne der Datenschutz-Grundverordnung (DSGVO) ist Philipp Motzer, AI Conversion, Village Ruispiri, Telavi District 1, 2212 Ruispiri, Georgien, Tel.: +1 415 475 3826, E-Mail: philipp@ai-conversion.ai. Der für die Verarbeitung von personenbezogenen Daten Verantwortliche ist diejenige natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet.
+
+## 2) Datenerfassung beim Besuch unserer Website
+
+**2.1** Bei der bloß informatorischen Nutzung unserer Website, also wenn Sie sich nicht registrieren oder uns anderweitig Informationen übermitteln, erheben wir nur solche Daten, die Ihr Browser an den Seitenserver übermittelt (sog. „Server-Logfiles"). Wenn Sie unsere Website aufrufen, erheben wir die folgenden Daten, die für uns technisch erforderlich sind, um Ihnen die Website anzuzeigen:
+
+- Unsere besuchte Website
+- Datum und Uhrzeit zum Zeitpunkt des Zugriffes
+- Menge der gesendeten Daten in Byte
+- Quelle/Verweis, von welchem Sie auf die Seite gelangten
+- Verwendeter Browser
+- Verwendetes Betriebssystem
+- Verwendete IP-Adresse (ggf.: in anonymisierter Form)
+
 Die Verarbeitung erfolgt gemäß Art. 6 Abs. 1 lit. f DSGVO auf Basis unseres berechtigten Interesses an der Verbesserung der Stabilität und Funktionalität unserer Website. Eine Weitergabe oder anderweitige Verwendung der Daten findet nicht statt. Wir behalten uns allerdings vor, die Server-Logfiles nachträglich zu überprüfen, sollten konkrete Anhaltspunkte auf eine rechtswidrige Nutzung hinweisen.
 
-2.2 Diese Website nutzt aus Sicherheitsgründen und zum Schutz der Übertragung personenbezogener Daten und anderer vertraulicher Inhalte (z.B. Bestellungen oder Anfragen an den Verantwortlichen) eine SSL-bzw. TLS-Verschlüsselung. Sie können eine verschlüsselte Verbindung an der Zeichenfolge „https://“ und dem Schloss-Symbol in Ihrer Browserzeile erkennen.
+**2.2** Diese Website nutzt aus Sicherheitsgründen und zum Schutz der Übertragung personenbezogener Daten und anderer vertraulicher Inhalte (z.B. Bestellungen oder Anfragen an den Verantwortlichen) eine SSL-bzw. TLS-Verschlüsselung. Sie können eine verschlüsselte Verbindung an der Zeichenfolge „https://" und dem Schloss-Symbol in Ihrer Browserzeile erkennen.
 
-3) Hosting & Content-Delivery-Network
-Vercel
+## 3) Hosting & Content-Delivery-Network
+
+### Vercel
 
 Für das Hosting unserer Website und die Darstellung der Seiteninhalte nutzen wir das System des folgenden Anbieters: Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA
 
 Sämtliche auf unserer Website erhobenen Daten werden auf den Servern des Anbieters verarbeitet.
+
 Wir haben mit dem Anbieter einen Auftragsverarbeitungsvertrag geschlossen, der den Schutz der Daten unserer Seitenbesucher sicherstellt und eine unberechtigte Weitergabe an Dritte untersagt.
 
 Für Datenübermittlungen in die USA hat sich der Anbieter dem EU-US-Datenschutzrahmen (EU-US Data Privacy Framework) angeschlossen, das auf Basis eines Angemessenheitsbeschlusses der Europäischen Kommission die Einhaltung des europäischen Datenschutzniveaus sicherstellt.
 
-4) Cookies
-Um den Besuch unserer Website attraktiv zu gestalten und die Nutzung bestimmter Funktionen zu ermöglichen, verwenden wir Cookies, also kleine Textdateien, die auf Ihrem Endgerät abgelegt werden. Teilweise werden diese Cookies nach Schließen des Browsers automatisch wieder gelöscht (sog. „Session-Cookies“), teilweise verbleiben diese Cookies länger auf Ihrem Endgerät und ermöglichen das Speichern von Seiteneinstellungen (sog. „persistente Cookies“). Im letzteren Fall können Sie die Speicherdauer der Übersicht zu den Cookie-Einstellungen Ihres Webbrowsers entnehmen.
+## 4) Cookies
+
+Um den Besuch unserer Website attraktiv zu gestalten und die Nutzung bestimmter Funktionen zu ermöglichen, verwenden wir Cookies, also kleine Textdateien, die auf Ihrem Endgerät abgelegt werden. Teilweise werden diese Cookies nach Schließen des Browsers automatisch wieder gelöscht (sog. „Session-Cookies"), teilweise verbleiben diese Cookies länger auf Ihrem Endgerät und ermöglichen das Speichern von Seiteneinstellungen (sog. „persistente Cookies"). Im letzteren Fall können Sie die Speicherdauer der Übersicht zu den Cookie-Einstellungen Ihres Webbrowsers entnehmen.
 
 Sofern durch einzelne von uns eingesetzte Cookies auch personenbezogene Daten verarbeitet werden, erfolgt die Verarbeitung gemäß Art. 6 Abs. 1 lit. b DSGVO entweder zur Durchführung des Vertrages, gemäß Art. 6 Abs. 1 lit. a DSGVO im Falle einer erteilten Einwilligung oder gemäß Art. 6 Abs. 1 lit. f DSGVO zur Wahrung unserer berechtigten Interessen an der bestmöglichen Funktionalität der Website sowie einer kundenfreundlichen und effektiven Ausgestaltung des Seitenbesuchs.
 
@@ -37,8 +44,9 @@ Sie können Ihren Browser so einstellen, dass Sie über das Setzen von Cookies i
 
 Bitte beachten Sie, dass bei Nichtannahme von Cookies die Funktionalität unserer Website eingeschränkt sein kann.
 
-5) Kontaktaufnahme
-5.1 - Anthropic Claude
+## 5) Kontaktaufnahme
+
+### 5.1 Anthropic Claude
 
 Auf dieser Website haben wir zur Bereitstellung eines autonomen Kundensupports eine Software-Lösung mit künstlicher Intelligenz des folgenden Anbieters eingebunden: Anthropic Ireland Limited, 6th Floor, South Bank House, Barrow Street, Dublin 4, D04 TR29, Irland
 
@@ -57,7 +65,8 @@ Erhobene personenbezogene Daten werden vorbehaltlich entgegenstehender gesetzlic
 Wir haben mit dem Anbieter einen Auftragsverarbeitungsvertrag geschlossen, der den Schutz der Daten unserer Seitenbesucher sicherstellt und eine unberechtigte Weitergabe an Dritte untersagt.
 
 Für die Übermittlung von Daten in die USA beruft sich der Anbieter auf Standardvertragsklauseln der Europäischen Kommission, welche die Einhaltung des europäischen Datenschutzniveaus sicherstellen sollen.
-- OpenAI
+
+### 5.2 OpenAI
 
 Auf dieser Website haben wir zur Bereitstellung eines autonomen Kundensupports eine Software-Lösung mit künstlicher Intelligenz des folgenden Anbieters eingebunden: OpenAI Ireland Limited, 1st Floor, The Liffey Trust Centre, 117-126 Sheriff Street Upper, Dublin 1, D01 YC43, Irland
 
@@ -77,7 +86,7 @@ Wir haben mit dem Anbieter einen Auftragsverarbeitungsvertrag geschlossen, der d
 
 Für die Übermittlung von Daten in die USA beruft sich der Anbieter auf Standardvertragsklauseln der Europäischen Kommission, welche die Einhaltung des europäischen Datenschutzniveaus sicherstellen sollen.
 
-5.2 Calendly
+### 5.2 Calendly
 
 Für die Bereitstellung einer Online-Terminbuchungsfunktion nutzen wir die Dienste des folgenden Anbieters: Calendly, LLC, BB&T Tower, 271 17th St NW, Atlanta, GA 30363, USA
 
@@ -89,17 +98,21 @@ Wir haben mit dem Anbieter einen Auftragsverarbeitungsvertrag geschlossen, der d
 
 Für Datenübermittlungen in die USA hat sich der Anbieter dem EU-US-Datenschutzrahmen (EU-US Data Privacy Framework) angeschlossen, das auf Basis eines Angemessenheitsbeschlusses der Europäischen Kommission die Einhaltung des europäischen Datenschutzniveaus sicherstellt.
 
-5.3 Im Rahmen der Kontaktaufnahme mit uns (z.B. per Kontaktformular oder E-Mail) werden – ausschließlich zum Zweck der Bearbeitung und Beantwortung Ihres Anliegens und nur im dafür erforderlichen Umfang – personenbezogene Daten verarbeitet.
+### 5.3 Kontaktaufnahme per E-Mail
+
+Im Rahmen der Kontaktaufnahme mit uns (z.B. per Kontaktformular oder E-Mail) werden – ausschließlich zum Zweck der Bearbeitung und Beantwortung Ihres Anliegens und nur im dafür erforderlichen Umfang – personenbezogene Daten verarbeitet.
 
 Rechtsgrundlage für die Verarbeitung dieser Daten ist unser berechtigtes Interesse an der Beantwortung Ihres Anliegens gemäß Art. 6 Abs. 1 lit. f DSGVO. Zielt Ihre Kontaktierung auf einen Vertrag ab, so ist zusätzliche Rechtsgrundlage für die Verarbeitung Art. 6 Abs. 1 lit. b DSGVO. Ihre Daten werden gelöscht, wenn sich aus den Umständen entnehmen lässt, dass der betroffene Sachverhalt abschließend geklärt ist und sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
 
-6) Datenverarbeitung bei Eröffnung eines Kundenkontos
+## 6) Datenverarbeitung bei Eröffnung eines Kundenkontos
+
 Gemäß Art. 6 Abs. 1 lit. b DSGVO werden personenbezogene Daten im jeweils erforderlichen Umfang weiterhin erhoben und verarbeitet, wenn Sie uns diese bei der Eröffnung eines Kundenkontos mitteilen. Welche Daten für die Kontoeröffnung erforderlich sind, entnehmen Sie der Eingabemaske des entsprechenden Formulars auf unserer Website.
 
 Eine Löschung Ihres Kundenkontos ist jederzeit möglich und kann durch eine Nachricht an die o.g. Adresse des Verantwortlichen erfolgen. Nach Löschung Ihres Kundenkontos werden Ihre Daten gelöscht, sofern alle darüber geschlossenen Verträge vollständig abgewickelt sind, keine gesetzlichen Aufbewahrungsfristen entgegenstehen und unsererseits kein berechtigtes Interesse an der Weiterspeicherung fortbesteht.
 
-7) Seitenfunktionalitäten
-Google Web Fonts
+## 7) Seitenfunktionalitäten
+
+### Google Web Fonts
 
 Diese Seite nutzt zur einheitlichen Darstellung von Schriftarten sogenannte Web Fonts des folgenden Anbieters: Google Ireland Limited, Gordon House, 4 Barrow St, Dublin, D04 E5W5, Irland
 
@@ -107,24 +120,26 @@ Beim Aufruf einer Seite lädt Ihr Browser die benötigten Web Fonts in ihren Bro
 
 Daten können zudem übermittelt werden an: Google LLC, USA
 
-Die Verarbeitung von personenbezogenen Daten im Zuge der Verbindungsaufnahme mit dem Anbieter der Schriftarten wird nur dann vollzogen, wenn Sie uns gemäß Art. 6 Abs. 1 lit. a DSGVO dazu Ihre ausdrückliche Einwilligung erteilt haben. Sie können Ihre erteilte Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen, indem Sie diesen Dienst über das auf der Webseite bereitgestellte „Cookie-Consent-Tool“ deaktivieren. Falls Ihr Browser keine Web Fonts unterstützt, wird eine Standardschrift von Ihrem Computer genutzt.
+Die Verarbeitung von personenbezogenen Daten im Zuge der Verbindungsaufnahme mit dem Anbieter der Schriftarten wird nur dann vollzogen, wenn Sie uns gemäß Art. 6 Abs. 1 lit. a DSGVO dazu Ihre ausdrückliche Einwilligung erteilt haben. Sie können Ihre erteilte Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen, indem Sie diesen Dienst über das auf der Webseite bereitgestellte „Cookie-Consent-Tool" deaktivieren. Falls Ihr Browser keine Web Fonts unterstützt, wird eine Standardschrift von Ihrem Computer genutzt.
 
 Für Datenübermittlungen in die USA hat sich der Anbieter dem EU-US-Datenschutzrahmen (EU-US Data Privacy Framework) angeschlossen, das auf Basis eines Angemessenheitsbeschlusses der Europäischen Kommission die Einhaltung des europäischen Datenschutzniveaus sicherstellt.
 
 Weitere Hinweise zu den Datenschutzbestimmungen von Google finden sich hier: https://business.safety.google/intl/de/privacy/
 
-8) Rechte des Betroffenen
-8.1 Das geltende Datenschutzrecht gewährt Ihnen gegenüber dem Verantwortlichen hinsichtlich der Verarbeitung Ihrer personenbezogenen Daten die nachstehenden Betroffenenrechte (Auskunfts- und Interventionsrechte), wobei für die jeweiligen Ausübungsvoraussetzungen auf die angeführte Rechtsgrundlage verwiesen wird:
+## 8) Rechte des Betroffenen
 
-Auskunftsrecht gemäß Art. 15 DSGVO;
-Recht auf Berichtigung gemäß Art. 16 DSGVO;
-Recht auf Löschung gemäß Art. 17 DSGVO;
-Recht auf Einschränkung der Verarbeitung gemäß Art. 18 DSGVO;
-Recht auf Unterrichtung gemäß Art. 19 DSGVO;
-Recht auf Datenübertragbarkeit gemäß Art. 20 DSGVO;
-Recht auf Widerruf erteilter Einwilligungen gemäß Art. 7 Abs. 3 DSGVO;
-Recht auf Beschwerde gemäß Art. 77 DSGVO.
-8.2 WIDERSPRUCHSRECHT
+**8.1** Das geltende Datenschutzrecht gewährt Ihnen gegenüber dem Verantwortlichen hinsichtlich der Verarbeitung Ihrer personenbezogenen Daten die nachstehenden Betroffenenrechte (Auskunfts- und Interventionsrechte), wobei für die jeweiligen Ausübungsvoraussetzungen auf die angeführte Rechtsgrundlage verwiesen wird:
+
+- Auskunftsrecht gemäß Art. 15 DSGVO;
+- Recht auf Berichtigung gemäß Art. 16 DSGVO;
+- Recht auf Löschung gemäß Art. 17 DSGVO;
+- Recht auf Einschränkung der Verarbeitung gemäß Art. 18 DSGVO;
+- Recht auf Unterrichtung gemäß Art. 19 DSGVO;
+- Recht auf Datenübertragbarkeit gemäß Art. 20 DSGVO;
+- Recht auf Widerruf erteilter Einwilligungen gemäß Art. 7 Abs. 3 DSGVO;
+- Recht auf Beschwerde gemäß Art. 77 DSGVO.
+
+**8.2 WIDERSPRUCHSRECHT**
 
 WENN WIR IM RAHMEN EINER INTERESSENABWÄGUNG IHRE PERSONENBEZOGENEN DATEN AUFGRUND UNSERES ÜBERWIEGENDEN BERECHTIGTEN INTERESSES VERARBEITEN, HABEN SIE DAS JEDERZEITIGE RECHT, AUS GRÜNDEN, DIE SICH AUS IHRER BESONDEREN SITUATION ERGEBEN, GEGEN DIESE VERARBEITUNG WIDERSPRUCH MIT WIRKUNG FÜR DIE ZUKUNFT EINZULEGEN.
 
@@ -134,7 +149,8 @@ WERDEN IHRE PERSONENBEZOGENEN DATEN VON UNS VERARBEITET, UM DIREKTWERBUNG ZU BET
 
 MACHEN SIE VON IHREM WIDERSPRUCHSRECHT GEBRAUCH, BEENDEN WIR DIE VERARBEITUNG DER BETROFFENEN DATEN ZU DIREKTWERBEZWECKEN.
 
-9) Dauer der Speicherung personenbezogener Daten
+## 9) Dauer der Speicherung personenbezogener Daten
+
 Die Dauer der Speicherung von personenbezogenen Daten bemisst sich anhand der jeweiligen Rechtsgrundlage, am Verarbeitungszweck und – sofern einschlägig – zusätzlich anhand der jeweiligen gesetzlichen Aufbewahrungsfrist (z.B. handels- und steuerrechtliche Aufbewahrungsfristen).
 
 Bei der Verarbeitung von personenbezogenen Daten auf Grundlage einer ausdrücklichen Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO werden die betroffenen Daten so lange gespeichert, bis Sie Ihre Einwilligung widerrufen.
