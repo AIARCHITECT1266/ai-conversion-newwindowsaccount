@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-20
 **Aktuelle Phase:** Pilot-Ready — Rechtstexte live, Website-Relaunch abgeschlossen, Founding-Phase ueber SEPA
-**Letzter Commit:** (wird nach Commit gesetzt)
+**Letzter Commit:** b838a2c — feat(legal): deploy IT-Recht-Kanzlei legal texts + privacy addendum
 
 ---
 
