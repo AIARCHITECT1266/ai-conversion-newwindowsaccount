@@ -172,8 +172,16 @@ const COLUMNS: { key: PipelineStatus; label: string; icon: typeof Star; gradient
   { key: "GEWONNEN", label: "Gewonnen", icon: Trophy, gradient: "from-emerald-400 to-emerald-500" },
 ];
 
+// Pill-Labels bewusst kurz gehalten: das Qualification-Badge sitzt
+// in der Kanban-Card oben rechts neben dem visitor-displayName. Bei
+// 5-spaltigem Grid bleibt fuer den Namen-Bereich ~110-150px Netto —
+// ein Label wie "Unqualifiziert" (14 Zeichen, ~110px mit Pill-Padding)
+// wuerde den Namen erneut truncaten, obwohl der Zeilenaufbau bereits
+// auf 2 Zeilen ist. Darum "Unqual." statt "Unqualifiziert".
+// Die Detail-Ansichten unter /dashboard/conversations/[id] und die
+// E-Mail-Benachrichtigung nutzen eigene Mappings mit voller Form.
 const QUALIFICATION_LABELS: Record<string, string> = {
-  UNQUALIFIED: "Unqualifiziert",
+  UNQUALIFIED: "Unqual.",
   MARKETING_QUALIFIED: "MQL",
   SALES_QUALIFIED: "SQL",
   OPPORTUNITY: "Opportunity",
