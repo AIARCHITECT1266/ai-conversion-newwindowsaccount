@@ -2,7 +2,41 @@
 
 **Letzte Aktualisierung:** 2026-04-21
 **Aktuelle Phase:** Demo bereit fuer MOD-Pilot-Outreach (Demo-Call 22./23.04.2026)
-**Letzter Commit:** a3a1f90 — feat(admin): demo-seed endpoint + MOD-Edu B2C lead seed data
+**Letzter Commit:** _folgt im naechsten Commit_ — docs(decisions): pilot-model 5 slots 30+30
+
+---
+
+## 21.04.2026 — Pilot-Modell-Entscheidung (5 Slots, 30+30)
+
+### Erledigt
+- Neuer ADR `docs/decisions/pilot-model-5-slots-30-30.md`
+  dokumentiert Produkt-/GTM-Entscheidung: **5 Pilot-Slots**
+  statt unbegrenzt, **30+30 Tage** statt 60 straight.
+- Phase 1 (30 Tage kostenlos) → Review-Punkt mit 3 Optionen
+  (direkt Vollpreis 467 EUR / Extended 30 Tage 233 EUR /
+  Trennung) → Phase 2 (optional) → Founding-Growth-Vollpreis.
+- Begruendung schriftlich: Solo-Founder-Kapazitaet
+  (3-5 h/Pilot/Woche), Knappheits-Signal, niedrigere
+  Commitment-Huerde, klarer Zwischen-Entscheidungs-Moment.
+- Review-Zeitpunkt: nach ersten 3 abgeschlossenen Piloten
+  (voraussichtlich Juli/August 2026).
+
+### Konsequenzen / Folge-Tasks (ausserhalb dieser Session)
+- **Banner-Wortlaut:** Website-Banner sagt aktuell
+  *"Die ersten 10 Pilotkunden ..."* (siehe
+  `docs/decisions/website-pre-mod-update.md` §2.3) — muss
+  auf **5 Slots** angepasst werden.
+- Pilot-Vereinbarung, E-Mail-Templates, Demo-Material auf
+  2-Phasen-Struktur umstellen.
+- Pilot-Status-Tracking (Phase 1 / Phase 2 / Voll-Konvertiert /
+  Abgebrochen) — Implementierungs-Ort offen (Tenant-Feld
+  vs. externes CRM).
+- Kein Code-Impact in dieser Session.
+
+### Kein Tech-Debt-Eintrag
+Bewusst kein TD-Pilot-06, weil es eine strategische
+Produkt-Entscheidung ist, keine aufgeschobene Schuld.
+ADR ist der richtige Ort.
 
 ---
 
