@@ -6,6 +6,23 @@
 
 ---
 
+## 21.04.2026 — Pre-Pilot Fix-Session
+
+- 3 Quick-Wins erledigt: auditLog in prompt/route.ts, Dashboard-Token 30d→7d,
+  11 tote Komponenten geloescht (Footer, HeroSection, HowItWorks, PilotSection,
+  Pricing, FloatingChat, NeuralGrid, LogoCloud, CalendarSection, ProblemSolution, Features)
+- Zod-Validation fuer admin/login + asset-studio/generate (die beiden POST-Routes
+  mit echtem Request-Body ohne Zod). Restliche 4 Audit-Findings waren Body-less
+  POST-Routes (nur URL-Params) — kein Zod noetig.
+- Default-Take fuer ~16 findMany-Queries (OOM-Praevention): 200 fuer Dashboard-
+  Listings, 1000 fuer Cron/Export, 100 fuer Messages, 500 fuer Tenants
+- Smoke-Tests: verschoben auf separate Session (Aufwand 4-6h, nicht pilot-blockierend)
+- Pilot-Launch-Status: GELB → GRUEN (kein bekannter Blocker)
+
+Audit-Report: docs/audits/pre-pilot-audit-2026-04-21.md
+
+---
+
 ## 20.04.2026 — Rechtstexte live
 
 - Alle 4 Rechtstexte (Impressum, Datenschutz, AGB, Widerrufsbelehrung) von IT-Recht-Kanzlei live auf ai-conversion.ai
