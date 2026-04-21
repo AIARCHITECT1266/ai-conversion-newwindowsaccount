@@ -56,6 +56,7 @@ export async function GET() {
   try {
     const tenants = await db.tenant.findMany({
       orderBy: { createdAt: "desc" },
+      take: 500,
       select: {
         ...TENANT_PUBLIC_SELECT,
         _count: {

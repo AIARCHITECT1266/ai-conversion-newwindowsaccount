@@ -89,6 +89,7 @@ export async function POST(
   const messages = await db.message.findMany({
     where: { conversationId: lead.conversationId },
     orderBy: { timestamp: "asc" },
+    take: 100,
     select: { role: true, contentEncrypted: true, timestamp: true },
   });
 

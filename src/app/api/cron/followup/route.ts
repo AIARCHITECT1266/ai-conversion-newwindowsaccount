@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { timestamp: "desc" },
         distinct: ["conversationId"],
+        take: 100,
         select: { conversationId: true, timestamp: true },
       });
       const lastMessageMap = new Map(

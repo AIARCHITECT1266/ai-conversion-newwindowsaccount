@@ -22,6 +22,7 @@ export async function GET() {
   const broadcasts = await db.broadcast.findMany({
     where: { tenantId: tenant.id },
     orderBy: { createdAt: "desc" },
+    take: 200,
     select: {
       id: true, message: true, segment: true, totalSent: true,
       totalFailed: true, status: true, createdAt: true, sentAt: true,
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
   const leads = await db.lead.findMany({
     where,
     select: { id: true },
+    take: 200,
   });
 
   if (leads.length === 0) {

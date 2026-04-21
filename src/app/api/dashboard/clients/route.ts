@@ -13,6 +13,7 @@ export async function GET() {
   const clients = await db.client.findMany({
     where: { tenantId: tenant.id },
     orderBy: { createdAt: "desc" },
+    take: 200,
     select: {
       id: true, companyName: true, contactName: true, status: true,
       onboardingStep: true, milestones: true, createdAt: true,

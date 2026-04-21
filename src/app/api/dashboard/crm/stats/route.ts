@@ -17,6 +17,7 @@ export async function GET() {
   // Alle Leads des Tenants mit Conversation-Daten laden
   const leads = await db.lead.findMany({
     where: { tenantId: tenant.id },
+    take: 1000,
     select: {
       id: true,
       pipelineStatus: true,

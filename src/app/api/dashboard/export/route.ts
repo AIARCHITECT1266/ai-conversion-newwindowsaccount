@@ -64,6 +64,7 @@ export async function GET() {
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
+      take: 1000,
     }),
     db.conversation.findMany({
       where: { tenantId: tenant.id },
@@ -84,6 +85,7 @@ export async function GET() {
         },
       },
       orderBy: { createdAt: "desc" },
+      take: 1000,
     }),
     db.client.findMany({
       where: { tenantId: tenant.id },
@@ -95,6 +97,7 @@ export async function GET() {
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
+      take: 1000,
     }),
   ]);
 

@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
   try {
     const tenants = await db.tenant.findMany({
       select: { id: true, name: true, retentionDays: true },
+      take: 500,
     });
 
     // Deduplizierung: Verarbeitete Message-IDs älter als 24h löschen
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
           messages: { none: {} },
         },
         select: { id: true },
+        take: 1000,
       });
 
       if (emptyConversations.length > 0) {
@@ -101,11 +103,13 @@ export async function GET(request: NextRequest) {
       const allClientIds = (await db.client.findMany({
         where: { tenantId: tenant.id },
         select: { id: true, leadId: true },
+        take: 1000,
       }));
       const existingLeadIds = new Set(
         (await db.lead.findMany({
           where: { tenantId: tenant.id },
           select: { id: true },
+          take: 1000,
         })).map((l) => l.id)
       );
       const orphanedClientIds = allClientIds

@@ -144,6 +144,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       timestamp: true,
     },
     orderBy: { timestamp: "asc" },
+    take: 100,
   });
 
   // Entschluesseln und fuer das Widget serialisieren

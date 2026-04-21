@@ -29,6 +29,7 @@ export async function GET(
   // Alle Leads dieser Kampagne laden
   const leads = await db.lead.findMany({
     where: { campaignId: campaign.id },
+    take: 1000,
     select: {
       score: true,
       qualification: true,

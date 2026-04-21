@@ -31,6 +31,7 @@ export async function GET(
   const abTests = await db.abTest.findMany({
     where: { campaignId: campaign.id },
     orderBy: { startedAt: "desc" },
+    take: 50,
   });
 
   // Gewinner-Vorschlag für aktive Tests > 14 Tage

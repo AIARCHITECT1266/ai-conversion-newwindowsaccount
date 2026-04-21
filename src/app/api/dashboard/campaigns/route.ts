@@ -25,6 +25,7 @@ export async function GET() {
   const campaigns = await db.campaign.findMany({
     where: { tenantId: tenant.id },
     orderBy: { createdAt: "desc" },
+    take: 200,
     select: {
       id: true,
       name: true,

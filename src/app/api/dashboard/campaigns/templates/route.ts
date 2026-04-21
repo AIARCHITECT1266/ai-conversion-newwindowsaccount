@@ -163,6 +163,7 @@ export async function GET() {
       ],
     },
     orderBy: [{ isSystem: "desc" }, { createdAt: "desc" }],
+    take: 200,
   });
 
   // JSON-Felder parsen
