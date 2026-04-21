@@ -26,13 +26,20 @@ Antworte AUSSCHLIESSLICH im folgenden JSON-Format (keine Markdown-Blöcke, kein 
   "naechsterSchritt": "Konkreter empfohlener nächster Schritt für den Vertrieb",
   "zusammenfassung": "2-3 Sätze Gesamtzusammenfassung des Gesprächsverlaufs",
   "kaufbereitschaft": "hoch" | "mittel" | "niedrig",
-  "einwaende": ["Liste der geäußerten Einwände/Bedenken"] oder []
+  "einwaende": ["Liste der geäußerten Einwände/Bedenken"] oder [],
+  "topSignals": ["Max 3 kurze Stichpunkte (je <=60 Zeichen), die den Lead-Score am stärksten treiben — positiv oder negativ"],
+  "einschaetzung": "1-2 Sätze Gesamt-Einschätzung mit konkreter Handlungs-Empfehlung für den Salesrep"
 }
 
 WICHTIG:
 - Analysiere NUR den Gesprächsinhalt, erfinde nichts dazu
 - Sei präzise und faktenbasiert
 - Budget-Signale können direkte Nennungen oder indirekte Hinweise sein
+- topSignals: genau 1 bis 3 Stichpunkte, jeder eine konkrete Beobachtung
+  ("Konkrete Kurswahl: Digital Marketing Manager", "Gutschein-Status offen",
+  "Sprachliche Barrieren erkennbar"). Keine Floskeln.
+- einschaetzung: kondensierte Handlungsempfehlung (z.B.
+  "Motivierter Lead mit klarem Ziel, Gutschein-Entscheidung steht aus — empfehle Rückruf binnen 48h")
 - Antworte auf Deutsch`;
 
 export async function POST(

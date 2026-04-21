@@ -159,6 +159,21 @@ export function parseConfig(raw: unknown): ResolvedTenantConfig {
   };
 }
 
+// ---------- leadType (Tenant-Klassifikation, Dashboard-only) ----------
+
+// leadType lebt im Tenant.webWidgetConfig-JSON, wird aber BEWUSST NICHT
+// ueber parseConfig() in die oeffentliche Widget-Config aufgenommen.
+// Grund: /api/widget/config liefert das ResolvedTenantConfig-Objekt an
+// anonyme Widget-Besucher aus — B2C/B2B-Klassifikation ist zwar nicht
+// direkt sensitiv, gehoert aber ins Dashboard-Kontext, nicht in die
+// oeffentliche Produkt-Oberflaeche. Dashboard-API liest leadType ueber
+// diesen separaten Helper, parseConfig() bleibt Widget-public.
+export function parseLeadType(raw: unknown): "B2C" | "B2B" | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = (raw as Record<string, unknown>).leadType;
+  return value === "B2C" || value === "B2B" ? value : null;
+}
+
 // ---------- Public-Key-Generierung ----------
 
 /**

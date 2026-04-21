@@ -105,6 +105,10 @@ interface AiSummary {
   zusammenfassung: string;
   kaufbereitschaft: "hoch" | "mittel" | "niedrig";
   einwaende: string[];
+  // Additive Felder aus Phase 2 (MOD-Demo). Optional, backward-compatible —
+  // bestehende Leads ohne Re-Generation haben diese Felder nicht.
+  topSignals?: string[];
+  einschaetzung?: string;
 }
 
 interface LeadDetail {
@@ -221,15 +225,24 @@ function getScoreColor(score: number) {
 function useTenantInfo() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string | null>(null);
+  const [leadType, setLeadType] = useState<"B2C" | "B2B" | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     fetch("/api/dashboard/me")
       .then((r) => { if (!r.ok) { window.location.href = "/dashboard/login"; return null; } return r.json(); })
-      .then((data) => { if (data) { setTenantId(data.tenantId); setTenantName(data.tenantName); } })
+      .then((data) => {
+        if (data) {
+          setTenantId(data.tenantId);
+          setTenantName(data.tenantName);
+          if (data.leadType === "B2C" || data.leadType === "B2B") {
+            setLeadType(data.leadType);
+          }
+        }
+      })
       .catch(() => { window.location.href = "/dashboard/login"; })
       .finally(() => setLoading(false));
   }, []);
-  return { tenantId, tenantName, loading };
+  return { tenantId, tenantName, leadType, loading };
 }
 
 /* ───────────────────────────── Score-Balken ─────────────────────── */
@@ -475,9 +488,10 @@ function LeadCard({
 /* ───────────────────────────── Detail-Modal ─────────────────────── */
 
 function DetailModal({
-  leadId, onClose, onSave,
+  leadId, leadType, onClose, onSave,
 }: {
   leadId: string;
+  leadType: "B2C" | "B2B" | null;
   onClose: () => void;
   onSave: (id: string, data: { dealValue?: number | null; notes?: string | null }) => Promise<void>;
 }) {
@@ -586,6 +600,18 @@ function DetailModal({
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${QUALIFICATION_COLORS[detail.qualification]}`}>
                       {QUALIFICATION_LABELS[detail.qualification]}
                     </span>
+                    {leadType && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          leadType === "B2C"
+                            ? "bg-cyan-500/10 text-cyan-300"
+                            : "bg-indigo-500/10 text-indigo-300"
+                        }`}
+                        title={leadType === "B2C" ? "Privatkunde (Business-to-Consumer)" : "Geschäftskunde (Business-to-Business)"}
+                      >
+                        {leadType}
+                      </span>
+                    )}
                     <span className="text-xs text-slate-500">Sprache: {detail.conversation.language.toUpperCase()}</span>
                     <span className="text-xs text-slate-500">Erstellt: {formatDate(detail.createdAt)}</span>
                   </div>
@@ -849,6 +875,37 @@ function DetailModal({
                       <div className="rounded-xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.03)] p-4">
                         <p className="text-sm leading-relaxed text-slate-200">{aiSummary.zusammenfassung}</p>
                       </div>
+
+                      {/* Top-Signale (Phase-2-additiv, nur wenn vorhanden) */}
+                      {aiSummary.topSignals && aiSummary.topSignals.length > 0 && (
+                        <div className="rounded-xl border border-[#c9a84c]/20 bg-[#c9a84c]/[0.04] p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="h-4 w-4 text-[#c9a84c]" />
+                            <span className="text-xs font-medium text-slate-400">
+                              Top-{aiSummary.topSignals.length}-Signale
+                            </span>
+                          </div>
+                          <ul className="space-y-1.5">
+                            {aiSummary.topSignals.slice(0, 3).map((s, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
+                                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#c9a84c]" />
+                                {s}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Einschätzung mit Handlungs-Empfehlung (Phase-2-additiv) */}
+                      {aiSummary.einschaetzung && (
+                        <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Brain className="h-4 w-4 text-emerald-400" />
+                            <span className="text-xs font-medium text-slate-400">Einschätzung & Empfehlung</span>
+                          </div>
+                          <p className="text-sm leading-relaxed text-slate-200">{aiSummary.einschaetzung}</p>
+                        </div>
+                      )}
 
                       {/* Kaufbereitschaft */}
                       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
@@ -1290,7 +1347,7 @@ function PipelineColumn({
 /* ───────────────────────────── Haupt-Seite ──────────────────────── */
 
 export default function CrmPipelinePage() {
-  const { tenantName, loading: authLoading } = useTenantInfo();
+  const { tenantName, leadType, loading: authLoading } = useTenantInfo();
   const [leads, setLeads] = useState<CrmLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1504,6 +1561,7 @@ export default function CrmPipelinePage() {
         {selectedLeadId && (
           <DetailModal
             leadId={selectedLeadId}
+            leadType={leadType}
             onClose={() => setSelectedLeadId(null)}
             onSave={handleSaveLeadDetails}
           />
