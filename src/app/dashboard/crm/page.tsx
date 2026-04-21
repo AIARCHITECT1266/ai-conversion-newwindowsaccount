@@ -426,9 +426,17 @@ function LeadCard({
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 opacity-0 transition-opacity group-hover:opacity-100" />
-          <span className="truncate text-sm font-medium text-slate-200">
-            {lead.conversation.visitorDisplayName ?? maskId(lead.conversation.externalId)}
-          </span>
+          {(() => {
+            const label = lead.conversation.visitorDisplayName ?? maskId(lead.conversation.externalId);
+            return (
+              <span
+                className="truncate text-sm font-medium text-slate-200"
+                title={label}
+              >
+                {label}
+              </span>
+            );
+          })()}
           {lead.conversation.channel && (
             <ChannelBadge channel={lead.conversation.channel} />
           )}

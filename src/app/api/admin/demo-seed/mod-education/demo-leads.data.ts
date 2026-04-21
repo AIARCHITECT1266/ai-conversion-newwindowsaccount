@@ -71,7 +71,7 @@ export interface DemoLead {
 
 const ANNA_M: DemoLead = {
   slug: "anna-m",
-  displayName: "Anna M., 34",
+  displayName: "Anna M.",
   age: 34,
   emailDummy: "anna.m@example.com",
   phoneDummy: "+49-555-101-2345",
@@ -196,7 +196,7 @@ const ANNA_M: DemoLead = {
 
 const STEFAN_K: DemoLead = {
   slug: "stefan-k",
-  displayName: "Stefan K., 42",
+  displayName: "Stefan K.",
   age: 42,
   emailDummy: "s.kuehn@example.com",
   phoneDummy: "+49-555-202-3456",
@@ -313,7 +313,7 @@ const STEFAN_K: DemoLead = {
 
 const YASEMIN_D: DemoLead = {
   slug: "yasemin-d",
-  displayName: "Yasemin D., 28",
+  displayName: "Yasemin D.",
   age: 28,
   emailDummy: "y.demir@example.com",
   phoneDummy: "+49-555-303-4567",
@@ -429,7 +429,7 @@ const YASEMIN_D: DemoLead = {
 
 const THOMAS_R: DemoLead = {
   slug: "thomas-r",
-  displayName: "Thomas R., 51",
+  displayName: "Thomas R.",
   age: 51,
   emailDummy: "t.richter@example.com",
   phoneDummy: "+49-555-404-5678",
@@ -546,7 +546,7 @@ const THOMAS_R: DemoLead = {
 
 const BIRGIT_H: DemoLead = {
   slug: "birgit-h",
-  displayName: "Birgit H., 38",
+  displayName: "Birgit H.",
   age: 38,
   emailDummy: "b.hoffmann@example.com",
   phoneDummy: "+49-555-505-6789",
@@ -655,7 +655,7 @@ const BIRGIT_H: DemoLead = {
 
 const MARCO_S: DemoLead = {
   slug: "marco-s",
-  displayName: "Marco S., 29",
+  displayName: "Marco S.",
   age: 29,
   emailDummy: "marco.s@example.com",
   phoneDummy: "+49-555-606-7890",
@@ -769,7 +769,7 @@ const MARCO_S: DemoLead = {
 
 const AHMAD_K: DemoLead = {
   slug: "ahmad-k",
-  displayName: "Ahmad K., 45",
+  displayName: "Ahmad K.",
   age: 45,
   emailDummy: "ahmad.k@example.com",
   phoneDummy: "+49-555-707-8901",
@@ -881,7 +881,7 @@ const AHMAD_K: DemoLead = {
 
 const JENNIFER_B: DemoLead = {
   slug: "jennifer-b",
-  displayName: "Jennifer B., 32",
+  displayName: "Jennifer B.",
   age: 32,
   emailDummy: "j.baum@example.com",
   phoneDummy: "+49-555-808-9012",
