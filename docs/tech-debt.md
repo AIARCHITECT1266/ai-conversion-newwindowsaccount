@@ -1208,3 +1208,126 @@ Betrifft: content/legal/datenschutz-ergaenzung.md
 
 ### Aufwand
 15-30 Min (Textanpassungen nach Kanzlei-Feedback).
+
+## TD-Pilot-01: WhatsApp Phone ID als Pflichtfeld bei Tenant-Anlage (21.04.2026)
+
+### Status
+Offen.
+
+### Kategorie
+Pilot-relevant, nicht blockierend.
+
+### Pilot-blockierend
+Nein fuer manuell angelegte Tenants. Ja, sobald Kunden Tenants
+selbst anlegen (Self-Service-Phase).
+
+### Problem
+Bei Tenant-Anlage im Admin-Interface ist das Feld "WhatsApp
+Phone ID" aktuell Pflicht, auch wenn der Tenant Web-Widget-only
+nutzen soll. Das fuehrt zu Workarounds wie "00000" als
+Dummy-Wert. Wegen `@unique`-Constraint auf `whatsappPhoneId`
+muss jeder Web-Widget-only Tenant sogar einen eindeutigen
+Dummy-Wert bekommen (00000, 00001, ...).
+
+### Ursache
+Historisch — urspruengliches Produkt war WhatsApp-first, Feld
+wurde als Required-Feld mit `@unique`-Constraint angelegt.
+
+### Aktuelle Code-Lage
+- `prisma/schema.prisma:21` → `whatsappPhoneId String @unique`
+  (NOT NULL)
+- `src/app/api/admin/tenants/route.ts:27` → Zod-Validator
+  `whatsappPhoneId: z.string().min(1).max(64)` (required)
+- `src/app/admin/page.tsx:761` → Frontend `isValid`-Check
+  erzwingt nicht-leeren Wert; Field (Z. 860-866) ohne
+  "Optional"-Kennzeichnung
+
+### Impact
+- User-Experience-Bug in der Admin-UI
+- Unprofessioneller Eindruck bei Self-Service-Tenant-Erstellung
+- Dummy-Werte in Produktions-DB (Data-Quality-Issue)
+- Jeder Dummy-Wert verbrennt einen Slot im `@unique`-Raum
+
+### Fix
+- WhatsApp Phone ID als Optional im Prisma-Schema
+  (`String? @unique` → Prisma erlaubt Multi-NULL auf
+  `@unique`-Feldern)
+- Zod-Validator anpassen: Required nur, wenn WhatsApp-Feature
+  aktiviert ist (plan-/feature-konditional)
+- Admin-Frontend: Feld als "Optional" kennzeichnen oder
+  ausblenden, wenn Plan/Feature WhatsApp nicht umfasst
+- Migration fuer existierende Tenants mit "00000"-Werten
+  (auf NULL umstellen)
+
+### Aufwand
+~45-60 Min.
+
+### Prioritaet
+Mittel. Fix innerhalb der naechsten 2-3 Wochen, spaetestens
+vor Self-Service-Flow.
+
+## TD-Pilot-02: Web-Widget muss nach Tenant-Erstellung manuell aktiviert werden (21.04.2026)
+
+### Status
+Offen.
+
+### Kategorie
+Pilot-relevant, nicht blockierend.
+
+### Pilot-blockierend
+Nein — Admin-Fehleranfaelligkeit, kein Funktionsausfall.
+
+### Problem
+Bei Tenant-Anlage ist "Web-Widget" standardmaessig nicht
+aktiviert, auch bei Plaenen, die Web-Widget enthalten (Growth,
+Professional). Admin muss nach Tenant-Erstellung manuell das
+Widget aktivieren (Admin-Edit-Modal oder Dashboard-Toggle).
+
+### Ursache
+Historisch — WhatsApp war der Primaer-Kanal, Web-Widget kam
+spaeter dazu (Phase 2-5). Default-State wurde nie an den
+neuen Produkt-Stand angepasst.
+
+### Aktuelle Code-Lage
+- `prisma/schema.prisma:40` →
+  `webWidgetEnabled Boolean @default(false)` (DB-Default OFF)
+- `src/app/api/admin/tenants/route.ts:114-127` (POST-Handler)
+  setzt `webWidgetEnabled` NICHT explizit → erbt `false`
+- `src/app/admin/page.tsx:850-918` (Create-Dialog) hat KEINEN
+  `webWidgetEnabled`-Toggle im Anlage-Formular
+- Plan-Selector-UI-Label "Growth (Web-Widget aktiv)" ist
+  rein dekorativ, loest keine Auto-Aktivierung aus
+- Aktivierung erfolgt NUR via Admin-Edit-Modal
+  (`page.tsx:1395-1415`) oder Dashboard-Toggle
+  (`src/app/api/dashboard/widget-config/toggle/route.ts`)
+
+### Impact
+- Extra-Arbeitsschritt bei jeder Tenant-Anlage
+- Risiko: Admin vergisst Aktivierung → Widget-Integration
+  scheitert beim Kunden
+- Gegenlaeufig zur aktuellen strategischen Ausrichtung
+  (Web-Widget-first nach Meta-Verifizierungs-Problemen mit
+  WhatsApp)
+
+### Fix
+- Default-Aktivierung Web-Widget plan-basiert umkehren:
+  - Starter (kein Widget): `webWidgetEnabled` default OFF
+  - Growth / Professional / hoeher: `webWidgetEnabled`
+    default ON
+- Umsetzung im POST-Handler von `api/admin/tenants/route.ts`
+  (aus `paddlePlan` ableiten), nicht im Prisma-Default
+  (bleibt OFF als sichere Baseline)
+- WhatsApp-Aktivierung als separaten, nachtraeglich
+  ausloesbaren Schritt kennzeichnen (sobald
+  Meta-Verifizierung durch)
+- Admin-UI Create-Dialog: WhatsApp-Felder als "optional
+  spaeter aktivieren" kennzeichnen, Web-Widget-Status
+  sichtbar machen
+
+### Aufwand
+~20-30 Min.
+
+### Prioritaet
+Mittel-Hoch. Zeitnah (naechste 2 Wochen), spaetestens vor
+Self-Service-Kunden. Strategisch konsistent mit
+Widget-first-Positionierung.
