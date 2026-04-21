@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/shared/db";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { decryptText } from "@/modules/encryption/aes";
+import { parseVisitorDisplayName } from "@/lib/widget/publicKey";
 
 // Zod-Schema fuer Query-Parameter
 const statusSchema = z.enum(["ACTIVE", "PAUSED", "CLOSED", "ARCHIVED"]).optional();
@@ -98,6 +99,9 @@ export async function GET(req: NextRequest) {
       status: c.status,
       language: c.language,
       consentGiven: c.consentGiven,
+      // Phase-2-Demo-Fix: abgeleiteter displayName aus widgetVisitorMeta
+      // fuer die Dashboard-Liste. Raw-JSON wird nicht ausgeliefert.
+      visitorDisplayName: parseVisitorDisplayName(c.widgetVisitorMeta),
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
       lastMessage,

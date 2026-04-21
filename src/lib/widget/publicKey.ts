@@ -159,6 +159,29 @@ export function parseConfig(raw: unknown): ResolvedTenantConfig {
   };
 }
 
+// ---------- widgetVisitorMeta Helpers (Dashboard-only) ----------
+
+// Extrahiert einen anzeigbaren Namen aus Conversation.widgetVisitorMeta.
+// Das Feld ist ein freies JSON und liegt unverschluesselt vor — wird aber
+// NICHT ueber die oeffentliche Widget-API ausgeliefert, nur im Dashboard.
+//
+// Hintergrund: Web-Channel-Conversations haben keine dedizierten
+// name/firstName-Felder im Schema. Bei Widget-Embed-Integrationen kann
+// das einbettende System einen displayName beim Session-Start mitgeben,
+// z.B. aus bereits bekannten Kunden-Daten (Logged-In-User) oder als
+// Demo-Seed-Marker. Dashboard-UI faellt auf maskId(externalId) zurueck
+// wenn kein displayName vorhanden — siehe crm/page.tsx, conversations/page.tsx.
+export function parseVisitorDisplayName(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = (raw as Record<string, unknown>).displayName;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  // Bound: 1 bis 120 Zeichen. Obergrenze schuetzt vor absichtlicher
+  // UI-Ueberflutung (lange Strings koennten Kanban-Karten sprengen).
+  if (trimmed.length < 1 || trimmed.length > 120) return null;
+  return trimmed;
+}
+
 // ---------- leadType (Tenant-Klassifikation, Dashboard-only) ----------
 
 // leadType lebt im Tenant.webWidgetConfig-JSON, wird aber BEWUSST NICHT

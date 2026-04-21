@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { decryptText } from "@/modules/encryption/aes";
+import { parseVisitorDisplayName } from "@/lib/widget/publicKey";
 import { db } from "@/shared/db";
 
 const leadUpdateSchema = z.object({
@@ -46,6 +47,9 @@ export async function GET(
           consentAt: true,
           createdAt: true,
           updatedAt: true,
+          // Phase-2-Demo-Fix: widgetVisitorMeta fuer displayName-Parsing,
+          // wird serverseitig reduziert auf visitorDisplayName.
+          widgetVisitorMeta: true,
           messages: {
             orderBy: { timestamp: "asc" },
             select: {
@@ -98,6 +102,8 @@ export async function GET(
         consentAt: lead.conversation.consentAt,
         createdAt: lead.conversation.createdAt,
         updatedAt: lead.conversation.updatedAt,
+        // Raw widgetVisitorMeta NICHT ausliefern — nur abgeleiteten Namen.
+        visitorDisplayName: parseVisitorDisplayName(lead.conversation.widgetVisitorMeta),
       },
       messages,
     },

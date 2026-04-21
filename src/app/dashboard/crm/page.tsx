@@ -69,6 +69,10 @@ interface CrmLead {
     channel?: "WHATSAPP" | "WEB";
     status: string;
     updatedAt: string;
+    // Phase-2-Demo-Fix: abgeleiteter Anzeigename aus
+    // widgetVisitorMeta.displayName. null fuer Leads ohne Meta
+    // (WhatsApp, alte Web-Leads) → Fallback auf maskId(externalId).
+    visitorDisplayName?: string | null;
   };
 }
 
@@ -134,6 +138,9 @@ interface LeadDetail {
     consentAt: string | null;
     createdAt: string;
     updatedAt: string;
+    // Phase-2-Demo-Fix: abgeleiteter Anzeigename aus widgetVisitorMeta,
+    // Fallback auf maskId(externalId) im UI.
+    visitorDisplayName?: string | null;
   };
   messages: LeadMessage[];
 }
@@ -420,7 +427,7 @@ function LeadCard({
         <div className="flex min-w-0 items-center gap-2">
           <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 opacity-0 transition-opacity group-hover:opacity-100" />
           <span className="truncate text-sm font-medium text-slate-200">
-            {maskId(lead.conversation.externalId)}
+            {lead.conversation.visitorDisplayName ?? maskId(lead.conversation.externalId)}
           </span>
           {lead.conversation.channel && (
             <ChannelBadge channel={lead.conversation.channel} />
@@ -594,7 +601,7 @@ function DetailModal({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-white" style={{ fontFamily: "Georgia, serif" }}>
-                    {maskId(detail.conversation.externalId)}
+                    {detail.conversation.visitorDisplayName ?? maskId(detail.conversation.externalId)}
                   </h3>
                   <div className="mt-1 flex items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${QUALIFICATION_COLORS[detail.qualification]}`}>

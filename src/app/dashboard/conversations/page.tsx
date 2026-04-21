@@ -37,6 +37,7 @@ import {
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
 import { decryptText } from "@/modules/encryption/aes";
+import { parseVisitorDisplayName } from "@/lib/widget/publicKey";
 import ConversationsFilter from "./ConversationsFilter";
 import { ChannelBadge } from "./ChannelBadge";
 
@@ -60,14 +61,22 @@ function parsePage(raw: string | string[] | undefined): number {
   return n;
 }
 
-// Externe ID maskieren (DSGVO). WEB-Channel hat seit Phase 3a.5
-// externalId=null — wir zeigen dann einen generischen Session-
-// Platzhalter statt "•••••", damit der User auf einen Blick sieht,
-// dass es kein WhatsApp-Kontakt ist.
-function maskExternalId(
+// Anzeigename fuer einen Listen-Eintrag bestimmen.
+// Priorisierung:
+//   1. visitorDisplayName (aus widgetVisitorMeta, Web-Kanal)
+//   2. maskExternalId (Fallback fuer WhatsApp-Leads und alte Web-Leads
+//      ohne displayName)
+//
+// Phase-2-Demo-Fix (21.04.2026): Vorher zeigte diese Liste fuer alle
+// WEB-Conversations den generischen Platzhalter "Web-Session", was bei
+// Demo-Leads zu keiner Identifikationsmoeglichkeit fuehrte. Neue Logik
+// fallback-kettet zuerst auf displayName, dann maskExternalId.
+function displayNameOrMask(
   externalId: string | null,
   channel: "WHATSAPP" | "WEB",
+  visitorDisplayName: string | null,
 ): string {
+  if (visitorDisplayName) return visitorDisplayName;
   if (channel === "WEB") return "Web-Session";
   if (!externalId || externalId.length <= 6) return "•••••";
   return externalId.slice(0, 4) + " •••• " + externalId.slice(-3);
@@ -166,7 +175,15 @@ export default async function ConversationsListPage({
       orderBy: { updatedAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: {
+      select: {
+        id: true,
+        externalId: true,
+        channel: true,
+        status: true,
+        updatedAt: true,
+        // Phase-2-Demo-Fix: displayName aus widgetVisitorMeta fuer
+        // sichtbaren Anzeigenamen statt generischem "Web-Session".
+        widgetVisitorMeta: true,
         messages: {
           orderBy: { timestamp: "desc" },
           take: 1,
@@ -197,6 +214,7 @@ export default async function ConversationsListPage({
       channel: c.channel,
       status: c.status,
       updatedAt: c.updatedAt,
+      visitorDisplayName: parseVisitorDisplayName(c.widgetVisitorMeta),
       lastMessage,
       lastMessageAt: c.messages[0]?.timestamp ?? null,
       leadScore: c.lead?.score ?? null,
@@ -264,7 +282,7 @@ export default async function ConversationsListPage({
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium">
-                        {maskExternalId(item.externalId, item.channel)}
+                        {displayNameOrMask(item.externalId, item.channel, item.visitorDisplayName)}
                       </span>
                       <ChannelBadge channel={item.channel} />
                       <span

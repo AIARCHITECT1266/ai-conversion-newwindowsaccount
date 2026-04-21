@@ -1598,3 +1598,56 @@ erzeugt; TD-Pilot-03 optimiert, wie GPT-4o diese Signale
 bewertet. Reihenfolge: erst TD-Pilot-05 (bessere Signale),
 dann TD-Pilot-03 (tenant-spezifisches Scoring) — sonst
 wird das Scoring auf schlechter Rohdaten-Basis optimiert.
+
+## TD-Pilot-07: Web-Channel-Namens-Anzeige — maskId-Fallback, displayName-Priorisierung (21.04.2026)
+
+### Status
+ERLEDIGT mit Commit (Hash folgt im selben Fix-Commit).
+
+### Kategorie
+Archiv-Eintrag. Dokumentiert die Verhaltensaenderung fuer
+zukuenftige Reviewer, keine weitere Aktion noetig.
+
+### Hintergrund
+Vor Commit 21.04.2026: Dashboard zeigte fuer WEB-Channel-
+Conversations die maskierte `externalId` (z.B. `"dem •••• -m"`
+fuer `externalId="demo-seed-anna-m"`) oder den generischen
+Platzhalter `"Web-Session"`. Beide Anzeigen waren fuer
+Salesreps nicht identifizierbar — kein Name, keine Abgrenzung
+zwischen verschiedenen Leads.
+
+Die `maskId()`-Funktion stammt aus der WhatsApp-Aera, als
+`externalId` ein Hash der Telefonnummer war. Fuer den Web-Kanal
+ist das Feld entweder `null` oder ein techischer Marker —
+Maskierung hatte dort keinen DSGVO-Zweck, erzeugte aber
+Identifikations-Luecken in Kanban und Konversations-Liste.
+
+### Aenderung
+- Neuer Helper `parseVisitorDisplayName(raw: unknown)` in
+  `src/lib/widget/publicKey.ts`, extrahiert defensiv
+  `widgetVisitorMeta.displayName` (1-120 Zeichen, string).
+- Dashboard-API-Endpoints liefern das abgeleitete Feld
+  `visitorDisplayName: string | null` mit, nicht das
+  Raw-JSON:
+  - `/api/dashboard/leads`
+  - `/api/dashboard/leads/[id]`
+  - `/api/dashboard/conversations`
+- Server-Component `/dashboard/conversations/page.tsx` nutzt
+  direkten Prisma-Load + gleichen Helper.
+- UI-Fallback-Kette: `visitorDisplayName ?? maskId(externalId)`
+  (crm/page.tsx) bzw. `displayNameOrMask()` (conversations/page.tsx).
+
+### Backward-Compatibility
+- WhatsApp-Leads haben `widgetVisitorMeta=null` →
+  `visitorDisplayName=null` → Fallback auf maskId greift unveraendert.
+- Bestehende Web-Leads ohne `displayName` in `widgetVisitorMeta` →
+  gleicher Fallback wie vorher ("Web-Session" in conversations/page.tsx,
+  maskId in crm/page.tsx).
+- Kein Schema-Change, keine DB-Migration.
+
+### Sekundaerer Nutzen
+Widget-Embed-Integrationen koennen bei Session-Start einen
+`displayName` mitgeben (z.B. Logged-In-User-Name vom Host-System),
+der dann direkt im Dashboard erscheint — ohne weitere Code-
+Aenderungen. Demo-Seed und zukuenftige SSO-Widget-Integrationen
+profitieren von derselben Infrastruktur.
