@@ -34,7 +34,8 @@ type AuditAction =
   | "widget.message_received"
   | "widget.config_updated"
   | "widget.public_key_generated"
-  | "widget.toggled";
+  | "widget.toggled"
+  | "dashboard.prompt_updated";
 
 // DSGVO: Felder die nie in Details auftauchen duerfen
 const SENSITIVE_FIELDS = new Set([

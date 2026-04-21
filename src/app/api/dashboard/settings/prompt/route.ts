@@ -3,6 +3,9 @@ import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { db } from "@/shared/db";
 import { detectPlanType } from "@/modules/bot/system-prompts";
+import { auditLog } from "@/modules/compliance/audit-log";
+import { getClientIp } from "@/shared/rate-limit";
+import { createHash } from "crypto";
 
 // GET: System-Prompt und Plan laden
 export async function GET() {
@@ -51,6 +54,14 @@ export async function POST(req: NextRequest) {
   await db.tenant.update({
     where: { id: tenant.id },
     data: { systemPrompt: systemPrompt || "" },
+  });
+
+  const ip = getClientIp(req);
+  const ipHash = createHash("sha256").update(ip).digest("hex").slice(0, 16);
+  auditLog("dashboard.prompt_updated", {
+    tenantId: tenant.id,
+    ip: ipHash,
+    details: { length: systemPrompt.length },
   });
 
   return NextResponse.json({ success: true });

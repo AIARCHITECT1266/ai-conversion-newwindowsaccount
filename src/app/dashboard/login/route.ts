@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 60 * 60 * 24 * 30, // 30 Tage
+    maxAge: 60 * 60 * 24 * 7, // 7 Tage — Security/Convenience-Balance fuer B2B Dashboard
     path: "/",
   });
 
