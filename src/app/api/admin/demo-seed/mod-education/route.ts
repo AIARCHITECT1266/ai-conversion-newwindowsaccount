@@ -104,6 +104,60 @@ async function createDemoConversation(
   });
 }
 
+// GET-Handler: diagnostische Read-only-Sicht auf den aktuellen
+// Zustand der Demo-Leads. Gibt pro Demo-Conversation externalId +
+// displayName aus widgetVisitorMeta zurueck, ohne den Raw-JSON komplett
+// zu exponieren. Dient der Verifikation, dass der Seed die erwarteten
+// Namen in der DB persistiert hat. Kein widgetVisitorMeta-Leak, nur
+// das abgeleitete Feld.
+export async function GET() {
+  const tenant = await db.tenant.findUnique({
+    where: { slug: TARGET_SLUG },
+    select: { id: true, slug: true },
+  });
+
+  if (!tenant) {
+    return NextResponse.json(
+      { error: `Tenant "${TARGET_SLUG}" existiert nicht.` },
+      { status: 400 },
+    );
+  }
+
+  const demoConvs = await db.conversation.findMany({
+    where: {
+      tenantId: tenant.id,
+      externalId: { startsWith: "demo-seed-" },
+    },
+    orderBy: { externalId: "asc" },
+    select: {
+      externalId: true,
+      widgetVisitorMeta: true,
+      lead: { select: { score: true } },
+    },
+  });
+
+  const items = demoConvs.map((c) => {
+    const meta =
+      c.widgetVisitorMeta && typeof c.widgetVisitorMeta === "object"
+        ? (c.widgetVisitorMeta as Record<string, unknown>)
+        : {};
+    return {
+      externalId: c.externalId,
+      displayName: typeof meta.displayName === "string" ? meta.displayName : null,
+      displayNameLength:
+        typeof meta.displayName === "string" ? meta.displayName.length : 0,
+      age: typeof meta.age === "number" ? meta.age : null,
+      score: c.lead?.score ?? null,
+    };
+  });
+
+  return NextResponse.json({
+    tenantSlug: tenant.slug,
+    count: items.length,
+    items,
+  });
+}
+
 export async function POST() {
   // Ziel-Tenant auflösen (hartkodiert fuer MOD-Demo)
   const tenant = await db.tenant.findUnique({
