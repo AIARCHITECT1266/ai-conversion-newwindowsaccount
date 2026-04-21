@@ -422,9 +422,13 @@ function LeadCard({
       onClick={() => onEdit(lead)}
       className="group cursor-grab rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all duration-200 hover:border-[rgba(201,168,76,0.25)] hover:bg-white/[0.04] active:cursor-grabbing"
     >
-      {/* Header: ID + Channel-Badge + Qualifikation */}
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
+      {/* Header-Zeile 1: Name + Qualifikations-Pill
+          Der Kanban-Column-Platz reicht nicht fuer Name + ChannelBadge +
+          Qual-Pill in einer Zeile (bei 5-spaltigem Grid und Pills wie
+          "Unqualifiziert"). ChannelBadge wandert deshalb auf Zeile 2
+          und gibt dem Namen maximalen Horizontalplatz. */}
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 opacity-0 transition-opacity group-hover:opacity-100" />
           {(() => {
             const label = lead.conversation.visitorDisplayName ?? maskId(lead.conversation.externalId);
@@ -437,14 +441,17 @@ function LeadCard({
               </span>
             );
           })()}
-          {lead.conversation.channel && (
-            <ChannelBadge channel={lead.conversation.channel} />
-          )}
         </div>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${QUALIFICATION_COLORS[lead.qualification] ?? "text-slate-400 bg-slate-500/10"}`}>
           {QUALIFICATION_LABELS[lead.qualification] ?? lead.qualification}
         </span>
       </div>
+      {/* Header-Zeile 2: ChannelBadge (sekundaere Metadaten) */}
+      {lead.conversation.channel && (
+        <div className="mb-2.5 flex items-center">
+          <ChannelBadge channel={lead.conversation.channel} />
+        </div>
+      )}
 
       {/* Score-Balken + Prediction */}
       <div className="mb-3 flex items-center gap-2">
