@@ -1331,3 +1331,185 @@ neuen Produkt-Stand angepasst.
 Mittel-Hoch. Zeitnah (naechste 2 Wochen), spaetestens vor
 Self-Service-Kunden. Strategisch konsistent mit
 Widget-first-Positionierung.
+
+## TD-Pilot-04: Widget-Preview im Admin-Interface (21.04.2026)
+
+### Status
+Offen.
+
+### Kategorie
+Pilot-relevant.
+
+### Pilot-blockierend
+Nein — Admin kann via manuellem HTML-Test oder Dashboard-
+Widget-Preview testen. Nur Workflow-Reibung, keine
+Funktionsluecke.
+
+### Problem
+Nach Tenant-Anlage und Prompt-Konfiguration gibt es im
+Admin-Interface keine Moeglichkeit, das Widget live zu
+testen. Admin muss manuell eine HTML-Datei erstellen oder
+Browser-Console-Injection auf einem lokalen Webserver
+nutzen. Der bestehende Dashboard-Widget-Preview
+(`src/app/dashboard/settings/widget/page.tsx`) ist
+tenant-eigener Flow und nicht fuer Admin-Cross-Tenant-
+Checks gedacht.
+
+### Ursache
+Feature wurde bisher nicht priorisiert — Admin-Workflow
+erwartete manuelles Testing durch den Plattform-Betreiber
+mit Dev-Umgebung. Mit wachsender Anzahl Kunden wird das
+zum Engpass.
+
+### Impact
+- Solo-Founder-Workflow: 15-20 Min Zeit-Verlust bei jedem
+  Prompt-Update (HTML-Datei anlegen, lokal serven, testen,
+  aufraeumen)
+- Bei Prompt-Iteration unter Zeitdruck
+  (Demo-Vorbereitung, Kunden-Feedback) signifikante
+  Reibung
+- Self-Service-Kunden koennten Konfiguration ohne
+  Preview-Option nicht selbst verifizieren
+- Support-Aufwand bei Onboarding neuer Kunden erhoeht
+
+### Fix
+- Admin-Detail-View pro Tenant (`src/app/admin/page.tsx`
+  Tenant-Edit-Modal): neuer Button "Widget Preview"
+- Oeffnet Modal oder separate Route
+  (`/admin/tenants/[id]/preview`) mit eingebettetem
+  Widget
+- Nutzt `webWidgetPublicKey` des Tenants automatisch,
+  keine Parameter-Eingabe noetig
+- Optional: Device-Preview (Desktop / Mobile Toggle)
+- Optional: Test-Mode-Flag
+  (z.B. `?admin-preview=1`-Query), der Gespraeche als
+  `channel: "WEB"` mit einem `widgetVisitorMeta.adminTest`
+  Marker schreibt, damit Lead-Scoring und CRM-Push
+  unterdrueckt werden koennen. Erfordert kleine
+  Erweiterung in `processMessage`.
+
+### Aufwand
+2-3 Stunden.
+
+### Pilot-relevanz
+Ja, sobald mehrere Kunden parallel onboarded werden.
+Fuer den MOD-Demo-Call selbst nicht blockierend — Philipp
+kann direkt ueber Widget-Public-Key und
+`/embed/widget?key=pub_xxx` testen.
+
+### Prioritaet
+Mittel. Vor Self-Service-Phase, nach ersten 3 Pilotkunden.
+
+## TD-Pilot-05: Bot-Prompts Sales-Effizienz-Optimierung (21.04.2026)
+
+### Status
+Offen.
+
+### Kategorie
+Pilot-relevant.
+
+### Pilot-blockierend
+Nicht technisch blockierend, aber relevant fuer
+KPI-Qualitaet des ersten Demo-Gespraechs.
+
+### Problem
+Aktuelle Mara (B2C) und Nora (B2B) Prompts aus Phase 1
+(Commit `4f159e3`) sind konversationell stark, aber bei
+Sales-Effizienz suboptimal. Beobachtungen aus Live-Tests
+am 21.04.2026 gegen die MOD-Demo-Tenants:
+
+**Mara-spezifisch:**
+- Zu viele Validierungs-Saetze ("Das verstehe ich",
+  "Verstehe.", "Das kann ich gut verstehen"). Im
+  Testlauf 4 Validierungen in 12 Messages → reduziert
+  Info-Dichte pro Message.
+- Kein Drill-Down auf qualifizierende Kriterien:
+  Branche, Kuendigungsfrist, Zielrolle nach
+  Weiterbildung und geografische Verfuegbarkeit
+  (MOD-Standorte) werden nicht aktiv erfragt.
+- Kein Conversion-Anker: Gespraech endet ohne explizite
+  Termin-Uebergabe oder Kontaktdaten-Erfassung.
+
+**Nora-spezifisch:**
+- Multi-Frage-Messages: mehrere unzusammenhaengende
+  Themen in einer Message (z.B. Kandidaten-
+  Identifikation UND Arbeitgeberservice-Kontakt
+  gleichzeitig). Ueberfordert B2B-Entscheider, fuehrt zu
+  unvollstaendigen Antworten.
+- Text-Bloecke zu lang: B2B-Kontext erwartet praezise,
+  zackige Kommunikation.
+- Keine aktive Qualifikation der Entscheidungs-Position
+  (Geschaeftsfuehrer vs. HR vs. Assistenz) im
+  Gespraechsfluss.
+
+**Beide Bots:**
+- Kein Message-Count-basierter Conversion-Anker: Nach
+  N Qualifying-Messages sollte explizit Termin
+  vorgeschlagen werden, statt beliebig weiterzu-
+  qualifizieren.
+
+### Ursache
+Initial-Prompts optimiert auf Rapport-Building und
+natuerlichen Gespraechsfluss (User-Direktive aus Phase 1:
+"Empathisch, warm, nicht als Checkliste"). Sales-Effizienz-
+Kriterien wurden in erster Iteration nicht explizit
+gesetzt, weil Fokus auf DSGVO-Ehrlichkeits-Anker und
+Ton-Treue lag.
+
+### Impact
+- Leads bekommen hohen Rapport-Score, aber niedrige
+  Conversion-Rate — Diskrepanz zwischen GPT-4o-Scoring
+  und realer Sales-Qualifikation
+- Salesreps muessen im Erstgespraech mehr Qualifikation
+  nachholen als noetig (Branche, Zielrolle, Standort)
+- Pilot-KPIs (Erstgespraech-Dauer, A-Lead-Quote,
+  Conversion von Chat zu Termin) werden nicht optimal
+  erreicht
+
+### Fix
+1. Validierungs-Limit einfuehren: Maximal jede dritte
+   Message beginnt mit empathischer Spiegelung. Rest
+   der Messages gehen direkt in die naechste Frage.
+2. Drill-Down-Struktur definieren (B2C, Mara):
+   Kurswunsch → Branche → Kuendigungsfrist / Agentur-
+   Status → Zielrolle nach Weiterbildung → Standort-
+   Praeferenz (MOD hat 20+ Standorte, Distanz zaehlt).
+3. Drill-Down-Struktur definieren (B2B, Nora):
+   Weiterbildungsbedarf → Unternehmensgroesse / Branche
+   → Mitarbeiter-Anzahl → Entscheidungs-Position →
+   Foerderungs-Awareness → Zeitrahmen.
+4. Message-Struktur: Ein Thema pro Message. 2-3 Saetze
+   erlaubt, wenn sie dasselbe Entscheidungs-Objekt
+   betreffen. Kein Mix unzusammenhaengender Themen.
+5. Conversion-Anker: Nach 8-10 Messages mit gutem Lead-
+   Signal → expliziter Termin-Vorschlag mit Kontaktdaten-
+   Erfassung (Telefon oder E-Mail).
+6. B2B-Tonalitaet praezisieren: Nora antwortet kompakter,
+   weniger Smalltalk-Varianz als Mara. "Sachlich-
+   praezise" statt "warm-einfuehlsam".
+7. Eval-Setup: 5-10 realistische Test-Szenarien pro Bot,
+   systematische Bewertung der Optimierung
+   (z.B. `src/scripts/eval-mara-nora.ts` gegen Claude-API
+   mit fixen User-Szenarien und Score-Diff).
+
+### Aufwand
+2-3 Stunden Prompt-Iteration + 1 Stunde Eval-Szenarien.
+
+### Pilot-relevanz
+Hoch. Fix idealerweise VOR erstem Demo-Call mit MOD
+oder anderem Warm Contact.
+
+### Prioritaet
+Hoch. Innerhalb 24-48h nach Demo-Tenant-Setup
+(also bis spaetestens 23.-24.04.2026 laut
+PROJECT_STATUS MOD-Demo-Termin).
+
+### Abhaengigkeit zu TD-Pilot-03
+TD-Pilot-03 (Scoring-Prompt tenant-agnostisch) und
+TD-Pilot-05 (Sales-Effizienz der Bot-Prompts) adressieren
+unterschiedliche Pfade derselben Conversion-Qualitaet:
+TD-Pilot-05 optimiert, welche Signale der Bot im Gespraech
+erzeugt; TD-Pilot-03 optimiert, wie GPT-4o diese Signale
+bewertet. Reihenfolge: erst TD-Pilot-05 (bessere Signale),
+dann TD-Pilot-03 (tenant-spezifisches Scoring) — sonst
+wird das Scoring auf schlechter Rohdaten-Basis optimiert.
