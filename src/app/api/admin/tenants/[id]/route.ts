@@ -53,10 +53,23 @@ const updateTenantSchema = z.object({
   paddlePlan: z.enum(ALLOWED_PLANS).nullable().optional(),
   webWidgetEnabled: z.boolean().optional(),
   // Partielles Config-Update — wird serverseitig in bestehendes JSON gemergt,
-  // damit andere Config-Felder (primaryColor, logoUrl etc.) nicht verloren gehen
+  // damit andere Config-Felder (primaryColor, logoUrl etc.) nicht verloren gehen.
+  //
+  // botName/botSubtitle/avatarInitials: redundante Felder zum Dashboard-
+  // Widget-Config-Endpoint, hier bewusst dupliziert fuer API-basierten
+  // Tenant-Seed (z.B. seed-mod-education-prompts.ts), bei dem der
+  // Dashboard-Magic-Link noch nicht verteilt wurde.
+  //
+  // leadType: Tenant-Klassifikation B2C vs. B2B (MOD-Demo-Phase 1).
+  // Beeinflusst Dashboard-UI (Signals-Anzeige) und kann spaeter Scoring-
+  // Kriterien parametrisieren. Optional + backward-compatible.
   webWidgetConfig: z
     .object({
       welcomeMessage: z.string().max(500).optional(),
+      botName: z.string().min(1).max(50).optional(),
+      botSubtitle: z.string().min(0).max(100).optional(),
+      avatarInitials: z.string().min(1).max(3).optional(),
+      leadType: z.enum(["B2C", "B2B"]).optional(),
     })
     .optional(),
   isActive: z.boolean().optional(),

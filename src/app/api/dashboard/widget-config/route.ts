@@ -73,6 +73,12 @@ function isValidLogoUrl(raw: string | null | undefined): boolean {
 // PATCH-Body: alle Felder optional, Partial Update.
 // bubbleIconUrl ist Phase-6.2 bewusst nicht editierbar und wird
 // daher auch nicht im Schema akzeptiert (siehe ADR).
+//
+// leadType: Tenant-Klassifikation B2C vs. B2B (MOD-Demo-Phase 1).
+// Gespiegelt im Admin-API-Schema (src/app/api/admin/tenants/[id]/route.ts)
+// damit sowohl Admin- als auch Dashboard-Flow ihn setzen koennen.
+// Optional + backward-compatible — bestehende Tenants ohne leadType
+// werden im Dashboard-UI als "unclassified" behandelt.
 const updateConfigSchema = z
   .object({
     backgroundColor: z.string().regex(HEX_COLOR_RE).optional(),
@@ -85,6 +91,7 @@ const updateConfigSchema = z
     botSubtitle: z.string().min(0).max(100).optional(),
     welcomeMessage: z.string().min(1).max(500).optional(),
     avatarInitials: z.string().min(1).max(3).optional(),
+    leadType: z.enum(["B2C", "B2B"]).optional(),
   })
   .refine((d) => isValidLogoUrl(d.logoUrl), {
     message: "Ungueltiges logoUrl-Format",
