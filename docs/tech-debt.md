@@ -1332,6 +1332,91 @@ Mittel-Hoch. Zeitnah (naechste 2 Wochen), spaetestens vor
 Self-Service-Kunden. Strategisch konsistent mit
 Widget-first-Positionierung.
 
+## TD-Pilot-03: Scoring-Prompt tenant-agnostisch, nicht bildungsbranchen-optimiert (21.04.2026)
+
+### Status
+Offen.
+
+### Kategorie
+Pilot-relevant.
+
+### Pilot-blockierend
+Nein fuer MOD-Demo-Call — Demo-Leads haben vorgesetzte Scores,
+Live-Nora-Testgespraech akzeptiert generischen Score.
+Relevant ab erstem echten MOD-Pilot mit Produktionstraffic.
+
+### Problem
+Der GPT-4o-Scoring-Prompt in `src/modules/bot/gpt.ts:36-53`
+(`SCORING_SYSTEM_PROMPT`) ist **zentral und tenant-agnostisch**.
+Er bewertet Leads nach generischen DACH-B2B-Kriterien:
+Kaufinteresse, Budget-Signale, Dringlichkeit,
+Gespraechsqualitaet. Das passt fuer klassische B2B-Software-
+Leads, aber NICHT fuer bildungsbezogene Qualifikation:
+
+- **B2C (Arbeitssuchende, Mara):** relevante Signale sind
+  Kurswahl-Konkretheit, Arbeitsvermittler-Kontakt,
+  Bildungsgutschein-Status, Zeitrahmen bis Kursstart,
+  sprachliches Ausdrucksvermoegen. "Budget" ist hier irrelevant
+  (Foerderung ueber Gutschein).
+- **B2B (Qualifizierungschancengesetz, Nora):**
+  Entscheidungs-Position, Unternehmensgroesse (fuer Foerder-
+  saetze), Mitarbeiter-Anzahl, Foerderungs-Awareness,
+  Zeitdruck-Treiber. "Budget" wird hier durch "Foerderfaehigkeit"
+  ersetzt.
+
+### Ursache
+Scoring-Prompt wurde initial fuer das generische Paddle-
+Plan-Standard-Produkt geschrieben (vor der Entscheidung fuer
+die Bildungsbranche als Pilot-Ziel). Demo-Phase zeigt die
+Luecke, aber sie wurde bewusst nicht unter Zeitdruck fuer den
+Demo-Call geschlossen (siehe Session-Log 21.04.2026:
+"Demo-Leads bekommen vorgesetzte Scores, Live-Nora akzeptiert
+generischen Score").
+
+### Impact
+- MOD-Pilot-KPIs: GPT-4o-Score korreliert nicht stark mit
+  Bildungsberatungs-Konversionsrate — Salesreps muessen
+  Score-Signale manuell uebersetzen
+- Andere Pilotkunden mit Nicht-B2B-Software-Profil
+  (Coaching, Immobilien, Handwerk) hatten historisch
+  dieselbe Diskrepanz, aber nie formalisiert
+
+### Fix
+- ADR schreiben unter `docs/decisions/scoring-prompt-tenant-
+  specific.md`: Soll der Scoring-Prompt pro `leadType` + ggf.
+  `branche` parametrisiert werden?
+- Implementierungs-Optionen:
+  - (a) Mehrere hartkodierte Scoring-Prompt-Varianten
+    (B2C, B2B, Default), Auswahl via `leadType` aus
+    `webWidgetConfig`. Einfach, wenig Flexibilitaet.
+  - (b) Scoring-Prompt aus `tenant.systemPrompt` **abgeleitet**:
+    kurzes "Analysiere die Signale, die der Bot-Prompt
+    priorisiert" vor dem Generic-Prompt platzieren. Komplexer,
+    aber automatisch tenant-spezifisch.
+  - (c) Tenant-Feld `scoringContext: string` (`@db.Text`,
+    nullable) als explizites Override fuer den Scoring-
+    Prompt. Am flexibelsten, aber erfordert Dashboard-UI
+    fuer Wartung.
+- Regression-Tests gegen internal-admin, test-b, bestehende
+  Coaching-/Immobilien-Templates
+
+### Aufwand
+2-3 Stunden (ADR + Refactor + Tests). Abhaengig von Option.
+
+### Trigger
+Nach TD-Pilot-05 (Prompt-Sales-Effizienz-Optimierung).
+Begruendung: Der Scoring-Prompt bewertet Signale, die der
+Bot im Gespraech erzeugt. Wenn Bot-Prompts (TD-Pilot-05)
+noch unoptimierte Signale erzeugen, wird ein refactor des
+Scoring-Prompts auf suboptimaler Rohdaten-Basis optimiert.
+Reihenfolge: erst TD-Pilot-05 (bessere Signale),
+dann TD-Pilot-03 (bessere Bewertung).
+
+### Prioritaet
+Mittel. Vor erstem echten MOD-Pilot mit Produktionstraffic —
+aber eben NACH TD-Pilot-05. Zeitfenster: 1-2 Wochen nach
+Demo-Call.
+
 ## TD-Pilot-04: Widget-Preview im Admin-Interface (21.04.2026)
 
 ### Status

@@ -1,8 +1,67 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-20
-**Aktuelle Phase:** Pilot-Ready — Rechtstexte live, Website-Relaunch abgeschlossen, Founding-Phase ueber SEPA
-**Letzter Commit:** b838a2c — feat(legal): deploy IT-Recht-Kanzlei legal texts + privacy addendum
+**Letzte Aktualisierung:** 2026-04-21
+**Aktuelle Phase:** Demo bereit fuer MOD-Pilot-Outreach (Demo-Call 22./23.04.2026)
+**Letzter Commit:** a3a1f90 — feat(admin): demo-seed endpoint + MOD-Edu B2C lead seed data
+
+---
+
+## 21.04.2026 — MOD Education Demo-Tenant-Setup
+
+### Erledigt (Phase 1 + 2)
+
+**Phase 1 — Prompts + Widget-Config (Commit `4f159e3`):**
+- Mara-B2C-Bildungsberaterin: systemPrompt (9262 Zeichen) + Welcome-Message + Branding ueber neu gebautes Seed-Script
+- Nora-B2B-Weiterbildungsberaterin: systemPrompt (8064 Zeichen) + Welcome-Message + Branding
+- Admin-API Zod-Schema erweitert: webWidgetConfig akzeptiert jetzt botName, botSubtitle, avatarInitials, leadType
+- Dashboard-Widget-Config-Schema gespiegelt (leadType optional, backward-compatible)
+- Seed-Script: HTTP-Client gegen Admin-API, Production-DB-Credentials bleiben ausschliesslich in Vercel Env
+
+**Phase 2 — Dashboard-Erweiterung + Demo-Leads (Commits `abe9c49` + `a3a1f90`):**
+- aiSummary-JSON erweitert um `topSignals: string[]` (max 3) und `einschaetzung: string` — additiv + backward-compatible
+- Claude-Analyse-Prompt in `/api/dashboard/leads/[id]/summary/route.ts` passt die neuen Felder mit an
+- `parseLeadType()` als separater Helper in `src/lib/widget/publicKey.ts` (leadType lebt NICHT im Widget-public ResolvedTenantConfig — gehoert in Dashboard-Kontext)
+- `/api/dashboard/me` liefert `leadType` (B2C/B2B/null) ans Frontend
+- CRM-Detail-Modal zeigt B2C/B2B-Badge neben Qualification + zwei neue Sektionen (Top-Signale, Einschaetzung)
+- Neuer Admin-Endpoint `POST /api/admin/demo-seed/mod-education` seedet 8 Demo-Leads in `mod-education-demo-b2c` (idempotent via externalId-Marker `demo-seed-*`)
+- 8 fiktive B2C-Demo-Leads seeded mit vollstaendiger Chat-Historie (verschluesselt), vorgesetztem Score, aiSummary + predictiveScore
+
+### MOD-Demo-Tenants
+
+| Slug | Bot | Plan | Widget enabled | Public Key |
+|---|---|---|---|---|
+| `mod-education-demo-b2c` | Mara (B2C) | Growth | ✓ | `pub_NjEW32lw7XossvAG` |
+| `mod-education-demo-b2b` | Nora (B2B) | Growth | ✓ | `pub_Q85UCr55bp7MRsAm` |
+
+**Widget-Test-URLs** (direkt embed-fähig):
+- B2C: `https://ai-conversion.ai/embed/widget?key=pub_NjEW32lw7XossvAG`
+- B2B: `https://ai-conversion.ai/embed/widget?key=pub_Q85UCr55bp7MRsAm`
+
+**Dashboard-Zugang:** Magic-Link pro Tenant in `dashboard-links.txt` (lokal, gitignored). Bei Bedarf neu generieren via `npx tsx src/scripts/rotate-dashboard-token.ts <tenant-id>`.
+
+### Demo-Leads-Verteilung (alle im B2C-Tenant Mara)
+
+| Name | Score | Qualification | Status |
+|------|------:|---------------|--------|
+| Anna M., 34 | 88 | OPPORTUNITY | A-Lead |
+| Stefan K., 42 | 84 | OPPORTUNITY | A-Lead |
+| Yasemin D., 28 | 68 | SALES_QUALIFIED | Borderline A/B |
+| Thomas R., 51 | 58 | SALES_QUALIFIED | Borderline A/B |
+| Birgit H., 38 | 44 | MARKETING_QUALIFIED | B-Lead |
+| Marco S., 29 | 36 | MARKETING_QUALIFIED | B-Lead |
+| Ahmad K., 45 | 22 | UNQUALIFIED | C-Lead |
+| Jennifer B., 32 | 12 | UNQUALIFIED | C-Lead |
+
+### Bekannte Limitationen / Caveats
+
+- **Scoring-Prompt bleibt tenant-agnostisch** (siehe TD-Pilot-03). Live-Nora-Testgespraeche bekommen generischen DACH-B2B-Score, der nicht bildungsbranchen-optimiert ist. Nicht blockierend fuer Demo-Call, aber relevant vor erstem echten MOD-Pilot.
+- **Bot-Prompt-Sales-Effizienz noch nicht optimiert** (siehe TD-Pilot-05). Maras Validierungs-Dichte und Noras Multi-Frage-Messages sind fuer echten Pilot zu stark ausgepraegt. Nice-to-Fix vor erstem Warm-Contact.
+- **Widget-Preview im Admin-Panel fehlt** (siehe TD-Pilot-04). Philipp muss aktuell ueber die Embed-URLs (oben) oder Dashboard-Preview testen.
+- **Pre-existing Admin-UI-Bugs:** WhatsApp Phone ID ist weiterhin Pflichtfeld bei Tenant-Anlage (TD-Pilot-01), Web-Widget default OFF (TD-Pilot-02) — Workarounds vorhanden.
+
+### Demo-Call-Status
+
+**GRUEN** — Demo-Bereit. Alle geplanten Phase-1- und Phase-2-Ziele erreicht.
 
 ---
 
