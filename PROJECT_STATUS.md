@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-21
 **Aktuelle Phase:** Demo bereit fuer MOD-Pilot-Outreach (Demo-Call 22./23.04.2026)
-**Letzter Commit:** _folgt im naechsten Commit_ — docs(decisions): pilot-model 5 slots 30+30
+**Letzter Commit:** 27f1098 — docs(decisions): add ADR for pilot model (5 slots, 30+30 days)
 
 ---
 
