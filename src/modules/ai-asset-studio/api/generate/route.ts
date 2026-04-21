@@ -4,50 +4,48 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { generateWithModel } from "@/modules/ai-asset-studio/lib/models";
 import { db } from "@/shared/db";
 import type { ModelId } from "@/modules/ai-asset-studio/lib/types";
 
-const VALID_MODELS: ModelId[] = ["grok", "claude", "gemini", "flux"];
+const generateSchema = z.object({
+  prompt: z.string().min(1, "Prompt ist erforderlich").max(5000),
+  model: z.enum(["grok", "claude", "gemini", "flux"]).default("flux"),
+  variations: z.number().int().min(1).max(4).default(1),
+  width: z.number().int().min(64).max(4096).default(1024),
+  height: z.number().int().min(64).max(4096).default(1024),
+});
 
 export async function POST(request: Request) {
-  // Authentifizierung
   const tenant = await getDashboardTenant();
   if (!tenant) {
     return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
   }
 
-  // Request Body parsen
-  const body = await request.json() as {
-    prompt?: string;
-    model?: string;
-    variations?: number;
-    width?: number;
-    height?: number;
-  };
-
-  if (!body.prompt || typeof body.prompt !== "string") {
-    return NextResponse.json({ error: "Prompt ist erforderlich" }, { status: 400 });
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Ungueltige Anfrage" }, { status: 400 });
   }
 
-  const model = (body.model ?? "flux") as ModelId;
-  if (!VALID_MODELS.includes(model)) {
+  const parsed = generateSchema.safeParse(rawBody);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: `Ungültiges Modell. Erlaubt: ${VALID_MODELS.join(", ")}` },
+      { error: "Ungueltige Eingabe", details: parsed.error.flatten() },
       { status: 400 }
     );
   }
 
-  const variations = Math.min(4, Math.max(1, body.variations ?? 1));
-  const width = body.width ?? 1024;
-  const height = body.height ?? 1024;
+  const { prompt, model, variations, width, height } = parsed.data;
 
   try {
     // Bilder generieren
     const results = await generateWithModel({
       tenantId: tenant.id,
-      prompt: body.prompt,
+      prompt,
       model,
       variations,
       width,
@@ -60,7 +58,7 @@ export async function POST(request: Request) {
         db.asset.create({
           data: {
             tenantId: tenant.id,
-            originalPrompt: body.prompt!,
+            originalPrompt: prompt,
             modelUsed: model.toUpperCase() as never,
             status: "COMPLETED",
             imageUrl: result.imageUrl,
@@ -71,7 +69,7 @@ export async function POST(request: Request) {
             fileSize: result.fileSize,
             versionHistory: JSON.stringify([
               {
-                prompt: body.prompt,
+                prompt,
                 modelUsed: model,
                 imageUrl: result.imageUrl,
                 createdAt: new Date().toISOString(),

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { checkRateLimit, getClientIp } from "@/shared/rate-limit";
 import { auditLog } from "@/modules/compliance/audit-log";
 import { createAdminSession, safeCompare } from "@/modules/auth/session";
+
+const loginSchema = z.object({
+  secret: z.string().min(1).max(512),
+});
 
 // POST /api/admin/login – Validiert Admin-Secret und setzt HttpOnly Session-Cookie
 export async function POST(request: NextRequest) {
@@ -23,9 +28,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { secret?: string };
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return NextResponse.json(
       { error: "Ungueltige Anfrage" },
@@ -33,8 +38,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const parsed = loginSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Ungueltige Anfrage", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
   // Timing-sicherer Vergleich des Secrets
-  if (!body.secret || !safeCompare(body.secret, secret)) {
+  if (!safeCompare(parsed.data.secret, secret)) {
     auditLog("admin.login_failed", { ip });
     return NextResponse.json(
       { error: "Falsches Secret" },
