@@ -52,10 +52,21 @@ export async function GET(req: NextRequest) {
   });
 
   if (!tenant) {
-    return new NextResponse(loginPage("Ungueltiger, deaktivierter oder abgelaufener Link."), {
-      status: 401,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
+    // Single-Use-Token-Rotation: Der Link wird nach dem ersten
+    // erfolgreichen Login rotiert. Frueher las der Fehlertext
+    // nur "Ungueltiger, deaktivierter oder abgelaufener Link" —
+    // was bei bereits benutzten Links irrefuehrend war (klang
+    // nach Admin-Fehler). Text weist jetzt explizit auf die
+    // Wiederverwendung hin.
+    return new NextResponse(
+      loginPage(
+        "Dieser Link wurde bereits verwendet oder ist abgelaufen. Bitte fordere einen neuen Link an.",
+      ),
+      {
+        status: 401,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      },
+    );
   }
 
   // Cookie mit neuem Token setzen und zum Dashboard weiterleiten

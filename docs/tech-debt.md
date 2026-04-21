@@ -1651,3 +1651,87 @@ Widget-Embed-Integrationen koennen bei Session-Start einen
 der dann direkt im Dashboard erscheint — ohne weitere Code-
 Aenderungen. Demo-Seed und zukuenftige SSO-Widget-Integrationen
 profitieren von derselben Infrastruktur.
+
+## TD-Pilot-08: Admin-UI-Button fuer Dashboard-Token-Regeneration + Invalidation (21.04.2026)
+
+### Status
+Offen.
+
+### Kategorie
+Pilot-relevant.
+
+### Pilot-blockierend
+Nein — manuelles Regenerieren via `npx tsx
+src/scripts/refresh-mod-magic-links.ts` existiert. Fuer
+generische Tenants fehlt ein aehnliches Skript, aber der
+Admin-API-Endpoint ist da (`POST /api/admin/tenants/[id]`).
+
+### Hintergrund
+Das Dashboard-Token ist Single-Use: nach dem ersten
+erfolgreichen Login rotiert es in `login/route.ts:39-49`
+und der urspruengliche Magic-Link wird ungueltig. Das ist
+Absicht (Security), fuehrt aber zu Reibung:
+- Admin kann sich in einem Browser einloggen, in einem
+  zweiten Browser / Inkognito-Tab liefert der identische
+  Link dann die Fehlerseite
+- Kunden-Onboarding: wenn der Magic-Link per E-Mail an
+  den Kunden geht und der Admin-Mail-Client vorher
+  "Link-Preview" macht, wird der Link bereits dort
+  verbrannt
+- Ohne Admin-UI gibt es keinen schnellen Weg, einen
+  frischen Link zu generieren — das Admin-API-Endpoint
+  `POST /api/admin/tenants/[id]` existiert, hat aber kein
+  UI
+
+Diagnose und Fehlertext-Praezisierung sind im selben
+Commit wie dieser Eintrag. Der Fehlertext nennt jetzt
+"bereits verwendet oder abgelaufen" statt des frueheren
+irrefuehrenden "Ungueltiger, deaktivierter oder
+abgelaufener Link".
+
+### Fehlender Endpoint
+`DELETE /api/admin/tenants/[id]/dashboard-token` — invalidiert
+ein bestehendes Token ohne neues zu generieren. Use-Case:
+kompromittierter Zugang, Mitarbeiter-Wechsel beim Kunden.
+Aktuelle Alternative: POST-Endpoint aufrufen, neuen Link
+nicht rausgeben — aber Token rotiert dabei trotzdem, nicht
+ganz sauber.
+
+### Fix
+1. Backend:
+   - Existierenden Endpoint `POST /api/admin/tenants/[id]`
+     nutzen fuer Regeneration (nichts zu tun)
+   - Neuer Endpoint `DELETE /api/admin/tenants/[id]/
+     dashboard-token` fuer reines Invalidate
+   - AuditActions `admin.dashboard_token_regenerated` und
+     `admin.dashboard_token_invalidated` ergaenzen
+2. Admin-UI (`src/app/admin/page.tsx` Detail-Modal):
+   - Sektion "Dashboard-Zugang"
+   - Button "Neuen Login-Link generieren" → Copy-Box mit
+     Link (einmalig, wie Vercel-API-Keys)
+   - Button "Bestehende Tokens invalidieren" mit Confirm-
+     Dialog
+3. Clipboard-Helper (navigator.clipboard API, keine neue
+   Dependency)
+
+### E-Mail-Versand (explizit NICHT im ersten Iterations-
+### schritt)
+Resend-Integration existiert bereits. Der E-Mail-Versand
+eines Magic-Links an einen Kunden braucht aber eine eigene
+Design-Runde: Sender-Adresse, Template, Opt-in der
+Empfaenger, DSGVO-Implikationen (automatisierter Versand
+an B2B-Ansprechpartner). In separater Session.
+
+### Aufwand
+45-60 Minuten fuer Backend + UI ohne E-Mail. Mit E-Mail:
+zusaetzlich 30-45 Minuten (eigene Session).
+
+### Prioritaet
+Mittel-Hoch. Vor dem ersten echten Kunden-Onboarding
+(wo der Link per E-Mail rausgehen muss).
+
+### Referenzen
+- Diagnose-Session 21.04.2026 (nach Phase-2-Fix-Session)
+- Sofort-Loesungs-Skript: `src/scripts/refresh-mod-magic-links.ts`
+- Rotation-Code: `src/app/dashboard/login/route.ts:39-49`
+- Token-TTL-Konstanten: `src/modules/auth/dashboard-auth.ts:12-13`
