@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-22
 **Aktuelle Phase:** MOD-Outreach aktiv; Pricing-Strategie auf Preis-Lock v2 umgestellt
-**Letzter Commit:** edf751c — fix(crm): shorten UNQUALIFIED label to "Unqual." in Kanban-Card
+**Letzter Commit:** 3e1a86d — feat(pricing): Founding-Partner-Pilot v2 — Preis-Lock statt Lifetime-Rabatt
 
 ---
 
@@ -24,6 +24,20 @@
 ### Konsistenz-Check (Grep nach "33%", "lebenslang", "233", "467", "869", "10 Plaetze")
 - Marketing-Frontend clean
 - FAQ, Rechtstexte, Admin/Dashboard unberuehrt (kein Pricing-Bezug)
+
+### Pilot-Cleanup (22.04.2026, spaeter Nachmittag)
+- **Add-on-Sektion bereinigt** (`src/app/pricing/PricingClient.tsx`):
+  Marketing Booster (+299 EUR) + White-Label (+500 EUR) entfernt —
+  beide nicht pilotreif. HubSpot Sync (+199) und Weekly Report (+99)
+  behalten, beide mit "In Pilotphase aktiviert"-Badge (amber, konsistent
+  zu "FOUNDING PARTNER"-Label). Grid von 4-col auf zentriertes
+  2-col-Layout (max-w-3xl) umgestellt. Untertitel erweitert um
+  Pilot-Aktivierungs-Hinweis.
+- **Founding-Partner-Sektion (`src/app/page-v2.tsx`):** "60 Tage"-
+  Widerspruch zum 30-Tage-Banner aufgeloest. Text neu: "waehrend
+  der Pilotphase ... mit ehrlichem Feedback, woechentlichen
+  Strategie-Calls und Testimonial im Erfolgsfall". Keine anderen
+  "60 Tage"-Fundstellen im gesamten src/-Baum.
 
 ---
 

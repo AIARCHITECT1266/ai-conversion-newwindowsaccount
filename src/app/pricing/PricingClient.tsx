@@ -137,11 +137,14 @@ interface AddOn {
   description: string;
 }
 
+// Pilot-Cleanup 22.04.2026: Marketing Booster (+299€) und White-Label
+// (+500€) entfernt, weil in der Pilotphase nicht in Produktionsreife.
+// HubSpot Sync + Weekly Report bleiben — beide sind ausgereift und in der
+// Founding-Partner-Pilotphase bereits ohne Extra-Kosten aktiviert
+// (siehe Pilot-Badge im Rendering).
 const addons: AddOn[] = [
-  { name: "Marketing Booster", price: "299", icon: <Megaphone className="h-5 w-5" />, description: "KI-Kampagnen-Generator, A/B Testing, QR-Codes & Broadcast Manager" },
   { name: "HubSpot Sync", price: "199", icon: <Link2 className="h-5 w-5" />, description: "Automatischer Lead-Push bei Score >70 mit Lifecycle-Stage Mapping" },
   { name: "Weekly Report", price: "99", icon: <BarChart3 className="h-5 w-5" />, description: "Wöchentlicher KI-Report: Trends, Top-Leads, Pipeline-Analyse per E-Mail" },
-  { name: "White-Label", price: "500", icon: <Palette className="h-5 w-5" />, description: "Eigenes Branding, eigene Domain, kein AI Conversion Logo" },
 ];
 
 // Vergleichstabelle
@@ -722,11 +725,14 @@ export default function PricingPage() {
             Optionale Add-ons
           </h2>
           <p className="mt-3 text-sm text-slate-500">
-            Für alle Pakete buchbar. Jederzeit hinzufüg- und kündbar.
+            Für alle Pakete buchbar. Jederzeit hinzufüg- und kündbar. In der Founding-Partner-Pilotphase bereits aktiviert.
           </p>
         </motion.div>
 
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
+        {/* 2 Cards (nach 22.04.2026-Cleanup) — zentriert in 2-Spalten-Grid
+            mit max-w-3xl, damit die Cards ungefaehr die Breite der
+            urspruenglichen 4-Spalten-Variante halten, ohne leere Grid-Cells. */}
+        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
           {addons.map((addon, i) => (
             <motion.div
               key={addon.name}
@@ -743,7 +749,13 @@ export default function PricingPage() {
                 <h3 className="text-sm font-semibold text-white">{addon.name}</h3>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-slate-500">{addon.description}</p>
-              <div className="mt-4 flex items-baseline gap-1">
+              {/* Pilot-Badge: dezent, gleiche Amber-Palette wie das
+                  "FOUNDING PARTNER"-Label auf den Hauptcards. */}
+              <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#C9A84C]/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#C9A84C]/80">
+                <Check className="h-2.5 w-2.5" />
+                In Pilotphase aktiviert
+              </div>
+              <div className="mt-3 flex items-baseline gap-1">
                 <span className="text-xl font-bold text-white">+{addon.price}€</span>
                 <span className="text-xs text-slate-600">/Monat</span>
               </div>

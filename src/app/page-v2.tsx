@@ -578,7 +578,7 @@ export default function LandingPage() {
 
           <div className="mt-8 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 max-w-2xl mx-auto">
             <p className="text-xs text-slate-400 leading-relaxed text-center">
-              Im Gegenzug begleiten Sie uns aktiv über 60 Tage als Pilotpartner — mit ehrlichem Feedback und, im Erfolgsfall, einem Testimonial mit echten Zahlen.
+              Im Gegenzug begleiten Sie uns aktiv während der Pilotphase — mit ehrlichem Feedback, wöchentlichen Strategie-Calls und, im Erfolgsfall, einem Testimonial mit echten Zahlen.
             </p>
           </div>
 
