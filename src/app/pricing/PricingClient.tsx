@@ -46,7 +46,6 @@ interface Plan {
   name: string;
   icon: React.ReactNode;
   listPrice: number;
-  foundingPrice: number;
   tagline: string;
   description: string;
   bots: string;
@@ -54,6 +53,12 @@ interface Plan {
   conversations: string;
   features: { text: string; icon: React.ReactNode }[];
   popular: boolean;
+  // Founding-Partner-Pilot v2 (22.04.2026): Markiert Tiers, die zum
+  // 5-Platz-Pilot gehoeren. Pilot-Tiers zeigen das "FOUNDING PARTNER"-
+  // Label + drei gruene Bullets (30 Tage kostenlos, 12 Monate
+  // Preis-Lock, keine Setup-Gebuehr). Starter laeuft als regulaeres
+  // Angebot ohne Pilot-Signale.
+  pilot: boolean;
 }
 
 const plans: Plan[] = [
@@ -61,7 +66,6 @@ const plans: Plan[] = [
     name: "Starter",
     icon: <Zap className="h-5 w-5" />,
     listPrice: 349,
-    foundingPrice: 233,
     tagline: "Ihr erster KI-Vertriebsmitarbeiter",
     description: "Perfekt für den Einstieg in automatisierten KI-Vertrieb",
     bots: "1 KI-Bot",
@@ -77,12 +81,12 @@ const plans: Plan[] = [
       { text: "E-Mail Support", icon: <Mail className="h-3.5 w-3.5" /> },
     ],
     popular: false,
+    pilot: false,
   },
   {
     name: "Growth",
     icon: <Rocket className="h-5 w-5" />,
     listPrice: 699,
-    foundingPrice: 467,
     tagline: "Skaliert Ihren Vertrieb",
     description: "Erweiterte KI-Features für wachsende Teams",
     bots: "3 KI-Bots",
@@ -100,12 +104,12 @@ const plans: Plan[] = [
       { text: "Priority Support (24h Reaktionszeit)", icon: <Headphones className="h-3.5 w-3.5" /> },
     ],
     popular: true,
+    pilot: true,
   },
   {
     name: "Professional",
     icon: <Building2 className="h-5 w-5" />,
     listPrice: 1299,
-    foundingPrice: 869,
     tagline: "Ihr komplettes KI-Vertriebsteam",
     description: "Maximale Power für große Vertriebsorganisationen",
     bots: "10 KI-Bots",
@@ -122,6 +126,7 @@ const plans: Plan[] = [
       { text: "SLA & persönlicher Ansprechpartner", icon: <Shield className="h-3.5 w-3.5" /> },
     ],
     popular: false,
+    pilot: true,
   },
 ];
 
@@ -248,31 +253,38 @@ function PlanCard({ plan, index }: { plan: Plan; index: number }) {
         </p>
         <p className="mt-1 text-xs text-slate-500">{plan.description}</p>
 
-        {/* Preis — Founding-Partner-Darstellung */}
+        {/* Preis — Founding-Partner-Pilot v2 (22.04.2026):
+            Vollpreis als Hauptpreis, kein durchgestrichener Preis mehr.
+            Pilot-Tiers (Growth + Professional) zeigen zusaetzlich das
+            "FOUNDING PARTNER"-Label + drei gruene Bullets (30 Tage
+            kostenlos, 12 Monate Preis-Lock, keine Setup-Gebuehr).
+            Starter laeuft als regulaeres Angebot. */}
         <div className="mt-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#C9A84C]/70 mb-1">Founding Partner</p>
+          {plan.pilot && (
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#C9A84C]/70 mb-1">
+              Founding Partner
+            </p>
+          )}
           <div className="flex items-baseline gap-1.5">
             <span className={`text-4xl font-extrabold tracking-tight ${plan.popular ? "text-[#C9A84C]" : "text-white"}`}>
-              {formatPrice(plan.foundingPrice)}€
+              {formatPrice(plan.listPrice)}€
             </span>
             <span className="text-sm text-slate-500">/Monat</span>
           </div>
-          <p className="mt-1 text-xs text-slate-600">
-            statt <span className="line-through">{formatPrice(plan.listPrice)}€/Monat</span>
-          </p>
 
-          {/* Founding-Vorteile */}
-          <div className="mt-3 space-y-1">
-            <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
-              <Check className="h-3 w-3 shrink-0" /> 33% Rabatt (lebenslang, solange Vertrag ungekündigt)
-            </p>
-            <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
-              <Check className="h-3 w-3 shrink-0" /> 30 Tage kostenlos starten
-            </p>
-            <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
-              <Check className="h-3 w-3 shrink-0" /> 0€ Setup-Gebühr in der Pilotphase
-            </p>
-          </div>
+          {plan.pilot && (
+            <div className="mt-3 space-y-1">
+              <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+                <Check className="h-3 w-3 shrink-0" /> 30 Tage kostenlos testen
+              </p>
+              <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+                <Check className="h-3 w-3 shrink-0" /> 12 Monate Preis-Lock auf {formatPrice(plan.listPrice)}€/Monat
+              </p>
+              <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+                <Check className="h-3 w-3 shrink-0" /> Keine Setup-Gebühr in der Pilotphase (0 EUR)
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Eckdaten */}
@@ -556,7 +568,7 @@ export default function PricingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-5 max-w-lg mx-auto text-lg leading-relaxed text-slate-400"
             >
-              Monatlich kündbar. Keine versteckten Kosten. 33% Founding-Partner-Rabatt, lebenslang.
+              Monatlich kündbar. Keine versteckten Kosten. Founding-Partner-Pilot: 30 Tage kostenlos, anschließend 12 Monate Preis-Lock auf den Start-Konditionen.
             </motion.p>
           </div>
         </div>
@@ -566,7 +578,7 @@ export default function PricingPage() {
       <section className="relative z-10 mx-auto max-w-3xl px-6 pb-8">
         <div className="rounded-xl border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.03)] px-6 py-4">
           <p className="text-xs text-slate-300 leading-relaxed text-center">
-            Founding Partner zahlen 33% weniger, solange der Vertrag ungekündigt bleibt. Die durchgestrichenen Preise gelten ab Vollverfügbarkeit. Founding Partner aus der aktuellen Pilotphase sichern sich ihre Konditionen dauerhaft.
+            Founding-Partner im Pilot (Growth &amp; Enterprise): 30 Tage kostenlos testen, anschließend 12 Monate Preis-Lock auf den Start-Konditionen. Nur 5 Pilot-Plätze verfügbar.
           </p>
         </div>
       </section>
@@ -828,7 +840,7 @@ export default function PricingPage() {
             Bereit, Founding Partner zu werden?
           </h2>
           <p className="mx-auto mt-4 max-w-md text-base text-slate-500">
-            Persönliches Onboarding. Monatlich kündbar. 33% Founding-Partner-Rabatt.
+            Persönliches Onboarding. Monatlich kündbar. 12 Monate Preis-Lock als Founding-Partner.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <a

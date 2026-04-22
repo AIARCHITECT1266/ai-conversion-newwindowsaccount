@@ -331,10 +331,10 @@ export default function LandingPage() {
           viewport={{ once: true }} transition={{ duration: 0.6 }}
           className="rounded-2xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.02)] p-8 sm:p-10">
           <p className="text-sm text-slate-300 leading-relaxed max-w-3xl mx-auto text-center">
-            AI Conversion startet gerade in die Pilotphase. Statt fertige Case Studies zu zeigen, die wir noch nicht haben, sind wir ehrlich: Wir suchen 10 mutige Pilotkunden, die uns helfen, das Produkt zur Marktreife zu bringen.
+            AI Conversion startet gerade in die Pilotphase. Statt fertige Case Studies zu zeigen, die wir noch nicht haben, sind wir ehrlich: Wir suchen 5 mutige Pilotkunden, die uns helfen, das Produkt zur Marktreife zu bringen.
           </p>
           <p className="mt-4 text-sm text-slate-300 leading-relaxed max-w-3xl mx-auto text-center">
-            Was Sie dafür bekommen: Persönliche Betreuung durch den Gründer, lebenslange Founding-Partner-Konditionen mit 33% Rabatt, 30 Tage kostenlos zum Start, direkter Einfluss auf die Roadmap.
+            Was Sie dafür bekommen: Persönliche Betreuung durch den Gründer, Founding-Partner-Pilot mit 12 Monaten Preis-Lock und 30 Tagen kostenloser Testphase, direkter Einfluss auf die Roadmap.
           </p>
           <div className="mt-8 flex justify-center">
             <a href={CALENDLY_URL}
@@ -470,18 +470,21 @@ export default function LandingPage() {
           </h2>
         </div>
 
-        {/* Founding-Partner Disclaimer */}
+        {/* Founding-Partner-Pilot v2 Disclaimer (22.04.2026) —
+            konsistent mit /pricing-Seite und Banner. */}
         <div className="mx-auto mb-10 max-w-3xl rounded-xl border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.03)] px-6 py-4">
           <p className="text-xs text-slate-300 leading-relaxed text-center">
-            Founding Partner zahlen 33% weniger, solange der Vertrag ungekündigt bleibt. Die durchgestrichenen Preise gelten ab Vollverfügbarkeit. Founding Partner aus der aktuellen Pilotphase sichern sich ihre Konditionen dauerhaft.
+            Founding-Partner im Pilot (Growth &amp; Enterprise): 30 Tage kostenlos testen, anschließend 12 Monate Preis-Lock auf den Start-Konditionen. Nur 5 Pilot-Plätze verfügbar.
           </p>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-3">
           {[
-            { name: "Starter", foundingPrice: 233, listPrice: 349, tag: "Für den Einstieg", features: ["1 WhatsApp Bot", "500 Konversationen/Mo.", "Lead-Scoring + Follow-Ups", "CRM Pipeline", "E-Mail Support"], highlighted: false },
-            { name: "Growth", foundingPrice: 467, listPrice: 699, tag: "Beliebteste Wahl", features: ["3 WhatsApp Bots", "2.000 Konversationen/Mo.", "Alles aus Starter", "Marketing Suite + A/B Testing", "Broadcast Manager", "Priority Support"], highlighted: true },
-            { name: "Professional", foundingPrice: 869, listPrice: 1299, tag: "Maximale Power", features: ["10 WhatsApp Bots", "Unbegrenzte Konversationen", "Alles aus Growth", "Client Portal", "HubSpot Sync", "Dediziertes Onboarding + SLA"], highlighted: false },
+            // Starter: regulaeres Angebot, keine Pilot-Signale (pilot: false)
+            { name: "Starter", price: 349, tag: "Für den Einstieg", features: ["1 WhatsApp Bot", "500 Konversationen/Mo.", "Lead-Scoring + Follow-Ups", "CRM Pipeline", "E-Mail Support"], highlighted: false, pilot: false },
+            // Growth + Professional: Pilot-Tier mit Preis-Lock-Bullets
+            { name: "Growth", price: 699, tag: "Beliebteste Wahl", features: ["3 WhatsApp Bots", "2.000 Konversationen/Mo.", "Alles aus Starter", "Marketing Suite + A/B Testing", "Broadcast Manager", "Priority Support"], highlighted: true, pilot: true },
+            { name: "Professional", price: 1299, tag: "Maximale Power", features: ["10 WhatsApp Bots", "Unbegrenzte Konversationen", "Alles aus Growth", "Client Portal", "HubSpot Sync", "Dediziertes Onboarding + SLA"], highlighted: false, pilot: true },
           ].map((plan) => (
             <motion.div key={plan.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.5 }}
@@ -492,28 +495,31 @@ export default function LandingPage() {
               <p className="text-xs text-slate-500">{plan.tag}</p>
               <h3 className="mt-1 text-xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>{plan.name}</h3>
 
-              {/* Founding-Partner-Label */}
-              <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-[#c9a84c]/70">Founding Partner</p>
-              <div className="mt-1 flex items-end gap-2">
-                <span className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>{plan.foundingPrice.toLocaleString("de-DE")}</span>
+              {/* FOUNDING PARTNER-Label nur auf Pilot-Tiers */}
+              {plan.pilot && (
+                <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-[#c9a84c]/70">
+                  Founding Partner
+                </p>
+              )}
+              <div className={`${plan.pilot ? "mt-1" : "mt-3"} flex items-end gap-2`}>
+                <span className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>{plan.price.toLocaleString("de-DE")}</span>
                 <span className="text-sm text-slate-500 mb-1">EUR/Monat</span>
               </div>
-              <p className="mt-1 text-xs text-slate-600">
-                statt <span className="line-through">{plan.listPrice.toLocaleString("de-DE")} EUR/Monat</span>
-              </p>
 
-              {/* Founding-Vorteile */}
-              <div className="mt-3 space-y-1">
-                <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
-                  <Check className="h-3 w-3 shrink-0" /> 33% Rabatt (lebenslang, solange Vertrag ungekündigt)
-                </p>
-                <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
-                  <Check className="h-3 w-3 shrink-0" /> 30 Tage kostenlos starten
-                </p>
-                <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
-                  <Check className="h-3 w-3 shrink-0" /> Keine Setup-Gebühr in der Pilotphase (0 EUR)
-                </p>
-              </div>
+              {/* Pilot-Vorteile nur auf Pilot-Tiers (Preis-Lock v2) */}
+              {plan.pilot && (
+                <div className="mt-3 space-y-1">
+                  <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+                    <Check className="h-3 w-3 shrink-0" /> 30 Tage kostenlos testen
+                  </p>
+                  <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+                    <Check className="h-3 w-3 shrink-0" /> 12 Monate Preis-Lock auf {plan.price.toLocaleString("de-DE")} EUR/Monat
+                  </p>
+                  <p className="flex items-center gap-1.5 text-[11px] text-emerald-400/80">
+                    <Check className="h-3 w-3 shrink-0" /> Keine Setup-Gebühr in der Pilotphase (0 EUR)
+                  </p>
+                </div>
+              )}
 
               <ul className="mt-5 space-y-2.5">
                 {plan.features.map((f) => (
@@ -556,9 +562,9 @@ export default function LandingPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
             {[
               "Persönliches Onboarding durch den Gründer — kein Support-Ticket-System",
-              "Founding-Partner-Preise — 33% Rabatt auf den regulären Listenpreis, lebenslang (solange Vertrag ungekündigt bleibt)",
-              "30 Tage kostenlos zum Start",
-              "Kein Setup-Fee in der Pilotphase",
+              "30 Tage kostenlos testen — ohne Kartendaten, ohne Setup-Fee",
+              "12 Monate Preis-Lock auf Ihre Start-Konditionen",
+              "Keine Setup-Gebühr in der Pilotphase (0 EUR)",
               "Direkter Einfluss auf die Roadmap — Ihre Anforderungen prägen das Produkt",
               "Wöchentliche Strategie-Calls in der ersten Pilotphase",
               "Vollständige Datensouveränität — AVV, Frankfurt-Hosting, AES-256",

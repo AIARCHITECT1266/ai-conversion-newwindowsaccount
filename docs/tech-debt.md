@@ -1735,3 +1735,78 @@ Mittel-Hoch. Vor dem ersten echten Kunden-Onboarding
 - Sofort-Loesungs-Skript: `src/scripts/refresh-mod-magic-links.ts`
 - Rotation-Code: `src/app/dashboard/login/route.ts:39-49`
 - Token-TTL-Konstanten: `src/modules/auth/dashboard-auth.ts:12-13`
+
+## TD-Marketing-02: Pricing-Plans-Datenstruktur zentralisieren (22.04.2026)
+
+### Status
+Offen.
+
+### Hinweis zur Nummerierung
+Die Nummer "TD-Marketing-01" war bereits vergeben (AGB-Passage zu
+Setup-Gebuehr, 16.04.2026, ERLEDIGT). Dieser Eintrag ist der zweite
+Marketing-Eintrag und bekommt daher TD-Marketing-02, auch wenn der
+urspruengliche Auftrag TD-Marketing-01 vorschlug.
+
+### Kategorie
+Code-Qualitaet / DRY.
+
+### Pilot-blockierend
+Nein — Copy-Konsistenz wurde manuell in beiden Dateien gesetzt.
+
+### Problem
+Die Pricing-Cards werden an zwei Stellen gerendert, beide mit
+eigenen inline-Datenstrukturen:
+
+1. `src/app/pricing/PricingClient.tsx` — voller Plan-Typ mit
+   `icon: React.ReactNode`, `tagline`, `description`, `bots`,
+   `tenants`, `conversations`, `features: {text, icon}[]`, `popular`,
+   `pilot`.
+2. `src/app/page-v2.tsx` — kompaktes Inline-Array mit `price`,
+   `tag`, `features: string[]`, `highlighted`, `pilot`.
+
+Jede Preis-, Bullet- oder Pilot-Signal-Aenderung muss an beiden
+Stellen identisch nachgefuehrt werden. Bei der Pilot-v2-Umstellung
+(22.04.2026) war das machbar, aber anfaellig fuer Drift.
+
+### Ursache
+Homepage und /pricing haben unterschiedliche UI-Anforderungen:
+- Homepage: kompakt, nur Basis-Features als Strings
+- /pricing: ausfuehrlich, mit Icons pro Feature, Tenant-/Bot-Limits
+  als eigene Eckdaten-Chips
+
+Eine gemeinsame Datenstruktur muesste beide Sichten abdecken — das
+geht nur, wenn Icons als String-Keys gespeichert und in der UI
+gemappt werden (`src/data/pricing-plans.ts` + `src/lib/pricing-
+icons.ts` als Lookup-Table).
+
+### Fix
+1. `src/data/pricing-plans.ts` anlegen:
+   - Gemeinsame Struktur: `id`, `name`, `listPrice`, `tag`, `tagline`,
+     `description`, `bots`, `tenants`, `conversations`,
+     `featureIds: string[]`, `popular`, `pilot`
+   - featureIds sind semantische Keys (z.B. "whatsapp-bot",
+     "multi-language", "lead-scoring-100"), keine UI-Strings
+2. `src/lib/pricing-features.ts`:
+   - Map von featureId → `{ text: string; icon: LucideIcon }`
+3. PricingClient.tsx und page-v2.tsx nutzen beide
+   `import { PLANS } from "@/data/pricing-plans"` und rendern nach
+   ihrer jeweiligen Detail-Dichte (Homepage nimmt die ersten N
+   featureIds, /pricing nimmt alle).
+4. page-v2.tsx bekommt ebenfalls Zugriff auf Icons, falls spaeter
+   Konsistenz mit /pricing-Icons gewuenscht.
+
+### Aufwand
+40-60 Minuten — keine DB-Migration, nur Refactor mit Type-Check
+und visuelle Re-Verifikation in Homepage + /pricing.
+
+### Prioritaet
+Niedrig-Mittel. Sobald die dritte Pricing-Aenderung ansteht
+(Preis-Rundung, neuer Tier, Feature-Bullet-Anpassung) oder das
+Drift-Risiko konkret wird (Copy-Check-Findings in Audits).
+
+### Referenzen
+- `src/app/pricing/PricingClient.tsx` — /pricing Plans-Array
+- `src/app/page-v2.tsx:481-485` — Homepage Plans-Array
+- Commit der Pilot-v2-Umstellung (22.04.2026) — zeigt die
+  Drift-Anfaelligkeit: beide Dateien mussten identisch angepasst
+  werden

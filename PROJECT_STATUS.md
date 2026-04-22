@@ -1,8 +1,29 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-21
-**Aktuelle Phase:** Demo bereit fuer MOD-Pilot-Outreach (Demo-Call 22./23.04.2026)
-**Letzter Commit:** 27f1098 — docs(decisions): add ADR for pilot model (5 slots, 30+30 days)
+**Letzte Aktualisierung:** 2026-04-22
+**Aktuelle Phase:** MOD-Outreach aktiv; Pricing-Strategie auf Preis-Lock v2 umgestellt
+**Letzter Commit:** edf751c — fix(crm): shorten UNQUALIFIED label to "Unqual." in Kanban-Card
+
+---
+
+## 22.04.2026 — Pricing-Strategie auf Preis-Lock v2 umgestellt
+
+### Erledigt
+- **Pricing-Seite auf Founding-Partner-Pilot v2 aktualisiert** (5 Plaetze, Preis-Lock statt Lifetime-Rabatt, Starter als regulaeres Angebot)
+  - `src/app/pricing/PricingClient.tsx`: Plan-Interface um `pilot: boolean` erweitert, `foundingPrice`-Feld entfernt, Hero-P + Disclaimer + Bottom-CTA auf "12 Monate Preis-Lock"-Framing umgestellt, durchgestrichene Preise komplett weg, Pilot-Bullets nur auf Growth + Professional
+  - `src/app/page-v2.tsx`: Homepage-Pricing-Block und Founding-Partner-Detail-Sektion identisch umgestellt (Description + Disclaimer + 3 Cards + 7-Punkte-Bullets)
+  - `src/components/FoundingPartnerBanner.tsx`: "33% Rabatt + 10 Plaetze" → "5 Plaetze · 30 Tage kostenlos · 12 Monate Preis-Lock"
+- **Branchen-Sektion auf Homepage angepasst** (Commit `63c889b`):
+  - Reihenfolge: Bildung & Weiterbildung (neu an Position 1), Steuerberater (neu mit Calculator-Icon), Immobilien, Coaching & Beratung
+  - Entfernt: Handwerk, Agentur
+  - Grid von 5 auf 4 Spalten reduziert fuer sauberere Symmetrie
+
+### Neue Tech-Debt
+- **TD-Marketing-02:** Pricing-Plans-Datenstruktur zentralisieren — aktuell in PricingClient.tsx und page-v2.tsx dupliziert, Drift-Risiko bei kuenftigen Aenderungen
+
+### Konsistenz-Check (Grep nach "33%", "lebenslang", "233", "467", "869", "10 Plaetze")
+- Marketing-Frontend clean
+- FAQ, Rechtstexte, Admin/Dashboard unberuehrt (kein Pricing-Bezug)
 
 ---
 

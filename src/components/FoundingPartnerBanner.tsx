@@ -67,8 +67,8 @@ export function FoundingPartnerBanner() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-1.5 sm:gap-3 sm:px-6">
         <p className="text-center text-[11px] font-medium text-amber-200/90 sm:text-xs">
-          <span className="font-semibold text-amber-100">Founding-Partner-Phase</span>
-          {" — "}33% Rabatt + 30 Tage kostenlos. 10 Plätze verfügbar.{" "}
+          <span className="font-semibold text-amber-100">Founding-Partner-Pilot</span>
+          {" — "}5 Plätze · 30 Tage kostenlos · 12 Monate Preis-Lock.{" "}
           <a
             href="/#founding-partner"
             className="font-semibold text-amber-300 underline underline-offset-2 transition-colors hover:text-amber-100"
