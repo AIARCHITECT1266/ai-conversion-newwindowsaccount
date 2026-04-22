@@ -192,7 +192,7 @@ export default function LandingPage() {
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
                 className="text-4xl font-bold leading-tight sm:text-5xl" style={{ fontFamily: "Georgia, serif" }}>
                 <span className="bg-gradient-to-r from-[#c9a84c] via-[#e8d5a0] to-[#c9a84c] bg-clip-text text-transparent">KI-Lead-Qualifizierung</span>
-                <br /><span className="text-white">für Weiterbildung &amp; Inbound-Teams</span>
+                <br /><span className="text-white">für Bildungsträger</span>
               </motion.h1>
 
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
@@ -404,7 +404,7 @@ export default function LandingPage() {
 
       {/* ═══════ 4. BRANCHEN — AM 22.04.2026 ENTFERNT ═══════
           Die Sektion widerspricht der neuen Nischen-Positionierung
-          "KI-Lead-Qualifizierung fuer Weiterbildung & Inbound-Teams"
+          "KI-Lead-Qualifizierung fuer Bildungstraeger"
           (Pivot 21.04.2026). Code bleibt auskommentiert erhalten, weil
           im Juni eine dedizierte /steuerberater-Landing-Page geplant ist,
           die diese Struktur wiederverwenden kann (TD-Marketing-04).

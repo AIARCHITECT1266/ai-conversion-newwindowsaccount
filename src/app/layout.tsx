@@ -13,23 +13,23 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ai-conversion.ai"),
-  title: "AI Conversion — KI-Lead-Qualifizierung für Weiterbildung & Inbound-Teams",
+  title: "AI Conversion — KI-Lead-Qualifizierung für Bildungsträger",
   description:
-    "KI-Lead-Qualifizierung für Weiterbildungsanbieter und Inbound-Teams. Web-Widget, CRM und Pipeline in einem System — qualifiziert Anfragen automatisch, übergibt nur vorgeprüfte Leads an Ihr Team. DSGVO-nativ, Frankfurt-Hosting.",
+    "KI-Lead-Qualifizierung für Bildungsträger. Web-Widget, CRM und Pipeline in einem System — qualifiziert Anfragen automatisch, übergibt nur vorgeprüfte Leads an Ihr Team. DSGVO-nativ, Frankfurt-Hosting.",
   keywords: [
     "AI Conversion",
     "KI Lead-Qualifizierung",
-    "Weiterbildung KI",
+    "Bildungsträger",
     "Bildungsträger Chatbot",
-    "Lead-Scoring",
-    "Inbound-Qualifizierung",
+    "Lead-Scoring Bildung",
+    "Weiterbildung Lead-Qualifizierung",
     "KI Chatbot Deutschland",
     "ai-conversion.ai",
   ],
   openGraph: {
-    title: "AI Conversion | KI-Lead-Qualifizierung für Weiterbildung",
+    title: "AI Conversion | KI-Lead-Qualifizierung für Bildungsträger",
     description:
-      "AI Conversion — Qualifiziert Anfragen von Weiterbildungsanbietern automatisch, erkennt kaufbereite Leads und übergibt sie vorgeprüft an Ihr Team. Web-Widget, 24/7, DSGVO-nativ.",
+      "AI Conversion — Qualifiziert Anfragen von Bildungsträgern automatisch, erkennt kaufbereite Leads und übergibt sie vorgeprüft an Ihr Team. Web-Widget, 24/7, DSGVO-nativ.",
     url: "https://ai-conversion.ai",
     type: "website",
     locale: "de_DE",
@@ -39,15 +39,15 @@ export const metadata: Metadata = {
         url: "/logo1.jpg",
         width: 1200,
         height: 630,
-        alt: "AI Conversion – KI-Lead-Qualifizierung für Weiterbildung",
+        alt: "AI Conversion – KI-Lead-Qualifizierung für Bildungsträger",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Conversion | KI-Lead-Qualifizierung für Weiterbildung",
+    title: "AI Conversion | KI-Lead-Qualifizierung für Bildungsträger",
     description:
-      "AI Conversion — Qualifiziert Anfragen von Weiterbildungsanbietern automatisch, erkennt kaufbereite Leads und übergibt sie vorgeprüft an Ihr Team. Web-Widget, 24/7, DSGVO-nativ.",
+      "AI Conversion — Qualifiziert Anfragen von Bildungsträgern automatisch, erkennt kaufbereite Leads und übergibt sie vorgeprüft an Ihr Team. Web-Widget, 24/7, DSGVO-nativ.",
     images: ["/logo1.jpg"],
   },
   robots: "index, follow",

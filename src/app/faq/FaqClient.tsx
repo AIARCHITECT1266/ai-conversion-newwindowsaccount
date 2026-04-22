@@ -39,7 +39,7 @@ const faqs = [
   },
   {
     q: "Wird WhatsApp als Kanal unterstützt?",
-    a: "WhatsApp ist für Q3 2026 eingeplant — derzeit läuft die Meta-Business-Verifizierung. Der Pilot fokussiert auf das Web-Widget, weil es ohne Verifizierungs-Wartezeit einsatzfähig ist und sich direkt in die bestehende Website Ihrer Weiterbildung oder Ihres Inbound-Teams einbetten lässt.",
+    a: "WhatsApp ist für Q3 2026 eingeplant — derzeit läuft die Meta-Business-Verifizierung. Der Pilot fokussiert auf das Web-Widget, weil es ohne Verifizierungs-Wartezeit einsatzfähig ist und sich direkt in die bestehende Website Ihres Bildungsträgers einbetten lässt.",
   },
 ];
 

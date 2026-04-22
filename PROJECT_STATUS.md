@@ -1,8 +1,41 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-22
-**Aktuelle Phase:** MOD-Outreach aktiv; Marketing auf Weiterbildungs-Positionierung umgestellt
-**Letzter Commit:** 95d71d8 — feat(pricing): Add-on-Cleanup + Founding-Partner-Sektion konsistent
+**Aktuelle Phase:** MOD-Outreach aktiv; Positionierung auf "Bildungstraeger" spitz geschaerft
+**Letzter Commit:** 1fea923 — feat(marketing): Positionierung auf Weiterbildung + WhatsApp-Cleanup + Branchen-Fokus
+
+---
+
+## 22.04.2026 — HOTFIX Positionierung: "Bildungstraeger" statt "Weiterbildung & Inbound-Teams"
+
+Nach dem Positionierungs-Commit `1fea923` (Abend) wurde per Hotfix die
+Nischen-Formulierung gespitzt, damit die Website 1:1 zur bereits
+versendeten MOD-Outreach-Mail passt.
+
+### Ersetzt
+- Hero-H1 (`src/app/page-v2.tsx`): "KI-Lead-Qualifizierung fuer
+  Weiterbildung & Inbound-Teams" → "KI-Lead-Qualifizierung fuer
+  Bildungstraeger"
+- Meta-Title + Description (`src/app/layout.tsx` + `src/app/page.tsx`
+  + `src/app/pricing/page.tsx` + `src/app/faq/page.tsx`)
+- OG-Tags + Twitter-Tags + og:image:alt (`src/app/layout.tsx`)
+- Keywords: "Weiterbildung KI" + "Inbound-Qualifizierung" raus,
+  "Bildungstraeger" + "Lead-Scoring Bildung" +
+  "Weiterbildung Lead-Qualifizierung" rein
+- FAQ Q8 Antwort: "Ihrer Weiterbildung oder Ihres Inbound-Teams" →
+  "Ihres Bildungstraegers"
+
+### Nicht angefasst (bewusst)
+- Auskommentierter Branchen-Sektions-Code (`page-v2.tsx:420-436`) —
+  bleibt als Ausgangspunkt fuer TD-Marketing-04
+- Demo-Leads-Chatverlaufs-Inhalte (`demo-leads.data.ts`) — "Weiterbildung"
+  dort ist legitime Konversations-Terminologie
+- Keyword "Weiterbildung Lead-Qualifizierung" (bleibt als SEO-Treiber)
+
+### Grep-Verifikation
+- "Inbound-Teams" in `src/`: 0 Treffer
+- "Weiterbildungsanbieter" in `src/`: 0 Treffer
+- "Weiterbildung &" in `src/`: 0 Treffer
 
 ---
 
