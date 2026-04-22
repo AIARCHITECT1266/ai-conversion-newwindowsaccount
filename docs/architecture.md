@@ -4,8 +4,8 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-19 (Mobile-Keyboard-Fix widget.js + Website-Relaunch)
-> **Stand des Codes:** Commit d8098e9 (Mobile-Keyboard-Fix v2)
+> **Letzte Aktualisierung:** 2026-04-23 (Datenschutz-Kanzlei-Stand, MOD-Demo-Infrastruktur, visitorDisplayName, leadType)
+> **Stand des Codes:** Commit 5174acd (Datenschutzerklärung komplett auf IT-Recht-Kanzlei-Stand)
 
 ---
 
@@ -31,7 +31,8 @@ dasselbe CRM und dasselbe Lead-Scoring.
 ### Web-Frontend (Next.js 15 App Router, React 19, Tailwind 4)
 
 - **Marketing-Site** — `/`, `/pricing`, `/faq`, `/multi-ai`,
-  `/datenschutz`, `/impressum`, `/agb`, `/coming-soon`. Eigenes
+  `/datenschutz`, `/impressum`, `/agb`, `/widerrufsbelehrung`,
+  `/coming-soon`. Eigenes
   Web-Widget aktiv via `MarketingWidget`-Client-Komponente
   (Tenant `ai-conversion-marketing`, Growth-Plan, seit 14.04.2026).
   Ausgeschlossen auf `/admin`, `/dashboard`, `/embed`, `/api`,
@@ -55,7 +56,7 @@ Gruppiert nach Zweck:
 
 | Gruppe | Routen | Auth |
 |---|---|---|
-| **Admin** | `/api/admin/*` — login, tenants, stats, plan-prompts | Session-Cookie nach `ADMIN_SECRET` |
+| **Admin** | `/api/admin/*` — login, tenants (erweitertes Zod-Schema akzeptiert `botName`, `botSubtitle`, `avatarInitials`, `leadType` in `webWidgetConfig`), stats, plan-prompts, `demo-seed/mod-education` (POST seedet 8 fiktive B2C-Demo-Leads für MOD-Pilot, GET listet aktuellen Stand) | Session-Cookie nach `ADMIN_SECRET` |
 | **Dashboard** | `/api/dashboard/*` — me, stats, conversations, leads, campaigns, broadcasts, clients, crm, export, settings, widget-config (GET/PATCH), widget-config/generate-key (POST), widget-config/toggle (POST) | Magic-Link-Token (`dashboard_token` Cookie) |
 | **Widget** | `/api/widget/*` — config, session, message, poll | `webWidgetPublicKey` + Session-Token |
 | **Webhooks** | `/api/webhook/whatsapp`, `/api/paddle/webhook` | HMAC-Signatur |
@@ -251,11 +252,22 @@ Entwicklungs-Status.
 - **Session = Conversation** (Phase 0, Entscheidung 2, Modell A):
   Jeder Besuch startet eine neue Conversation. Keine Browser-
   Persistierung, keine Cookies, DSGVO-freundlich
-- **Tenant-Customization:** 10 Felder in `webWidgetConfig` JSON
-  (`backgroundColor`, `primaryColor`, `accentColor`, `textColor`,
-  `mutedTextColor`, `logoUrl`, `botName`, `botSubtitle`,
-  `welcomeMessage`, `avatarInitials`) mit defensivem `parseConfig`
-  in `src/lib/widget/publicKey.ts`
+- **Tenant-Customization:** 10 Widget-public Felder in
+  `webWidgetConfig` JSON (`backgroundColor`, `primaryColor`,
+  `accentColor`, `textColor`, `mutedTextColor`, `logoUrl`, `botName`,
+  `botSubtitle`, `welcomeMessage`, `avatarInitials`) plus separate
+  Dashboard-only-Felder (`leadType: "B2C"|"B2B"` für Lead-
+  Klassifikations-Badge im CRM, `displayName` in
+  `widgetVisitorMeta` für Kanban-Karten-Namen). Parse-Helper alle
+  in `src/lib/widget/publicKey.ts`:
+  - `parseConfig()` — Widget-public, 10 Felder, wird über
+    `GET /api/widget/config` an anonyme Widget-Besucher serviert
+  - `parseLeadType()` — Dashboard-only, bewusst nicht in
+    `ResolvedTenantConfig` aufgenommen (B2C/B2B nicht sensitiv,
+    gehört aber nicht in öffentliche Widget-API)
+  - `parseVisitorDisplayName()` — Dashboard-only, extrahiert
+    `displayName` aus `widgetVisitorMeta`, Fallback auf `maskId` bei
+    null (Kanban-Card + Modal-Header + Conversations-List)
 - **UX-Features (Phase 4b + 4c + Keyboard-Fix 18.04.):**
   Consent-Modal vor Chat-Start, optimistic UI, Typing-Indicator,
   Network-Error-Handling mit Offline-Banner, ARIA-Accessibility,
@@ -310,7 +322,8 @@ Entwicklungs-Status.
   - `GET /api/dashboard/widget-config` — Config mit Defaults,
     Plan-Check via `hasPlanFeature()` (Starter → 403)
   - `PATCH /api/dashboard/widget-config` — Partielles Update
-    der 10 editierbaren Felder, Zod-Validierung, Merge-Semantik
+    der 10 Widget-public Felder plus optional `leadType`
+    ("B2C"|"B2B"), Zod-Validierung, Merge-Semantik
   - `POST /api/dashboard/widget-config/generate-key` — Idempotenter
     Key-Gen mit 3×-Retry bei Unique-Kollision
   - `POST /api/dashboard/widget-config/toggle` — Enable/Disable,
@@ -327,6 +340,13 @@ Entwicklungs-Status.
   (List, Detail, CRM) — Emerald fuer WhatsApp, Sky fuer Web
 - **Channel-Filter:** `ConversationsFilter` Client Component mit
   `useTransition` fuer smooth Filter-Wechsel
+- **Namen-Anzeige (22.04.2026):** `visitorDisplayName` aus
+  `widgetVisitorMeta.displayName` hat Vorrang vor der
+  `maskId(externalId)`-Fallback-Kette. Bei WhatsApp-Leads
+  (`widgetVisitorMeta=null`) greift der Fallback unveraendert.
+  Dieselbe Logik in `src/app/dashboard/crm/page.tsx` Kanban-Card +
+  Detail-Modal. Helper: `parseVisitorDisplayName()` in
+  `src/lib/widget/publicKey.ts`.
 
 ### 5.6 Settings-Sidebar (Phase 6.5, produktiv)
 
@@ -347,10 +367,10 @@ in `docs/data-model.md` (geplant).
 
 | Model | Zweck | Schlüssel-Felder |
 |---|---|---|
-| **Tenant** | Mandant, zentrale Config | `slug`, `whatsappPhoneId`, `webWidgetPublicKey`, `paddlePlan`, `hubspotApiKey` (verschlüsselt) |
-| **Conversation** | Chat-Session (channel-agnostisch) | `channel`, `externalId` (nullable für WEB), `widgetSessionToken`, `consentGiven/At`, `status` |
+| **Tenant** | Mandant, zentrale Config | `slug`, `whatsappPhoneId`, `webWidgetPublicKey`, `webWidgetConfig` (JSON: 10 Widget-public + `leadType` Dashboard-only), `paddlePlan`, `hubspotApiKey` (verschlüsselt) |
+| **Conversation** | Chat-Session (channel-agnostisch) | `channel`, `externalId` (nullable für WEB, Demo-Seed-Marker `demo-seed-*`), `widgetSessionToken`, `widgetVisitorMeta` (JSON: `displayName`, `age`, `source` — Dashboard-only, nicht über Widget-API exposed), `consentGiven/At`, `status` |
 | **Message** | Einzelne Nachricht, verschlüsselt | `role`, `contentEncrypted` (AES-256-GCM) |
-| **Lead** | Qualifizierter Kontakt | `score`, `qualification`, `pipelineStatus`, `campaignId`, `abTestVariant` |
+| **Lead** | Qualifizierter Kontakt | `score`, `qualification`, `pipelineStatus`, `campaignId`, `abTestVariant`, `aiSummary` (JSON-Cache: `interesse`, `budgetSignal`, `naechsterSchritt`, `zusammenfassung`, `kaufbereitschaft`, `einwaende[]`, seit 21.04. additiv `topSignals[]` + `einschaetzung`), `predictiveScore` (JSON: `probability`, `reasoning`, `nextBestAction`) |
 | **Client** | Aus Lead gewonnener Kunde | `leadId` (1:1), `status`, `onboardingStep` |
 | **Campaign** | Marketing-Kampagne | `slug`, `isActive`, Relationen zu `AbTest`, `Broadcast` |
 | **CampaignTemplate** | Vorlage (System oder Tenant) | `briefing`, `openers`, `abVarianten`, `ziele` (alle JSON) |
@@ -385,9 +405,11 @@ sobald diese Datei angelegt wird.
 | **STOP-Befehl** | Jede User-Nachricht `"STOP"` setzt `status: CLOSED` + Audit-Log `bot.conversation_stopped` |
 | **Retention** | `Tenant.retentionDays` (Default 90), automatisch via `/api/cron/cleanup` (DSGVO-Pflicht-Löschung) |
 | **Audit-Log** | `auditLog()` aus `@/modules/compliance/audit-log` für jede sensitive Operation, `SENSITIVE_FIELDS` werden automatisch gefiltert |
-| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). In Datenschutz §6.5 + AVV §5 dokumentiert (TD-Compliance-05). DPA v5.1.0 unterzeichnet 13.04.2026, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt), SOC 2 Bridge Letter akzeptiert 15.04.2026 (TD-Compliance-08 erledigt) |
+| **Error-Monitoring** | Sentry (`@sentry/nextjs`), EU-Region Frankfurt, Error-Only (kein Tracing, kein Replay, `sendDefaultPii: false`). Init via `src/instrumentation.ts` (Server/Edge) + `src/instrumentation-client.ts` (Client). Alle Sentry-Configs in `src/`. Nur in Production aktiv (`enabled: NODE_ENV === "production"`). Seit Kanzlei-Datenschutz-Ueberarbeitung 23.04.2026 in `content/legal/datenschutz.md` §7 dokumentiert (Hauptdokument, nicht mehr Ergaenzung) + AVV §5 (`public/dpa.md`). DPA v5.1.0 unterzeichnet 13.04.2026, Aggregated Identifying Data deaktiviert (TD-Compliance-01 erledigt), SOC 2 Bridge Letter akzeptiert 15.04.2026 (TD-Compliance-08 erledigt) |
 | **Rate-Limiting** | Upstash Redis Sliding Window, pro-Endpoint-Schemas (Webhook, Admin-Login, Widget-Config/Session/Message/Poll, Onboarding) |
 | **Hosting** | Prisma Postgres Frankfurt (EU-Region, DPA verfuegbar), 2 Instanzen (teal-battery=Prod, red-mirror=Dev), Vercel Fluid Compute |
+| **EU-Vertreter (Art. 27 DSGVO)** | iuro Rechtsanwaelte GmbH t/a Prighter, Schellinggasse 3, 1010 Wien (Georgien-Sitz benoetigt Vertreter in der Union). Kontakt: support@prighter.com, Portal: https://app.prighter.com/portal/16103587069. Dokumentiert in Datenschutz §1.3 + Impressum (identische Schreibweise). TD-Compliance-07 erledigt 20.04.2026. LOA-Approval pending (TD-Compliance-13) |
+| **Rechtstexte-Infrastruktur** | Seit 20.04.2026 Markdown-basierte Legal-Pages in `content/legal/*.md` (impressum, datenschutz, datenschutz-ergaenzung, agb, widerrufsbelehrung). Rendering via remark + remark-html in Server Components (`src/app/{datenschutz,impressum,agb,widerrufsbelehrung}/page.tsx`), styling via `prose prose-invert @tailwindcss/typography`. Datenschutz-Page laedt zusaetzlich `datenschutz-ergaenzung.md` (produktspezifische Zusaetze: Resend, Chat-Widget Mara, Google-Fonts-Interim-Hinweis). Texte von IT-Recht-Kanzlei Keller generiert (Stand 23.04.2026, Haupt-Datenschutz auf neuem Kanzlei-Konfigurator-Output mit manuell ergaenztem Art. 27-Abschnitt 1.3 und Sentry als §7) |
 | **Zahlungen** | Paddle DEAKTIVIERT (Application abgelehnt 07.04.2026). Founding-Phase: manuelle SEPA-Rechnungsstellung nach Demo-Call. Payment-Provider-Ersatz als TD-Billing-01 erfasst |
 
 **Verweis:** Sicherheits-Entscheidungen sind dokumentiert in
@@ -426,6 +448,10 @@ Folgenscheidungen:
 | — | Sentry Minimal-Config: Error-Only, kein Tracing/Replay (13.04.2026) | `tracesSampleRate: 0`, `replaysSessionSampleRate: 0`, `sendDefaultPii: false`. DSGVO-Minimierung + Free-Tier-Budget. Source-Maps-Upload deaktiviert (TD-Monitoring-02) |
 | — | Paddle-Checkout deaktiviert, Founding-Phase manuell per SEPA (16.04.2026) | Paddle-Application abgelehnt (AI Chatbots + Marketing Software ausserhalb AUP). Checkout-Route gibt 503 zurueck. Backend-Code bleibt. Alle CTAs auf Calendly umgebogen. TD-Billing-01 fuer Provider-Ersatz |
 | — | Mobile-Keyboard-Viewport-Fix im Host-Script statt iframe-Inneren (18.04.2026) | `visualViewport`-Listener in widget.js setzt `.frame-wrap` height/top dynamisch. Erster Versuch (--vh im iframe-Inneren) scheiterte: iframe-Container blieb auf voller Hoehe, Android Chrome schnitt oben ab. Fix muss im Host-Script sein, weil der iframe-Container die Viewport-Begrenzung definiert |
+| — | Pilot-Modell: 5 Slots, 30 Tage kostenlos + 12 Monate Preis-Lock (21.04.2026) | ADR `docs/decisions/pilot-model-5-slots-30-30.md`. Website-Umsetzung seit 22.04.: Banner, /pricing, Homepage-Pricing-Block zeigen einheitlich "5 Plaetze · 30 Tage kostenlos · 12 Monate Preis-Lock". Starter laeuft als regulaeres Angebot ohne Pilot-Signale, Growth + Professional als Pilot-Tier mit "FOUNDING PARTNER"-Label |
+| — | MOD-Demo-Infrastruktur: Admin-Endpoint `POST /api/admin/demo-seed/mod-education` (21.04.2026) | Hartkodierter Tenant-Slug `mod-education-demo-b2c`, idempotent via `externalId`-Marker `demo-seed-*`. Seedet 8 fiktive B2C-Leads mit verschluesselter Chat-Historie (`encryptText`), vorgesetztem Score/Qualification/Pipeline, vorausgefuelltem `aiSummary`-JSON (inkl. `topSignals` + `einschaetzung`) und `predictiveScore`. Lokale Seed-Scripts in `src/scripts/`: `seed-mod-education-prompts.ts`, `seed-mod-education-demo-leads.ts`, `verify-mod-tenant-isolation.ts`, `diagnose-mod-demo-leads.ts`, `refresh-mod-magic-links.ts`. Alle Scripts rufen die Admin-API via HTTP auf (CLAUDE.md-Regel: Production-DB-Credentials nie in lokaler Shell). Neue AuditAction `admin.demo_seed_mod_education` |
+| — | `aiSummary`-Schema additiv erweitert: `topSignals[]` + `einschaetzung` (21.04.2026) | Kein DB-Schema-Change (Feld ist `@db.Text` JSON). Interface-Erweiterung in Dashboard `crm/page.tsx` als optionale Felder, backward-compatible mit bestehenden Leads ohne Re-Generation. Claude-Analyse-Prompt in `/api/dashboard/leads/[id]/summary` liefert die zwei neuen Felder fuer neue/regenerierte Analysen. Dashboard-UI rendert beide Sektionen konditional |
+| — | Marketing-Positionierung auf "Bildungstraeger" (22./23.04.2026) | Hero, Meta, OG, Twitter-Tags einheitlich auf "KI-Lead-Qualifizierung fuer Bildungstraeger". WhatsApp aus Marketing-Copy entfernt (Pricing-Labels → "KI-Bots (Web-Widget)"), nur noch als Roadmap-Chip "WhatsApp Cloud API (Q3 2026)" sichtbar (Meta-Verifizierung pending, TD-Marketing-03). Branchen-Sektion auskommentiert (Nischen-Positionierung, dedizierte `/steuerberater`-Landing-Page geplant, TD-Marketing-04). Nicht System- sondern Copy-Aenderung — hier gelistet weil sie die Positionierungs-Grundlage fuer alle Produktentscheidungen liefert |
 
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
@@ -507,7 +533,20 @@ an Nebentabellen, neuen Dashboard-Features, UI-Anpassungen.
 Solche Änderungen gehören in `PROJECT_STATUS.md` und ggf.
 `docs/decisions/`.
 
-**Letzte Aktualisierung:** 2026-04-13 — Sentry Error-Monitoring
-in Externe Services, Security-Tabelle, Technologie-Stack und
-Entscheidungstabelle ergaenzt. DB-Split dokumentiert
+**Letzte Aktualisierung:** 2026-04-23 — Sync fuer System-Aenderungen
+seit 19.04.: MOD-Demo-Infrastruktur (Admin-Endpoint + 5 Seed/Verify-
+Scripts + `aiSummary`-JSON-Erweiterung um `topSignals` + `einschaetzung`),
+`parseLeadType()` + `parseVisitorDisplayName()` Helper, Dashboard-
+Namen-Anzeige via `widgetVisitorMeta.displayName`, Rechtstexte-
+Infrastruktur (`content/legal/*.md` + remark-Rendering, IT-Recht-
+Kanzlei-Stand), Prighter-EU-Vertreter als eigene Security-Tabellen-
+Zeile, Sentry-§-Referenz auf §7 aktualisiert, `/widerrufsbelehrung`
+in Frontend-Routen, Admin-API-Schema-Erweiterung um
+`botName`/`botSubtitle`/`avatarInitials`/`leadType`, Pilot-Modell-
+ADR + Marketing-Positionierung auf "Bildungstraeger" in
+Entscheidungstabelle.
+
+**Davor:** 2026-04-13 — Sentry Error-Monitoring in Externe Services,
+Security-Tabelle, Technologie-Stack und Entscheidungstabelle ergaenzt.
+DB-Split dokumentiert
 (teal-battery/red-mirror, zwei Instanzen). Commit-Stand: `87d98ec`.
