@@ -2062,3 +2062,154 @@ juristische Einheit fuer den US-Markt. Bei Operativierung:
 
 ### Prioritaet
 Niedrig-Mittel — blockiert durch externe LLC-Registrierung.
+
+## TD-Compliance-16: Google Fonts self-hosten (23.04.2026)
+
+### Status
+Offen — Kanzlei-Konfigurator-Deaktivierung erfolgt, Code-
+Implementierung steht aus.
+
+### Hinweis zur Nummerierung
+User-Vorschlag war "TD-Compliance-06" (belegt, AVV-Akzeptanz-Verifikation,
+ERLEDIGT 15.04.). Dieser Eintrag nutzt die naechste freie Nummer nach
+TD-Compliance-15.
+
+### Kategorie
+Compliance / Technische Implementierung.
+
+### Pilot-blockierend
+Nein — Interim-Hinweis in datenschutz-ergaenzung.md (Abschnitt "Google
+Web Fonts") deckt das Thema rechtlich ab: Google Fonts werden nur im
+eingeloggten Bereich geladen, nicht auf der oeffentlichen Seite.
+
+### Kontext
+Die neue Datenschutzerklaerung (23.04.) enthaelt bewusst keine Google-
+Fonts-Klausel mehr, weil die Kanzlei Google Fonts im Konfigurator
+deaktiviert hat. Tatsaechlich werden Google Fonts aber weiterhin in
+einigen Admin- und Dashboard-Bereichen (Cormorant Garamond + Geist)
+ueber `<link>`-Tags von fonts.googleapis.com geladen — siehe:
+- `src/middleware.ts:192` (Admin-Login-HTML)
+- `src/app/admin/page.tsx:207` (@import url)
+- `src/app/dashboard/conversations/[id]/page.tsx:133` (@import url)
+- `src/app/dashboard/login/route.ts:92` (Dashboard-Login-Error-HTML)
+
+Kurze Uebergangsloesung: Ergaenzungs-Hinweis "ausschliesslich in
+eingeloggten Bereichen" bleibt in `content/legal/datenschutz-ergaenzung.md`
+als Interim-Klausel aktiv.
+
+### Fix
+1. Migration auf `next/font/google` (Self-Hosting via Next.js-Font-
+   Optimierung) an allen vier Stellen
+2. Fallback-Chain pruefen (Georgia, serif)
+3. Nach Verifikation: Ergaenzungs-Google-Fonts-Klausel in
+   `datenschutz-ergaenzung.md` entfernen
+4. CSP-Lockerung (fonts.googleapis.com / fonts.gstatic.com) aus
+   `src/middleware.ts` entfernen
+
+### Aufwand
+1-2 Stunden fuer alle vier Fundstellen + CSP-Cleanup + Smoke-Test in
+Admin/Dashboard.
+
+### Prioritaet
+Mittel. Nicht pilot-blockierend (Interim-Klausel deckt ab), aber im
+naechsten Compliance-Zyklus erledigen — auch weil damit Tech-Debt
+Phase 4-pre "Google Fonts hardcoded auf 4 Stellen" abgearbeitet wird.
+
+## TD-Compliance-17: Resend- und Chat-Widget-Klauseln in Hauptdatenschutz verschieben (23.04.2026)
+
+### Status
+Offen — blockiert durch AVV-Zweitinfo von IT-Recht-Kanzlei Keller.
+
+### Hinweis zur Nummerierung
+User-Vorschlag war "TD-Compliance-07" (belegt, EU-Vertreter Art. 27,
+ERLEDIGT 20.04.). Naechste freie Nummer.
+
+### Kategorie
+Compliance / Redaktionelle Konsolidierung.
+
+### Pilot-blockierend
+Nein — beide Klauseln sind in `content/legal/datenschutz-ergaenzung.md`
+(Abschnitte "E-Mail-Versand ueber Resend" und "Chat-Widget / KI-basierte
+Kundenkommunikation") aktuell live und rechtlich ausreichend, aber
+strukturell separiert.
+
+### Kontext
+Die neue Hauptdatenschutzerklaerung von IT-Recht-Kanzlei Keller
+(23.04.) enthaelt keine Klausel fuer:
+- Resend (Transaktions-E-Mail-Versand)
+- Eigenes Chat-Widget / Mara (KI-Erstberatung)
+
+Begruendung: Bei der Konfigurator-Generierung lagen noch nicht alle
+AVV-/Zweck-/Empfaenger-Informationen zu diesen Diensten vor. Keller
+hat Zweit-Mail mit AVV-Status/Zweck/Betreiber/Empfaenger-Infos
+angekuendigt.
+
+### Fix
+1. Keller-Zweit-Mail abwarten (oder aktiv anmahnen)
+2. Resend-Klausel aus `datenschutz-ergaenzung.md` ins Hauptdokument
+   verschieben, z.B. als neuer Abschnitt "7) Tools und Sonstiges →
+   Resend" oder neuer Abschnitt "8) E-Mail-Versand"
+3. Chat-Widget-Klausel (Mara) ebenfalls ins Hauptdokument migrieren —
+   ggf. als eigener Abschnitt "Chat-Bot" oder unter "5) Kontaktaufnahme"
+4. Ergaenzungs-Datei danach evtl. ganz entfernen, wenn alle
+   Produkt-Hinweise ins Hauptdokument migriert sind
+
+### Aufwand
+30-45 Minuten nach Eingang der Keller-Zweit-Mail.
+
+### Prioritaet
+Niedrig-Mittel. Wartet auf externe Zulieferung.
+
+## TD-Compliance-18: AVV-Check aller Auftragsverarbeiter durchfuehren (23.04.2026)
+
+### Status
+Offen — Live-Check vom 23.04. bereits teilweise durchgefuehrt.
+
+### Hinweis zur Nummerierung
+User-Vorschlag war "TD-Compliance-08" (belegt, Sentry SOC 2 Bridge
+Letter, ERLEDIGT 15.04.). Naechste freie Nummer.
+
+### Kategorie
+Compliance / Auditierung.
+
+### Pilot-blockierend
+Nein fuer Outreach, aber **Pflicht vor erstem zahlenden Pilot-Kunden**.
+Ohne AVV darf keine Auftragsverarbeitung stattfinden.
+
+### Aktueller Stand (Live-Check 23.04.2026)
+| Anbieter | AVV | Drittland-Uebermittlung |
+|---|---|---|
+| Vercel | ✅ | DPF |
+| Calendly | ✅ | DPF |
+| Sentry | ✅ (v5.1.0 unterzeichnet 13.04.) | DPF |
+| Anthropic | ✅ (DPA, Zero Data Retention) | SCC |
+| OpenAI | ✅ (DPA) | SCC |
+| Resend | ⚠️ offen | SCC (zu verifizieren) |
+| Neon / DB-Anbieter | ⚠️ offen | ? |
+| Paddle | ⚠️ offen (aktuell deaktiviert, Backend-Code vorhanden) | DPF (zu verifizieren) |
+| HubSpot | ⚠️ offen (Optional-Feature ab Professional) | DPF |
+| Notion | ⚠️ offen (Session-Notes intern) | DPF |
+
+### Fix
+1. Pro Anbieter im "⚠️ offen"-Status:
+   - AVV-Status pruefen (Anbieter-Portal / Account-Settings)
+   - Falls nicht vorhanden: DPA anfordern + unterzeichnen
+   - Drittland-Status verifizieren (DPF-Zertifizierung oder SCCs)
+2. Ergebnisse in `public/dpa.md` Subprozessor-Tabelle nachtragen
+3. Datenschutzerklaerung ggf. um fehlende Anbieter ergaenzen
+4. Ergebnis-Tabelle als internes Compliance-Dokument archivieren
+
+### Aufwand
+30-45 Minuten pro Anbieter (Portal-Check + Download/Unterzeichnung +
+Eintrag). Gesamt 3-5 Stunden.
+
+### Prioritaet
+Hoch. Vor erstem zahlenden Pilot-Kunden vollstaendig.
+
+### Anmerkung zu TD-Compliance-14
+TD-Compliance-14 "Verarbeitungsverzeichnis nach Art. 30 DSGVO erstellen"
+(angelegt 22.04.) deckt die inhaltliche Dokumentations-Seite ab. Dieser
+Eintrag (TD-Compliance-18) fokussiert auf die **vertragliche** Seite:
+welche AVVs sind unterzeichnet, welche Drittland-Mechanismen greifen.
+Beide Tasks laufen parallel. Bei GDD-Vorlage-Nutzung (Kanzlei-Keller)
+werden beide Themenfelder mit einem Template abgedeckt.

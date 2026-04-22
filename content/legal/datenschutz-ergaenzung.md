@@ -1,24 +1,6 @@
 ## Ergänzende Datenschutzhinweise
 
-Die vorstehende Datenschutzerklärung wird durch folgende produktspezifische Hinweise ergänzt:
-
-### Fehler-Monitoring mit Sentry
-
-Zur Sicherstellung der technischen Stabilität und zur Fehleranalyse unserer Anwendung nutzen wir Sentry, einen Dienst zur Erfassung von Fehlermeldungen.
-
-Anbieter: Functional Software, Inc. d/b/a Sentry, 45 Fremont Street, 8th Floor, San Francisco, CA 94105, USA
-
-Serverstandort: Europäische Union (Frankfurt am Main)
-
-Sentry erfasst technische Fehlerprotokolle (Stack-Traces), aufgerufene URL-Pfade, Browser-Typ und -Version (User-Agent) zum Zwecke der Fehleranalyse und Anwendungsstabilität.
-
-Wir haben Sentry so konfiguriert, dass KEINE IP-Adressen, KEINE Cookies und KEINE sonstigen personenbezogenen Daten übertragen werden.
-
-Rechtsgrundlage: Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO) an einem stabil funktionierenden Dienst. Wir haben mit Sentry einen Auftragsverarbeitungsvertrag abgeschlossen (DPA v5.1.0, unterzeichnet am 13.04.2026).
-
-Fehlerprotokolle werden nach 30 Tagen automatisch gelöscht.
-
-Weitere Informationen: https://sentry.io/privacy/
+Die vorstehende Datenschutzerklärung wird durch folgende produktspezifische Hinweise ergänzt. Der Sentry-Hinweis ist seit dem 23.04.2026 Bestandteil der Haupt-Datenschutzerklärung (Abschnitt 7) und wurde daher hier entfernt.
 
 ### E-Mail-Versand über Resend
 

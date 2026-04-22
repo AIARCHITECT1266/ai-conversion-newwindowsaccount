@@ -1,8 +1,62 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-23
-**Aktuelle Phase:** MOD-Outreach aktiv; DSGVO-Nachpflege (Art. 27) abgeschlossen
-**Letzter Commit:** 503a4b2 — fix(pricing): "Beliebteste Wahl" entfernt — kein Phantom-Social-Proof in Pilotphase
+**Aktuelle Phase:** MOD-Outreach aktiv; Datenschutzerklaerung auf Kanzlei-Stand
+**Letzter Commit:** 12ac262 — fix(compliance): Art. 27 DSGVO — Prighter EU-Vertreter in Datenschutzerklärung
+
+---
+
+## 23.04.2026 — Datenschutzerklaerung komplett auf IT-Recht-Kanzlei-Stand ersetzt
+
+Nach Rueckmeldung der Kanzlei Keller (23.04.) wurde die Haupt-
+Datenschutzerklaerung komplett durch den neuen Konfigurator-Output
+ersetzt.
+
+### Aenderungen
+- `content/legal/datenschutz.md` komplett neu geschrieben (kompletter
+  Austausch inkl. der heute Morgen manuell eingefuegten Art. 27-Klausel,
+  die jetzt im neuen Dokument als regulaerer Abschnitt 1.3 integriert ist)
+- **Neu dokumentierte Dienste:** Sentry (Abschnitt 7) — Keller-Punkt 2
+- **Entfernt:** Google-Fonts-Klausel aus Hauptdokument — Keller-Punkt 3
+  (Google Fonts im Konfigurator deaktiviert, Self-Host-Implementierung
+  steht aus, TD-Compliance-16)
+- **Praezisiert:** Cookie-Abschnitt (4) — nur technisch notwendige
+  Cookies, kein Consent-Banner noetig (TTDSG § 25 Abs. 2 Nr. 2)
+- **EU-Vertreter:** Art. 27-Klausel wandert von eigenem Abschnitt 2
+  zu Unter-Abschnitt 1.3 — Keller-Wortlaut kuerzer als Prighter-
+  Snippet vom Morgen
+- **Sentry-Duplikat aus Ergaenzung entfernt:** `content/legal/
+  datenschutz-ergaenzung.md` Abschnitt "Fehler-Monitoring mit Sentry"
+  geloescht, da jetzt im Hauptdokument. Ergaenzung behaelt Resend-,
+  Chat-Widget- und Google-Fonts-Interim-Klauseln, bis Keller-Zweit-
+  Mail eintrifft (TD-Compliance-17)
+
+### Konsistenz-Check Impressum
+Firmenname + Adresse der Prighter-Klausel in `content/legal/impressum.md`
+inhaltlich identisch zu Datenschutz 1.3. Nur Adress-Formatierung leicht
+unterschiedlich (1-zeilig vs. mehrzeilig) — beide Varianten rechtlich
+korrekt, nicht angefasst.
+
+### Extern verifizierter Live-Status (23.04.)
+- Vercel: DPF-zertifiziert ✅
+- Calendly: DPF-zertifiziert ✅
+- Cookie-Situation: 0 Cookies auf Homepage, nur technisch notwendig im
+  Login-Bereich → kein Consent-Banner erforderlich
+
+### Neue Tech-Debt
+- **TD-Compliance-16:** Google Fonts self-hosten (Kanzlei-Konfigurator-
+  Deaktivierung erfolgt, Code-Implementierung steht aus)
+- **TD-Compliance-17:** Resend- und Chat-Widget-Klauseln aus Ergaenzung
+  ins Hauptdokument verschieben, sobald Keller-Zweit-Mail eintrifft
+- **TD-Compliance-18:** AVV-Check aller Auftragsverarbeiter (Matrix mit
+  ✅/⚠️-Status fuer 10 Anbieter, Stand 23.04.)
+
+Anmerkung: User-Prompt schlug TD-Compliance-06/07/08/09 vor — alle
+belegt bis TD-Compliance-15. Neue Eintraege nutzen die naechsten freien
+Nummern. Der vorgeschlagene TD-Compliance-09 "Verarbeitungsverzeichnis"
+ist bereits durch den heute Morgen angelegten TD-Compliance-14
+abgedeckt — kein zweiter Eintrag noetig, Hinweis im TD-Compliance-18-
+Eintrag zur Abgrenzung.
 
 ---
 
