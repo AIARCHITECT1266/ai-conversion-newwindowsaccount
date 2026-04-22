@@ -7,10 +7,13 @@ import Navigation from "@/components/Navigation";
 import {
   Bot, Kanban, Megaphone, UserCheck, Target,
   TrendingUp, Sparkles, Shield, Check, ArrowRight,
-  Building2, GraduationCap, Calculator,
-  SlidersHorizontal, Globe, Users,
+  SlidersHorizontal, Globe,
   AlertTriangle,
 } from "lucide-react";
+// Hinweis: Building2, GraduationCap, Calculator, Users wurden am
+// 22.04.2026 mit der Branchen-Sektion auskommentiert. Bei Reaktivierung
+// als dedizierte /steuerberater-Landing-Page (TD-Marketing-04) einfach
+// wieder ergaenzen.
 
 const CALENDLY_URL = "https://calendly.com/philipp-ai-conversion/30min";
 
@@ -188,13 +191,13 @@ export default function LandingPage() {
 
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
                 className="text-4xl font-bold leading-tight sm:text-5xl" style={{ fontFamily: "Georgia, serif" }}>
-                <span className="bg-gradient-to-r from-[#c9a84c] via-[#e8d5a0] to-[#c9a84c] bg-clip-text text-transparent">KI-Vertrieb</span>
-                <br /><span className="text-white">für den DACH-Mittelstand</span>
+                <span className="bg-gradient-to-r from-[#c9a84c] via-[#e8d5a0] to-[#c9a84c] bg-clip-text text-transparent">KI-Lead-Qualifizierung</span>
+                <br /><span className="text-white">für Weiterbildung &amp; Inbound-Teams</span>
               </motion.h1>
 
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
                 className="mt-4 text-xl text-slate-300 leading-relaxed" style={{ fontFamily: "Georgia, serif" }}>
-                WhatsApp, Web, CRM und Pipeline in einem System &ndash; qualifiziert Ihre Anfragen automatisch und übergibt nur die heißen Leads an Ihren Vertrieb.
+                Web-Widget, CRM und Pipeline in einem System &ndash; qualifiziert Anfragen automatisch, erkennt kaufbereite Interessenten und übergibt sie vorgeprüft an Ihr Team.
               </motion.p>
 
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
@@ -268,7 +271,7 @@ export default function LandingPage() {
               {/* Stats-Footer */}
               <div className="mt-4 grid grid-cols-4 gap-2">
                 {[
-                  { value: "43", label: "Routes" },
+                  { value: "43", label: "Automationen" },
                   { value: "7", label: "Module" },
                   { value: "24/7", label: "Online" },
                   { value: "AES", label: "256-bit" },
@@ -296,7 +299,7 @@ export default function LandingPage() {
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { icon: Bot, color: "text-emerald-400", border: "border-emerald-500/15", bg: "bg-emerald-500/[0.03]", name: "Sales Agent", desc: "WhatsApp KI-Bot, Lead-Scoring, Follow-Up Scheduler, Multi-Sprachen", tag: "Leads generieren" },
+            { icon: Bot, color: "text-emerald-400", border: "border-emerald-500/15", bg: "bg-emerald-500/[0.03]", name: "Sales Agent", desc: "Web-Widget KI-Bot, Lead-Scoring, Follow-Up Scheduler, Multi-Sprachen", tag: "Leads generieren" },
             { icon: Kanban, color: "text-purple-400", border: "border-purple-500/15", bg: "bg-purple-500/[0.03]", name: "CRM Pipeline", desc: "Kanban-Board, Predictive Score, AI-Analyse, Proposal Generator", tag: "Leads konvertieren" },
             { icon: Megaphone, color: "text-[#c9a84c]", border: "border-[rgba(201,168,76,0.15)]", bg: "bg-[rgba(201,168,76,0.03)]", name: "Marketing Suite", desc: "Kampagnen-Tracking, A/B Testing, Broadcast, AI Content Creator", tag: "Leads skalieren" },
             { icon: UserCheck, color: "text-blue-400", border: "border-blue-500/15", bg: "bg-blue-500/[0.03]", name: "Client Portal", desc: "Onboarding-Checkliste, KI-Dokumente, Meilensteine, Notizen", tag: "Kunden binden" },
@@ -366,7 +369,7 @@ export default function LandingPage() {
               border: "border-[rgba(201,168,76,0.15)]",
               bg: "bg-[rgba(201,168,76,0.03)]",
               title: "Eine Plattform statt fünf",
-              body: "WhatsApp, Web-Widget, CRM, Pipeline und Marketing in einem System statt HubSpot + Superchat + Calendly + Mailchimp. Kein Tool-Dschungel, keine Daten-Silos, eine Login-Oberfläche.",
+              body: "Web-Widget, CRM, Pipeline und Marketing in einem System statt HubSpot + Intercom + Calendly + Mailchimp. Kein Tool-Dschungel, keine Daten-Silos, eine Login-Oberfläche.",
             },
             {
               icon: Target,
@@ -399,7 +402,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════ 4. BRANCHEN ═══════ */}
+      {/* ═══════ 4. BRANCHEN — AM 22.04.2026 ENTFERNT ═══════
+          Die Sektion widerspricht der neuen Nischen-Positionierung
+          "KI-Lead-Qualifizierung fuer Weiterbildung & Inbound-Teams"
+          (Pivot 21.04.2026). Code bleibt auskommentiert erhalten, weil
+          im Juni eine dedizierte /steuerberater-Landing-Page geplant ist,
+          die diese Struktur wiederverwenden kann (TD-Marketing-04).
+          Siehe auch PROJECT_STATUS 22.04.2026.
+
       <section className="relative z-10 mx-auto max-w-5xl px-6 py-28">
         <div className="text-center mb-12">
           <p className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a84c]">Branchen</p>
@@ -431,6 +441,7 @@ export default function LandingPage() {
           })}
         </div>
       </section>
+      */}
 
       {/* ═══════ 5. ROI-RECHNER ═══════ */}
       <RoiCalculator />
@@ -446,7 +457,7 @@ export default function LandingPage() {
 
         <div className="flex flex-wrap items-center justify-center gap-6">
           {[
-            { name: "WhatsApp Cloud API", color: "text-emerald-400" },
+            { name: "WhatsApp Cloud API (Q3 2026)", color: "text-emerald-400" },
             { name: "HubSpot CRM", color: "text-purple-400" },
             { name: "Claude (Anthropic)", color: "text-[#c9a84c]" },
             { name: "GPT-4o (OpenAI)", color: "text-emerald-400" },
@@ -481,10 +492,10 @@ export default function LandingPage() {
         <div className="grid gap-5 lg:grid-cols-3">
           {[
             // Starter: regulaeres Angebot, keine Pilot-Signale (pilot: false)
-            { name: "Starter", price: 349, tag: "Für den Einstieg", features: ["1 WhatsApp Bot", "500 Konversationen/Mo.", "Lead-Scoring + Follow-Ups", "CRM Pipeline", "E-Mail Support"], highlighted: false, pilot: false },
+            { name: "Starter", price: 349, tag: "Für den Einstieg", features: ["1 KI-Bot (Web-Widget)", "500 Konversationen/Mo.", "Lead-Scoring + Follow-Ups", "CRM Pipeline", "E-Mail Support"], highlighted: false, pilot: false },
             // Growth + Professional: Pilot-Tier mit Preis-Lock-Bullets
-            { name: "Growth", price: 699, tag: "Beliebteste Wahl", features: ["3 WhatsApp Bots", "2.000 Konversationen/Mo.", "Alles aus Starter", "Marketing Suite + A/B Testing", "Broadcast Manager", "Priority Support"], highlighted: true, pilot: true },
-            { name: "Professional", price: 1299, tag: "Maximale Power", features: ["10 WhatsApp Bots", "Unbegrenzte Konversationen", "Alles aus Growth", "Client Portal", "HubSpot Sync", "Dediziertes Onboarding + SLA"], highlighted: false, pilot: true },
+            { name: "Growth", price: 699, tag: "Beliebteste Wahl", features: ["3 KI-Bots (Web-Widget)", "2.000 Konversationen/Mo.", "Alles aus Starter", "Marketing Suite + A/B Testing", "Broadcast Manager", "Priority Support"], highlighted: true, pilot: true },
+            { name: "Professional", price: 1299, tag: "Maximale Power", features: ["10 KI-Bots (Web-Widget)", "Unbegrenzte Konversationen", "Alles aus Growth", "Client Portal", "HubSpot Sync", "Dediziertes Onboarding + SLA"], highlighted: false, pilot: true },
           ].map((plan) => (
             <motion.div key={plan.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.5 }}

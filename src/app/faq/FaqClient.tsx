@@ -5,18 +5,21 @@ import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
 
+// FAQ-Update 22.04.2026: WhatsApp-spezifische Fragen ersetzt durch
+// Web-Widget-Perspektive. WhatsApp-Integration ist fuer Q3 2026
+// geplant (Meta-Business-Verifizierung laeuft). Siehe TD-Marketing-03.
 const faqs = [
   {
-    q: "Was kostet die WhatsApp Business API zusätzlich?",
-    a: "Die WhatsApp Business API verursacht geringe Zusatzkosten direkt bei Meta. Service-Antworten innerhalb von 24h sind kostenlos. Marketing-Nachrichten kosten ca. 0,11 € pro Konversation. Diese Kosten sind nicht in unserem Paket enthalten, bleiben aber bei typischer Nutzung unter 50 €/Monat.",
+    q: "Wie wird der Bot in meine Website eingebunden?",
+    a: "Sie erhalten einen kurzen JavaScript-Snippet, den Sie in Ihrer Website einbetten — analog zu einem Analytics-Tag. Das Widget läuft in einer eigenen iframe-Sandbox (CSP-konform), ist mobil-optimiert und passt sich an Ihre Brand-Farben an. Setup in unter 10 Minuten.",
   },
   {
     q: "Wie lange dauert die Einrichtung?",
-    a: "Ihr Bot ist in der Regel innerhalb von 48 Stunden live. Wir übernehmen das komplette Setup — Sie müssen nichts technisch einrichten. Sie brauchen nur Ihre WhatsApp Business Nummer und 30 Minuten für das Onboarding-Gespräch.",
+    a: "Ihr Widget ist in der Regel innerhalb von 48 Stunden live. Wir übernehmen das komplette Setup inklusive Prompt-Feinschliff auf Ihre Anfragen-Szenarien — Sie brauchen nur 30 Minuten für das Onboarding-Gespräch.",
   },
   {
     q: "Ist das DSGVO-konform?",
-    a: "Ja. Wir nutzen ausschließlich die offizielle WhatsApp Business API mit Auftragsverarbeitungsvertrag (AVV). Alle Daten werden EU-konform verarbeitet.",
+    a: "Ja. Verarbeitung ausschließlich in Frankfurt, Auftragsverarbeitungsvertrag (AVV) inklusive, Nachrichten AES-256-verschlüsselt, EU-Vertreter gemäß Art. 27 DSGVO benannt. Consent-Dialog vor dem ersten Chat-Turn, Löschfunktion pro Konversation.",
   },
   {
     q: "Kann ich monatlich kündigen?",
@@ -24,7 +27,7 @@ const faqs = [
   },
   {
     q: "Was passiert wenn der Bot eine Frage nicht beantworten kann?",
-    a: "Der Bot übergibt nahtlos an einen menschlichen Mitarbeiter — mit vollständigem Gesprächsverlauf. Kein Kunde muss sein Anliegen wiederholen.",
+    a: "Der Bot übergibt nahtlos an einen menschlichen Mitarbeiter — mit vollständigem Gesprächsverlauf. Kein Interessent muss sein Anliegen wiederholen.",
   },
   {
     q: "Welche CRM-Systeme werden unterstützt?",
@@ -35,8 +38,8 @@ const faqs = [
     a: "Ja, besonders gut. Der Bot qualifiziert nach Budget, Zeitrahmen und Entscheidungskompetenz und bucht nur dann Termine, wenn die Kriterien erfüllt sind.",
   },
   {
-    q: "Was ist wenn ich noch keine WhatsApp Business Nummer habe?",
-    a: "Kein Problem. Wir helfen beim kompletten Setup der WhatsApp Business API inklusive Meta-Verifizierung — im Setup-Preis enthalten.",
+    q: "Wird WhatsApp als Kanal unterstützt?",
+    a: "WhatsApp ist für Q3 2026 eingeplant — derzeit läuft die Meta-Business-Verifizierung. Der Pilot fokussiert auf das Web-Widget, weil es ohne Verifizierungs-Wartezeit einsatzfähig ist und sich direkt in die bestehende Website Ihrer Weiterbildung oder Ihres Inbound-Teams einbetten lässt.",
   },
 ];
 
@@ -87,7 +90,7 @@ export default function FAQ() {
           Häufige Fragen
         </h1>
         <p className="mb-16 text-[15px] text-slate-500">
-          Alles, was Sie über unseren KI-WhatsApp-Bot wissen müssen.
+          Alles, was Sie über unsere KI-Lead-Qualifizierung wissen müssen.
         </p>
 
         {/* Accordion */}

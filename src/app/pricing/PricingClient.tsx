@@ -72,7 +72,7 @@ const plans: Plan[] = [
     tenants: "1 Mandant",
     conversations: "500 Konversationen/Monat",
     features: [
-      { text: "WhatsApp KI-Vertriebsbot (Claude Sonnet)", icon: <Bot className="h-3.5 w-3.5" /> },
+      { text: "Web-Widget KI-Vertriebsbot (Claude Sonnet)", icon: <Bot className="h-3.5 w-3.5" /> },
       { text: "Multisprachen-Bot (erkennt Sprache automatisch)", icon: <Globe className="h-3.5 w-3.5" /> },
       { text: "Lead-Scoring 0-100 automatisch", icon: <Target className="h-3.5 w-3.5" /> },
       { text: "Lead-Pipeline Übersicht (MQL → SQL → Customer)", icon: <TrendingUp className="h-3.5 w-3.5" /> },
@@ -99,7 +99,7 @@ const plans: Plan[] = [
       { text: "Gesprächs-Heatmap (wo springen Leads ab?)", icon: <BarChart3 className="h-3.5 w-3.5" /> },
       { text: "Termin-Intelligenz (optimiert nach Tag/Zeit)", icon: <Calendar className="h-3.5 w-3.5" /> },
       { text: "A/B Testing für Bot-Prompts", icon: <SlidersHorizontal className="h-3.5 w-3.5" /> },
-      { text: "WhatsApp-Broadcast an alle aktiven Leads", icon: <Megaphone className="h-3.5 w-3.5" /> },
+      { text: "Broadcast-Manager an alle aktiven Leads", icon: <Megaphone className="h-3.5 w-3.5" /> },
       { text: "Multi-AI Dashboard (Claude + GPT-4o)", icon: <Sparkles className="h-3.5 w-3.5" /> },
       { text: "Priority Support (24h Reaktionszeit)", icon: <Headphones className="h-3.5 w-3.5" /> },
     ],
@@ -164,7 +164,7 @@ const comparisonRows: ComparisonRow[] = [
   { feature: "Mandanten", starter: "1", growth: "3", professional: "10", enterprise: "Unbegrenzt" },
   { feature: "Konversationen/Monat", starter: "500", growth: "2.000", professional: "Unbegrenzt", enterprise: "Unbegrenzt" },
   { feature: "KI-Features", category: true, starter: "", growth: "", professional: "", enterprise: "" },
-  { feature: "WhatsApp KI-Vertriebsbot", starter: true, growth: true, professional: true, enterprise: true },
+  { feature: "Web-Widget KI-Vertriebsbot", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "Multisprachen-Bot", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "Lead-Scoring 0\u2013100", tooltip: "KI bewertet jeden Lead 0-100 automatisch", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "Competitor-Mentions Erkennung", starter: true, growth: true, professional: true, enterprise: true },
@@ -178,7 +178,7 @@ const comparisonRows: ComparisonRow[] = [
   { feature: "Lead-Pipeline Übersicht", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "ROI-Rechner", tooltip: "Zeigt live wie viel der Bot einspart", starter: true, growth: true, professional: true, enterprise: true },
   { feature: "Termin-Intelligenz", tooltip: "Optimiert Terminvorschläge nach Tag/Zeit", starter: false, growth: true, professional: true, enterprise: true },
-  { feature: "WhatsApp-Broadcast", starter: false, growth: true, professional: true, enterprise: true },
+  { feature: "Broadcast-Manager", starter: false, growth: true, professional: true, enterprise: true },
   { feature: "CRM-Sync (HubSpot, Salesforce, Pipedrive)", starter: false, growth: false, professional: true, enterprise: true },
   { feature: "Kalender-Integration", starter: false, growth: false, professional: true, enterprise: true },
   { feature: "Plattform & Support", category: true, starter: "", growth: "", professional: "", enterprise: "" },
@@ -612,15 +612,9 @@ export default function PricingPage() {
           ))}
         </div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="mt-6 text-center text-xs text-slate-600"
-        >
-          Zusätzlich fallen WhatsApp-Nachrichtenkosten an (ca. 0,11€ pro Marketing-Nachricht in DE, direkt über Meta).
-          Service-Antworten innerhalb 24h sind kostenlos.
-        </motion.p>
+        {/* Fußnote zu WhatsApp-Nachrichtenkosten entfernt am 22.04.2026 —
+            WhatsApp als Kanal ist bis zur Meta-Business-Verifizierung
+            (Q3 2026) nicht Teil des Pilot-Angebots. Siehe TD-Marketing-03. */}
       </section>
 
       {/* ═══════ VALUE BANNER ═══════ */}

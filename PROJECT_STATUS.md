@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-22
-**Aktuelle Phase:** MOD-Outreach aktiv; Pricing-Strategie auf Preis-Lock v2 umgestellt
-**Letzter Commit:** 3e1a86d — feat(pricing): Founding-Partner-Pilot v2 — Preis-Lock statt Lifetime-Rabatt
+**Aktuelle Phase:** MOD-Outreach aktiv; Marketing auf Weiterbildungs-Positionierung umgestellt
+**Letzter Commit:** 95d71d8 — feat(pricing): Add-on-Cleanup + Founding-Partner-Sektion konsistent
 
 ---
 
@@ -24,6 +24,42 @@
 ### Konsistenz-Check (Grep nach "33%", "lebenslang", "233", "467", "869", "10 Plaetze")
 - Marketing-Frontend clean
 - FAQ, Rechtstexte, Admin/Dashboard unberuehrt (kein Pricing-Bezug)
+
+### Positionierung + WhatsApp-Cleanup + Branchen-Fokus (22.04.2026, Abend)
+- **Website auf Weiterbildungs-Positionierung umgestellt:** Hero,
+  Meta-Title, Meta-Description, Keywords, OG-Tags, Twitter-Tags
+  konsistent auf "KI-Lead-Qualifizierung fuer Weiterbildung &
+  Inbound-Teams" (Nische 1 nach Pivot vom 21.04.). Betrifft
+  `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/page-v2.tsx`,
+  `src/app/pricing/page.tsx`, `src/app/faq/page.tsx`.
+- **WhatsApp als Feature zurueckgestuft auf Roadmap (Q3 2026):**
+  WhatsApp aus Pricing-Labels ("1/3/10 KI-Bots (Web-Widget)" statt
+  "WhatsApp Bots"), Sales-Agent-Feature-Description, Vergleichs-
+  Sektion ("Web-Widget statt HubSpot + Intercom + Calendly +
+  Mailchimp") und FAQ entfernt. Einziger sichtbarer WhatsApp-Bezug:
+  Integrations-Chip "WhatsApp Cloud API (Q3 2026)" + neuer FAQ-
+  Eintrag zum WhatsApp-Roadmap-Status. Grund: Meta-Business-
+  Verifizierung nicht durch, nicht lieferfaehig. Siehe TD-Marketing-03.
+- **Branchen-Sektion aus Haupt-Landing-Page entfernt:** Sektion
+  "Fuer diese Branchen besonders geeignet" widersprach der Nischen-
+  Positionierung. Code auskommentiert erhalten fuer spaetere
+  `/steuerberater`-Landing-Page-Reaktivierung (TD-Marketing-04),
+  ungenutzte Icon-Imports aus Haupt-Block entfernt.
+- **"Routes"-Label durch "Automationen" ersetzt** im Live-Dashboard-
+  Block der Homepage (User-Vokabular statt Dev-Vokabular).
+- **FAQ-Content aktualisiert:** Vier WhatsApp-spezifische Fragen
+  durch Web-Widget-Perspektive ersetzt (Einbindung, DSGVO,
+  Roadmap-Status).
+
+### Neue Tech-Debt
+- **TD-Marketing-03:** WhatsApp-Integration reaktivieren sobald
+  Meta-Business-Verifizierung durch ist — Pricing-Labels, Sales-
+  Agent-Description, Vergleichs-Sektion und FAQ muessen zurueck-
+  getauscht werden (2-3h Copy + Design-Runde zur kombinierten
+  Positionierung)
+- **TD-Marketing-04:** Branchen-Sektion als dedizierte
+  Landing-Pages reaktivieren — statt Haupt-Seite-Sektion separate
+  `/steuerberater`-, `/weiterbildung`-Routes bauen ab Juni 2026
 
 ### Pilot-Cleanup (22.04.2026, spaeter Nachmittag)
 - **Add-on-Sektion bereinigt** (`src/app/pricing/PricingClient.tsx`):

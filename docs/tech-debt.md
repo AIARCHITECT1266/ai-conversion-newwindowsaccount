@@ -1810,3 +1810,119 @@ Drift-Risiko konkret wird (Copy-Check-Findings in Audits).
 - Commit der Pilot-v2-Umstellung (22.04.2026) — zeigt die
   Drift-Anfaelligkeit: beide Dateien mussten identisch angepasst
   werden
+
+## TD-Marketing-03: WhatsApp-Integration reaktivieren sobald Meta-Verifizierung durch (22.04.2026)
+
+### Status
+Offen — blockiert durch externe Meta-Business-Verifizierung.
+
+### Pilot-blockierend
+Nein — Marketing ist auf "Web-Widget" umgestellt, Backend-Routen und
+Dashboard-Integration bleiben funktionsfaehig fuer spaetere
+Reaktivierung.
+
+### Kontext
+Die Meta-Business-Verifizierung fuer ai-conversion.ai steckt seit
+Paddle-Ablehnung vom 07.04. faktisch fest (keine neue AUP-kompatible
+Kategorie bislang akzeptiert). Pilot laeuft ueber Web-Widget. Am
+22.04.2026 wurde die Marketing-Website konsequent auf Web-Widget
+umgestellt — WhatsApp ist nur noch als Roadmap-Eintrag "Q3 2026"
+sichtbar.
+
+### Was wurde zurueckgestuft (Commit 22.04.)
+- `src/app/layout.tsx` + `src/app/page.tsx`: Meta-Title/Description
+  ohne WhatsApp, neue Positionierung "KI-Lead-Qualifizierung fuer
+  Weiterbildung"
+- `src/app/page-v2.tsx` Hero: "KI-Lead-Qualifizierung fuer
+  Weiterbildung & Inbound-Teams" statt "KI-Vertrieb DACH-Mittelstand"
+- `src/app/page-v2.tsx` Sales Agent Description, Vergleichs-Sektion,
+  Pricing-Cards (1/3/10 WhatsApp Bots → 1/3/10 KI-Bots (Web-Widget))
+- `src/app/pricing/PricingClient.tsx` Feature-Bullets,
+  Vergleichstabelle, WhatsApp-Gebuehren-Fussnote entfernt
+- `src/app/faq/FaqClient.tsx`: WhatsApp-spezifische FAQ-Eintraege
+  durch Web-Widget-Perspektive ersetzt, neuer Eintrag "Wird
+  WhatsApp als Kanal unterstuetzt?" mit Q3-2026-Info
+- `src/app/page-v2.tsx` Integrations-Chip: "WhatsApp Cloud API"
+  bleibt mit "(Q3 2026)"-Suffix sichtbar als Roadmap-Signal
+
+### NICHT angefasst (funktional, nicht Marketing)
+- `src/app/onboarding/page.tsx` — enthaelt weiterhin
+  "WhatsApp Phone ID"-Pflichtfeld (an TD-Pilot-01 gekoppelt, eigener
+  Fix-Zyklus)
+- `src/app/admin/page.tsx` — interne Admin-Felder
+- `src/app/dashboard/campaigns/*`, `broadcasts/*`, `bot-test/*`,
+  `conversations/*` — interne Dashboard-UI
+- Backend-Routen (`/api/webhook/whatsapp`, `/api/platform-bot`)
+- ChannelBadge-Komponente (WhatsApp bleibt als Kanal-Enum-Wert)
+
+### Fix bei Meta-Verifizierungs-Erfolg
+1. Alle obigen Marketing-Texte zuruecktauschen — dabei idealerweise
+   statt revert: bewusste Copy-Entscheidung, ob "Web-Widget **+**
+   WhatsApp" (additive Positionierung) oder WhatsApp-zurueck-in-den-
+   Fokus
+2. Pricing-Labels: "1/3/10 KI-Bots (Web-Widget)" →
+   "1/3/10 KI-Bots (Web + WhatsApp)"
+3. FAQ: Roadmap-Eintrag umformulieren zu "Wie funktioniert die
+   WhatsApp-Integration?"
+4. Integrations-Chip: "(Q3 2026)"-Suffix entfernen
+5. Onboarding-Flow WhatsApp-Phone-ID je nach Strategie wieder
+   pflicht oder optional (TD-Pilot-01-Fix)
+
+### Aufwand
+2-3 Stunden reine Copy-Arbeit + eine Design-Runde zu
+"Web-Widget + WhatsApp"-Kombi-Positionierung.
+
+### Trigger
+Meta-Business-Verifizierung bestaetigt. Aktuell keine zeitliche
+Einschaetzung aus Paddle-Tenor; TD-Billing-01 Payment-Provider-
+Ersatz laeuft parallel und kann WhatsApp-unabhaengig starten.
+
+## TD-Marketing-04: Branchen-Sektion als dedizierte Landing-Pages reaktivieren (22.04.2026)
+
+### Status
+Offen — geplante Nutzung ab Juni 2026 (Steuerberater-Launch).
+
+### Pilot-blockierend
+Nein.
+
+### Kontext
+Die Branchen-Sektion "Fuer diese Branchen besonders geeignet" (4
+Karten: Bildung, Steuerberater, Immobilien, Coaching) war zuletzt
+auf der Haupt-Landing-Page aktiv. Nach dem Nischen-Pivot vom 21.04.
+und der Fokussierung auf Weiterbildung widerspricht eine Generalist-
+Branchen-Sektion der Positionierung.
+
+Am 22.04.2026 wurde die Sektion in `src/app/page-v2.tsx` (Z. 402ff)
+komplett auskommentiert, der Code (inkl. Icons GraduationCap,
+Calculator, Building2, Users) bleibt erhalten. Icon-Imports wurden
+aus dem Haupt-Imports-Block entfernt, mit Inline-Hinweis fuer
+Reaktivierung.
+
+### Fix (zum Zeitpunkt Steuerberater-Launch Juni 2026)
+- **Nicht** den auskommentierten Block auf der Haupt-Seite
+  reaktivieren — widerspricht Nischen-Positionierung.
+- **Statt dessen** dedizierte Landing-Page `/steuerberater` bauen,
+  die:
+  - Den auskommentierten Code als Ausgangspunkt nutzt (Layout +
+    Icons)
+  - Steuerberater-spezifische Hero, Use-Cases, Testimonials (falls
+    vorhanden)
+  - Eigenes Pricing-Framing falls fuer die Nische abweichend
+  - Eigene Integrations-Liste (DATEV, Lexoffice, lexware statt
+    HubSpot als Standard)
+- Parallel weitere Landing-Pages pro Nische nach gleichem Muster:
+  `/weiterbildung` (aus MOD-Pilot-Lernings), `/immobilien`,
+  `/coaching` — jeweils nur wenn eine Pilot-Referenz besteht.
+
+### Aufwand
+3-4 Stunden pro Landing-Page (Copy + Layout + Routing + Metadata).
+Ein-Zeit-Extraktion der gemeinsamen Branchen-Card-Komponente in
+`src/components/BranchCard.tsx` lohnt sich ab Seite 2.
+
+### Trigger
+Erster echter Steuerberater-Pilot bestaetigt (ConvArch-Ziel: Juni
+2026 nach erfolgreichem MOD-Onboarding).
+
+### Referenzen
+- Auskommentierter Ausgangscode: `src/app/page-v2.tsx:402-437`
+- Icon-Reaktivierung: Import-Block in `src/app/page-v2.tsx:7-15`
