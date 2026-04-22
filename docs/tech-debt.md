@@ -1926,3 +1926,139 @@ Erster echter Steuerberater-Pilot bestaetigt (ConvArch-Ziel: Juni
 ### Referenzen
 - Auskommentierter Ausgangscode: `src/app/page-v2.tsx:402-437`
 - Icon-Reaktivierung: Import-Block in `src/app/page-v2.tsx:7-15`
+
+## TD-Compliance-13: Prighter-LOA-Approval-Status woechentlich pruefen (22.04.2026)
+
+### Status
+Offen — Prighter-Portal zeigt aktuell "Waiting for LOA approval" seit
+22.04.2026.
+
+### Hinweis zur Nummerierung
+User-Vorschlag war "TD-Compliance-01" — die Nummer ist bereits belegt
+(Sentry-AVV, ERLEDIGT am 15.04.2026). Dieser Eintrag ist die naechste
+freie Nummer nach TD-Compliance-12.
+
+### Kategorie
+Compliance / Prozess.
+
+### Pilot-blockierend
+Nein — Art. 27-Klausel in Datenschutz + Impressum ist bereits live
+(Commit 23.04.2026). Prighter agiert bei Purchase sofort, LOA-Approval
+ist ein internes Prighter-Prozess-Signal.
+
+### Kontext
+AI Conversion hat am 22.04.2026 einen EU-Vertreter-Vertrag mit iuro
+Rechtsanwaelte GmbH t/a Prighter (Wien) abgeschlossen. Prighter-
+Account-ID: 16103587069. LOA-Status im Portal ist "Waiting for LOA
+approval". Solange der LOA nicht approved ist, kann sich Prighter nicht
+als offizieller Vertreter gegenueber Behoerden ausweisen.
+
+### Fix
+1. Prighter-Portal woechentlich checken:
+   https://app.prighter.com/portal/16103587069
+2. Bei Approval-Mail: Eintrag hier auf ERLEDIGT setzen, Datum der
+   Bestaetigung notieren, PDF-Bestaetigung archivieren
+3. Bei Problemen (Ablehnung, Nachforderung): support@prighter.com
+
+### Aufwand
+5 Min pro Check, einmaliger Abschluss.
+
+### Prioritaet
+Niedrig — reine Statusueberwachung.
+
+## TD-Compliance-14: Verarbeitungsverzeichnis nach Art. 30 DSGVO erstellen (22.04.2026)
+
+### Status
+Offen.
+
+### Hinweis zur Nummerierung
+User-Vorschlag war "TD-Compliance-02" (belegt, Sentry-Datenschutz,
+ERLEDIGT 15.04.2026). Dieser Eintrag nutzt die naechste freie Nummer.
+
+### Kategorie
+Compliance / DSGVO-Pflicht.
+
+### Pilot-blockierend
+Nein fuer Outreach-Start, aber **Pflicht nach Art. 30 DSGVO** und bei
+Aufsichtsbehoerden-Anfrage sofort vorlegbar.
+
+### Kontext
+Ein Verarbeitungsverzeichnis (Art. 30 DSGVO) ist fuer Verantwortliche
+mit Beschaeftigten oder bei regelmaessiger Verarbeitung
+personenbezogener Daten zwingend — beides trifft auf AI Conversion
+zu (Tenant-Conversations, Leads, Dashboard-User). Ein vollstaendiges
+Verzeichnis fehlt aktuell; die Einzelbausteine existieren in
+verstreuter Form:
+- AVV-Liste in `public/dpa.md`
+- Subprozessor-Liste in Datenschutzerklaerung
+- Retention-Zeitraeume in `docs/architecture.md`
+- Audit-Log-Actions in `src/modules/compliance/audit-log.ts`
+
+### Fix (separater Arbeitsblock diese Woche)
+1. Template von Datenschutz-Generator oder IT-Recht-Kanzlei nutzen
+2. Pro Verarbeitungstaetigkeit eintragen: Zweck, Rechtsgrundlage,
+   Datenkategorien, Betroffenenkategorien, Empfaenger, Drittland-
+   Uebermittlungen, Loeschfristen, technische und organisatorische
+   Massnahmen
+3. Mindestens abdecken:
+   - Website-Besuch / Server-Logs
+   - Widget-Conversations (AES-256, 90 Tage Retention)
+   - Lead-Pipeline / CRM
+   - Dashboard-Zugriff / Magic-Link-Auth
+   - Sentry Error-Reporting
+   - Calendly Terminvergabe
+   - OpenAI Lead-Scoring / Anthropic Claude Chat-Replies
+4. PDF-Ausgabe archivieren, nicht public-facing
+5. Pflege-Rhythmus: bei jeder neuen Subprozessor-/Feature-Einfuehrung
+   aktualisieren
+
+### Aufwand
+4-6 Stunden Erst-Erstellung mit Template. Danach ca. 15 Minuten pro
+Update.
+
+### Prioritaet
+Hoch. Vor erstem zahlenden Pilot-Kunden fertig, idealerweise diese
+Woche nach dem MOD-Outreach-Follow-Up.
+
+## TD-Compliance-15: Impressum + Datenschutz um US-Sitz erweitern sobald POWER FORGE AI LLC operativ (22.04.2026)
+
+### Status
+Offen — abhaengig von LLC-Registrierung / Operatives-Start.
+
+### Hinweis zur Nummerierung
+User-Vorschlag war "TD-Compliance-05" (belegt, Sentry+Datenschutz,
+ERLEDIGT 15.04.2026). Dieser Eintrag nutzt die naechste freie Nummer.
+
+### Kategorie
+Compliance / Internationale Ausweitung.
+
+### Pilot-blockierend
+Nein — nur relevant sobald der US-Sitz tatsaechlich Geschaeft aufnimmt.
+
+### Kontext
+AI Conversion plant die US-LLC "POWER FORGE AI LLC" als parallele
+juristische Einheit fuer den US-Markt. Bei Operativierung:
+- Impressum wird Co-Verantwortlichen-Konstellation oder
+  Dual-Entity-Struktur abbilden
+- Datenschutzerklaerung muss US-Sitz benennen und Drittland-Kontext
+  anpassen
+- EU-Vertreter (Prighter) bleibt bestehen — US-Sitz ist ebenfalls
+  ausserhalb EU, Art. 27 DSGVO greift weiterhin
+
+### Fix
+1. Mit IT-Recht-Kanzlei abklaeren, ob Co-Verantwortlichen-Vereinbarung
+   nach Art. 26 DSGVO noetig ist
+2. Impressum: zweiten Block fuer POWER FORGE AI LLC (Sitz, Registriernr.,
+   Kontakt, TMG-Angaben nach US-Recht-Aequivalent)
+3. Datenschutzerklaerung: Verantwortlicher-Abschnitt um zweite
+   Entitaet + Aufteilung der Verarbeitungen ("X wird von Philipp
+   Motzer verantwortet, Y von POWER FORGE AI LLC")
+4. Prighter-Vertrag eventuell um zweite Entitaet erweitern (je nach
+   Prighter-Terms)
+5. AVV-Liste in public/dpa.md anpassen
+
+### Aufwand
+2-4 Stunden, je nach Kanzlei-Konsultation.
+
+### Prioritaet
+Niedrig-Mittel — blockiert durch externe LLC-Registrierung.

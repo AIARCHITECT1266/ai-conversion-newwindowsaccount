@@ -1,8 +1,47 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-22
-**Aktuelle Phase:** MOD-Outreach aktiv; Positionierung auf "Bildungstraeger" spitz geschaerft
-**Letzter Commit:** 1fea923 — feat(marketing): Positionierung auf Weiterbildung + WhatsApp-Cleanup + Branchen-Fokus
+**Letzte Aktualisierung:** 2026-04-23
+**Aktuelle Phase:** MOD-Outreach aktiv; DSGVO-Nachpflege (Art. 27) abgeschlossen
+**Letzter Commit:** 503a4b2 — fix(pricing): "Beliebteste Wahl" entfernt — kein Phantom-Social-Proof in Pilotphase
+
+---
+
+## 23.04.2026 — DSGVO-Hotfix: Art. 27-Klausel (Prighter) in Datenschutzerklaerung
+
+Impressum enthielt den EU-Vertreter-Hinweis bereits. Datenschutzerklaerung
+fehlte die Klausel — Pflichtverletzung nach Art. 27 Abs. 2 DSGVO.
+Hotfix heute nachgereicht:
+
+- `content/legal/datenschutz.md`: Neuer Abschnitt `## 2) Vertreter in
+  der Europaeischen Union (Art. 27 DSGVO)` direkt nach
+  `1) Einleitung und Kontaktdaten des Verantwortlichen`, mit vollstaendiger
+  Prighter-Adresse (iuro Rechtsanwaelte GmbH t/a Prighter, Schellinggasse 3,
+  1010 Wien), Portal-Link (https://app.prighter.com/portal/16103587069)
+  und offiziellem Prighter-Snippet-Wording
+- Folge-Abschnitte 2-9 zu 3-10 renummeriert (incl. Subsection-Nummern
+  `### 5.x` → `### 6.x`, `**8.x**` → `**9.x**`)
+- Identische Schreibweise/Adresse wie im Impressum
+
+### Bestehender Markdown-Bug nicht gefixt
+Die Datenschutzerklaerung hatte vor dem Hotfix bereits eine doppelte
+Subsection-Nummer (`### 5.2 OpenAI` + `### 5.2 Calendly`). Nach der
+Renummerierung bleibt die Dopplung als `### 6.2 OpenAI` + `### 6.2
+Calendly` bestehen. Bewusst nicht gefixt (Scope-eng, kein User-Auftrag).
+Separater Fix-Commit empfohlen.
+
+### Neue Tech-Debt
+- **TD-Compliance-13:** Prighter-LOA-Approval-Status woechentlich
+  pruefen (aktuell "Waiting for LOA approval" seit 22.04.)
+- **TD-Compliance-14:** Verarbeitungsverzeichnis nach Art. 30 DSGVO
+  erstellen (Pflicht, separater Arbeitsblock diese Woche)
+- **TD-Compliance-15:** Bei US-LLC-Aktivierung (POWER FORGE AI LLC)
+  Impressum + Datenschutz um US-Sitz erweitern, Prighter bleibt
+
+Nummerierungs-Hinweis: User-Prompt schlug TD-Compliance-01/02/05
+vor — alle drei sind bereits belegt (Sentry-Themen, ERLEDIGT am
+13./15.04.). Neue Eintraege nutzen die naechsten freien Nummern.
+
+---
 
 ---
 
