@@ -7,7 +7,7 @@ import Navigation from "@/components/Navigation";
 import {
   Bot, Kanban, Megaphone, UserCheck, Target,
   TrendingUp, Sparkles, Shield, Check, ArrowRight,
-  Building2, Hammer, GraduationCap, Briefcase,
+  Building2, GraduationCap, Calculator,
   SlidersHorizontal, Globe, Users,
   AlertTriangle,
 } from "lucide-react";
@@ -411,13 +411,12 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
+            { icon: GraduationCap, name: "Bildung & Weiterbildung", desc: "Kursanfragen automatisch qualifizieren, vorgeprüfte Leads mit Score an Sales übergeben, Termine direkt buchen." },
+            { icon: Calculator, name: "Steuerberater", desc: "Mandats-Anfragen automatisch qualifizieren, Privat- und Geschäftsmandate trennen und passende Beratungstermine vergeben." },
             { icon: Building2, name: "Immobilien", desc: "Exposé-Anfragen sofort beantworten, Besichtigungstermine automatisch buchen, Objekte qualifiziert zuordnen" },
-            { icon: Hammer, name: "Handwerk", desc: "Auftragsanfragen 24/7 entgegennehmen, Termine koordinieren und Angebote automatisch nachfassen" },
             { icon: Users, name: "Coaching & Beratung", desc: "Erstgespräche vorqualifizieren, nur kaufbereite Interessenten zum Call einladen" },
-            { icon: GraduationCap, name: "Bildung & Weiterbildung", desc: "Kursanfragen automatisch beantworten, Interessenten qualifizieren und in passende Programme einordnen" },
-            { icon: Briefcase, name: "Agentur", desc: "Lead-Qualifizierung automatisieren, Projektanfragen bewerten und Pipeline-Wert tracken" },
           ].map((b, i) => {
             const Icon = b.icon;
             return (
