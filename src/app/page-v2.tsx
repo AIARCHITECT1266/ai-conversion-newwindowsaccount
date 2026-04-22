@@ -494,7 +494,7 @@ export default function LandingPage() {
             // Starter: regulaeres Angebot, keine Pilot-Signale (pilot: false)
             { name: "Starter", price: 349, tag: "Für den Einstieg", features: ["1 KI-Bot (Web-Widget)", "500 Konversationen/Mo.", "Lead-Scoring + Follow-Ups", "CRM Pipeline", "E-Mail Support"], highlighted: false, pilot: false },
             // Growth + Professional: Pilot-Tier mit Preis-Lock-Bullets
-            { name: "Growth", price: 699, tag: "Beliebteste Wahl", features: ["3 KI-Bots (Web-Widget)", "2.000 Konversationen/Mo.", "Alles aus Starter", "Marketing Suite + A/B Testing", "Broadcast Manager", "Priority Support"], highlighted: true, pilot: true },
+            { name: "Growth", price: 699, tag: "Empfohlen für Founding Partner", features: ["3 KI-Bots (Web-Widget)", "2.000 Konversationen/Mo.", "Alles aus Starter", "Marketing Suite + A/B Testing", "Broadcast Manager", "Priority Support"], highlighted: true, pilot: true },
             { name: "Professional", price: 1299, tag: "Maximale Power", features: ["10 KI-Bots (Web-Widget)", "Unbegrenzte Konversationen", "Alles aus Growth", "Client Portal", "HubSpot Sync", "Dediziertes Onboarding + SLA"], highlighted: false, pilot: true },
           ].map((plan) => (
             <motion.div key={plan.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
