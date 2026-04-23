@@ -2329,3 +2329,51 @@ und User nur die tenant.qualificationLabels sehen.
 **Wann relevant:** Wenn wir ohnehin auf String-Column statt Enum
 migrieren (z.B. fuer voll-dynamische Qualification-Stufen pro
 Tenant). Bis dahin: deferred.
+
+### TD-Post-Demo-07: Prisma-Config-Klarheit + Dev-vs-Prod-DB-Doku
+
+**Status:** Open, Post-Demo, MITTLERE Prioritaet (blockiert jede kuenftige Migration).
+
+**Problem:**
+Die Kommentar-Zeile in `prisma.config.ts:6` behauptet:
+> .env.local hat Vorrang (enthält die echten Vercel-Werte)
+
+Das ist am 23.04.2026 als falsch entlarvt worden. Tatsaechlich zeigen
+lokale `.env.local` und Vercel-Production auf **zwei verschiedene
+Prisma-Postgres-Datenbanken** (gleiches Host `db.prisma.io`, aber
+unterschiedliche User/Password-Kombinationen = zwei separate DBs).
+
+Zusaetzlich gibt es auf Prisma Postgres ein internes Verhalten, bei dem
+Prisma-CLI-Befehle (`migrate status`, `migrate deploy`, `migrate diff`,
+`db execute`) nicht durchgehend dieselbe Datenbank ansprechen wie der
+Runtime-`PrismaPg`-Adapter — trotz identischer DATABASE_URL. Der CLI-
+Management-Layer meldet "Database schema is up to date", waehrend die
+vom Runtime-Adapter genutzte DB die neuen Spalten physisch nicht hatte.
+
+Der Scoring-Refactor vom 23.04. lief deshalb lokal durch, aber die
+Prod-Spalten wurden erst durch manuelles ALTER TABLE via PrismaPg
+und INSERT in `_prisma_migrations` nachgerueckt.
+
+**Warum nicht jetzt gefixt:**
+- Vor dem Demo-Call 29.04. keine Zeit fuer DB-Struktur-Reorganisation.
+- Migration ist inzwischen zweifelsfrei auf Prod angekommen (Spalten
+  verifiziert, `_prisma_migrations`-Eintrag gesetzt).
+- Nur Tooling-Doku-Problem, nicht Code-Logik.
+
+**Gewuenschte Loesung:**
+1. Kommentar in `prisma.config.ts` korrigieren.
+2. Zweite Env-File `.env.vercel.dev` / `.env.vercel.production` als
+   Standard etablieren (ueber `vercel env pull ...`) und den
+   Migration-Workflow darauf umstellen.
+3. Eindeutige Dokumentation: wie wird eine Migration zuverlaessig auf
+   Prisma Postgres Prod gespielt, wenn `migrate deploy` "No pending"
+   luegt? Siehe `docs/migration-workflow.md` Abschnitt "Migrationen
+   auf Prod deployen" fuer den 23.04.-Ablauf, der funktioniert hat.
+4. Pruefen ob Prisma-Accelerate-Layer oder ein Prisma-Postgres-Bug
+   als Root-Cause ausgeschlossen werden kann — andernfalls Upstream-
+   Report an Prisma.
+
+**Wann fixen:**
+Erste Woche nach Demo-Call (03.05.-10.05.2026). Vor naechster Migration
+zwingend. Gefahr sonst: jede kuenftige Schema-Aenderung hat denselben
+Fallout.

@@ -20,6 +20,55 @@ docs/tech-debt.md ergaenzt. Audit-Log-Call
 `dashboard.scoring_updated` war bereits in der Settings-Route
 vorhanden (Zeile 104) — keine Nachlieferung noetig.
 
+### 23.04.2026 — Migration-Drift zwischen Dev-DB und Prod-DB
+
+Nach dem Refactor-Push stellte sich heraus, dass der Seed-Script-
+Aufruf gegen Production mit 500 fehlschlug
+(`PATCH /api/admin/tenants/cmo8yte6d000004jlergkg37w`). Root-Cause-
+Diagnose:
+
+- Lokale `.env.local` und Vercel-Production-Env nutzen **zwei separate
+  Prisma-Postgres-Datenbanken** auf demselben Host (`db.prisma.io`).
+  Identische URL-Struktur (Path, Port, Query-Keys, Userlaenge), aber
+  andere Credentials → andere DB.
+- Zusaetzlich: Prisma CLI (`migrate deploy`, `migrate status`,
+  `migrate diff`, `db execute`) spricht einen anderen Layer an als
+  der `PrismaPg`-Runtime-Adapter, obwohl beide dieselbe DATABASE_URL
+  bekommen. CLI meldete "Database schema is up to date", die App-DB
+  hatte aber nur 6 statt 7 Migrationen und keine der drei
+  scoringPrompt/qualificationLabels/scoringSignals-Spalten.
+
+**Fix** ausgefuehrt am 23.04. Nachmittag:
+
+1. `vercel env pull .env.vercel.production --environment=production --yes`
+2. `.gitignore` um `.env.vercel.*` erweitert (defensive Absicherung).
+3. `npx dotenv-cli -e .env.vercel.production -- npx prisma migrate deploy`
+   → "No pending migrations" (CLI-Layer-Mismatch).
+4. Fallback: ALTER TABLE via `PrismaPg`-Adapter mit IF NOT EXISTS:
+   - `tenants.scoringPrompt TEXT`
+   - `tenants.qualificationLabels JSONB`
+   - `leads.scoringSignals JSONB`
+5. `_prisma_migrations`-Eintrag manuell synchronisiert via
+   `$executeRaw` INSERT (checksum = "manual-apply-via-prismapg-2026-04-23").
+6. Direkte Verifikation: `tenant.findUnique` liefert B2C-Tenant mit
+   `scoringPrompt: null, qualificationLabels: null` → Runtime-DB hat
+   die Spalten jetzt.
+7. `.env.vercel.production` geloescht (nicht im Repo, durch
+   `.gitignore` geschuetzt).
+
+**Neue Tech-Debt:** TD-Post-Demo-07 (Prisma-Config-Klarheit + Dev-vs-
+Prod-DB-Doku). Blockiert jede kuenftige Migration bis zur Klaerung.
+
+**Neue Doku:** `docs/migration-workflow.md` erweitert um Abschnitt
+"Migrationen auf Prod deployen (Prisma Postgres)" mit dem 23.04.-
+Ablauf — inklusive Fallback-Pfad fuer den Fall dass `migrate deploy`
+"No pending" luegt.
+
+**Seed-Re-Run:** bereit. Philipp kann jetzt
+`SEED_TARGET_URL=https://ai-conversion.ai ADMIN_SECRET=... npx tsx
+src/scripts/seed-mod-education-prompts.ts` ausfuehren. Die Prod-DB
+akzeptiert den PATCH.
+
 ### Gefixte Risiken (aus Architektur-Scan 23.04. Vormittag)
 - **R-1 (HOCH) Scoring-Prompt-Mismatch:** gefixt. Scoring-Prompt ist jetzt
   tenant-konfigurierbar (`Tenant.scoringPrompt`). MOD-B2C- und MOD-B2B-
