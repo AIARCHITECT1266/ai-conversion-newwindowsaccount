@@ -37,6 +37,9 @@ interface Lead {
   source: string | null;
   appointmentAt: string | null;
   createdAt: string;
+  // ADR scoring-per-tenant: konkrete Scoring-Beobachtungen aus dem letzten
+  // GPT-Call. Optional weil aeltere API-Versionen das Feld nicht liefern.
+  scoringSignals?: string[];
 }
 
 interface ConversationDetail {
@@ -56,6 +59,17 @@ interface ConversationDetail {
   updatedAt: string;
   messages: Message[];
   lead: Lead | null;
+}
+
+// Tenant-spezifische Labels fuer die Qualification-Enum-Keys.
+// Kommt aus der API-Response (Top-Level-Feld neben `conversation`).
+// Fallback auf Defaults wenn API alt ist.
+interface QualificationLabels {
+  UNQUALIFIED: string;
+  MARKETING_QUALIFIED: string;
+  SALES_QUALIFIED: string;
+  OPPORTUNITY: string;
+  CUSTOMER: string;
 }
 
 /* ───────────────────────────── Hilfs-Funktionen ────────────────── */
@@ -90,12 +104,22 @@ function maskId(externalId: string | null): string {
   return externalId.slice(0, 4) + "••••" + externalId.slice(-3);
 }
 
-const QUALIFICATION_LABELS: Record<string, { label: string; color: string }> = {
-  UNQUALIFIED: { label: "Neu", color: "bg-gray-500" },
-  MARKETING_QUALIFIED: { label: "MQL", color: "bg-blue-500" },
-  SALES_QUALIFIED: { label: "SQL", color: "bg-purple-500" },
-  OPPORTUNITY: { label: "Opportunity", color: "bg-amber-500" },
-  CUSTOMER: { label: "Customer", color: "bg-emerald-500" },
+// Stage-Farben fuer die Qualification-Badge (fest, nicht tenant-editierbar).
+// Labels kommen aus der API (tenant.qualificationLabels).
+const QUALIFICATION_COLORS: Record<string, string> = {
+  UNQUALIFIED: "bg-gray-500",
+  MARKETING_QUALIFIED: "bg-blue-500",
+  SALES_QUALIFIED: "bg-purple-500",
+  OPPORTUNITY: "bg-amber-500",
+  CUSTOMER: "bg-emerald-500",
+};
+
+const DEFAULT_LABELS: QualificationLabels = {
+  UNQUALIFIED: "Unqualified",
+  MARKETING_QUALIFIED: "MQL",
+  SALES_QUALIFIED: "SQL",
+  OPPORTUNITY: "Opportunity",
+  CUSTOMER: "Customer",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -113,6 +137,7 @@ export default function ConversationDetailPage() {
   const id = params.id as string;
 
   const [conversation, setConversation] = useState<ConversationDetail | null>(null);
+  const [qualificationLabels, setQualificationLabels] = useState<QualificationLabels>(DEFAULT_LABELS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -123,7 +148,12 @@ export default function ConversationDetailPage() {
         if (!r.ok) throw new Error("Konversation nicht gefunden");
         return r.json();
       })
-      .then((data) => setConversation(data.conversation))
+      .then((data) => {
+        setConversation(data.conversation);
+        if (data.qualificationLabels) {
+          setQualificationLabels(data.qualificationLabels);
+        }
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Fehler"))
       .finally(() => setLoading(false));
   }, [id]);
@@ -269,48 +299,68 @@ export default function ConversationDetailPage() {
 
             {/* Lead-Daten */}
             {conversation.lead ? (
-              <InfoCard title="Lead">
-                <InfoRow
-                  icon={TrendingUp}
-                  label="Score"
-                  value={
-                    <span className="font-semibold" style={{ color: "var(--gold)" }}>
-                      {conversation.lead.score}/100
-                    </span>
-                  }
-                />
-                <InfoRow
-                  icon={Tag}
-                  label="Stage"
-                  value={
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={`inline-block h-2 w-2 rounded-full ${
-                          QUALIFICATION_LABELS[conversation.lead.qualification]?.color ?? "bg-gray-500"
-                        }`}
-                      />
-                      {QUALIFICATION_LABELS[conversation.lead.qualification]?.label ?? conversation.lead.qualification}
-                    </span>
-                  }
-                />
-                <InfoRow icon={Tag} label="Pipeline" value={conversation.lead.pipelineStatus} />
-                <InfoRow
-                  icon={Euro}
-                  label="Deal-Wert"
-                  value={
-                    conversation.lead.dealValue != null
-                      ? `${conversation.lead.dealValue.toLocaleString("de-DE")} €`
-                      : "–"
-                  }
-                />
-                {conversation.lead.source && (
-                  <InfoRow icon={Tag} label="Quelle" value={conversation.lead.source} />
+              <>
+                <InfoCard title="Lead">
+                  <InfoRow
+                    icon={TrendingUp}
+                    label="Score"
+                    value={
+                      <span className="font-semibold" style={{ color: "var(--gold)" }}>
+                        {conversation.lead.score}/100
+                      </span>
+                    }
+                  />
+                  <InfoRow
+                    icon={Tag}
+                    label="Stage"
+                    value={
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={`inline-block h-2 w-2 rounded-full ${
+                            QUALIFICATION_COLORS[conversation.lead.qualification] ?? "bg-gray-500"
+                          }`}
+                        />
+                        {qualificationLabels[
+                          conversation.lead.qualification as keyof QualificationLabels
+                        ] ?? conversation.lead.qualification}
+                      </span>
+                    }
+                  />
+                  <InfoRow icon={Tag} label="Pipeline" value={conversation.lead.pipelineStatus} />
+                  <InfoRow
+                    icon={Euro}
+                    label="Deal-Wert"
+                    value={
+                      conversation.lead.dealValue != null
+                        ? `${conversation.lead.dealValue.toLocaleString("de-DE")} €`
+                        : "–"
+                    }
+                  />
+                  {conversation.lead.source && (
+                    <InfoRow icon={Tag} label="Quelle" value={conversation.lead.source} />
+                  )}
+                  {conversation.lead.appointmentAt && (
+                    <InfoRow icon={Calendar} label="Termin" value={formatDate(conversation.lead.appointmentAt)} />
+                  )}
+                  <InfoRow icon={Clock} label="Erstellt" value={formatDate(conversation.lead.createdAt)} />
+                </InfoCard>
+
+                {/* Signals — nur rendern, wenn vorhanden.
+                    ADR scoring-per-tenant: reine Text-Bullets, keine Icons,
+                    keine Kategorien, kein Color-Coding. */}
+                {conversation.lead.scoringSignals && conversation.lead.scoringSignals.length > 0 && (
+                  <InfoCard title="Signale">
+                    <ul className="space-y-2 text-sm" style={{ color: "var(--text)" }}>
+                      {conversation.lead.scoringSignals.map((signal, idx) => (
+                        <li key={idx} className="flex gap-2">
+                          <span style={{ color: "var(--gold)" }}>•</span>
+                          <span className="flex-1 leading-snug">{signal}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </InfoCard>
                 )}
-                {conversation.lead.appointmentAt && (
-                  <InfoRow icon={Calendar} label="Termin" value={formatDate(conversation.lead.appointmentAt)} />
-                )}
-                <InfoRow icon={Clock} label="Erstellt" value={formatDate(conversation.lead.createdAt)} />
-              </InfoCard>
+              </>
             ) : (
               <InfoCard title="Lead">
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>

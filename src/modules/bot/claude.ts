@@ -104,6 +104,8 @@ export async function generateReply(
     const response = await client.messages.create(
       {
         model: "claude-sonnet-4-20250514",
+        // TD-Post-Demo-03: temperature pro Tenant konfigurierbar machen
+        temperature: 0.3,
         max_tokens: 1024,
         system: systemPrompt,
         messages,

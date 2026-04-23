@@ -28,6 +28,7 @@ import {
   X,
   Globe,
   MessageSquare,
+  Target,
   User,
   CreditCard,
   Link2,
@@ -50,6 +51,7 @@ interface ComingSoonItem {
 const ACTIVE_ITEMS: ActiveItem[] = [
   { href: "/dashboard/settings/widget", label: "Web-Widget", Icon: Globe },
   { href: "/dashboard/settings/prompt", label: "Bot-Prompt", Icon: MessageSquare },
+  { href: "/dashboard/settings/scoring", label: "Scoring", Icon: Target },
 ];
 
 const COMING_SOON_ITEMS: ComingSoonItem[] = [

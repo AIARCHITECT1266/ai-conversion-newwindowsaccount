@@ -38,8 +38,31 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: true });
 loadEnv({ path: ".env" });
 
+// Scoring-Prompts fuer MOD-Nischen (siehe ADR scoring-per-tenant).
+// Werden neben Konversations-Prompt (Mara/Nora) im Seed gesetzt.
+import { MOD_B2C_SCORING_PROMPT } from "../modules/bot/scoring/mod-b2c";
+import { MOD_B2B_SCORING_PROMPT } from "../modules/bot/scoring/mod-b2b";
+
 const TENANT_B2C_SLUG = "mod-education-demo-b2c";
 const TENANT_B2B_SLUG = "mod-education-demo-b2b";
+
+// MOD-spezifische Qualifikations-Labels (ADR scoring-per-tenant, 23.04.2026).
+// Enum-Keys bleiben stabil — nur die UI-Labels sind nischen-angepasst.
+const MOD_B2C_LABELS = {
+  UNQUALIFIED: "Nicht foerderfaehig",
+  MARKETING_QUALIFIED: "Grundinteresse",
+  SALES_QUALIFIED: "Gutschein-Aussicht",
+  OPPORTUNITY: "Vermittler-Kontakt",
+  CUSTOMER: "Kursanmeldung",
+} as const;
+
+const MOD_B2B_LABELS = {
+  UNQUALIFIED: "Kein QCG-Fit",
+  MARKETING_QUALIFIED: "QCG-Interesse",
+  SALES_QUALIFIED: "QCG-qualifiziert",
+  OPPORTUNITY: "HR-Termin",
+  CUSTOMER: "Vertrag",
+} as const;
 
 const BASE_URL = (process.env.SEED_TARGET_URL ?? "https://ai-conversion.ai").replace(/\/+$/, "");
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
@@ -333,6 +356,15 @@ interface PatchBody {
     avatarInitials: string;
     leadType: "B2C" | "B2B";
   };
+  // Scoring-Felder (ADR scoring-per-tenant)
+  scoringPrompt: string;
+  qualificationLabels: {
+    UNQUALIFIED: string;
+    MARKETING_QUALIFIED: string;
+    SALES_QUALIFIED: string;
+    OPPORTUNITY: string;
+    CUSTOMER: string;
+  };
 }
 
 async function patchTenant(
@@ -368,11 +400,19 @@ async function main() {
   if (NORA_SYSTEM_PROMPT.length > 30000) {
     throw new Error(`Nora-Prompt zu lang: ${NORA_SYSTEM_PROMPT.length} > 30000`);
   }
+  if (MOD_B2C_SCORING_PROMPT.length < 50 || MOD_B2C_SCORING_PROMPT.length > 30000) {
+    throw new Error(`B2C-Scoring-Prompt Laenge out of range: ${MOD_B2C_SCORING_PROMPT.length}`);
+  }
+  if (MOD_B2B_SCORING_PROMPT.length < 50 || MOD_B2B_SCORING_PROMPT.length > 30000) {
+    throw new Error(`B2B-Scoring-Prompt Laenge out of range: ${MOD_B2B_SCORING_PROMPT.length}`);
+  }
   if (MARA_WELCOME.length > 500 || NORA_WELCOME.length > 500) {
     throw new Error("Welcome-Message zu lang (>500 Zeichen)");
   }
   console.log(`[seed-mod-prompts]   Mara-Prompt: ${MARA_SYSTEM_PROMPT.length} Zeichen`);
   console.log(`[seed-mod-prompts]   Nora-Prompt: ${NORA_SYSTEM_PROMPT.length} Zeichen`);
+  console.log(`[seed-mod-prompts]   B2C-Scoring: ${MOD_B2C_SCORING_PROMPT.length} Zeichen`);
+  console.log(`[seed-mod-prompts]   B2B-Scoring: ${MOD_B2B_SCORING_PROMPT.length} Zeichen`);
 
   // Admin-Login
   const sessionToken = await adminLogin();
@@ -410,8 +450,10 @@ async function main() {
       avatarInitials: "M",
       leadType: "B2C",
     },
+    scoringPrompt: MOD_B2C_SCORING_PROMPT,
+    qualificationLabels: { ...MOD_B2C_LABELS },
   });
-  console.log(`[seed-mod-prompts] ${TENANT_B2C_SLUG} aktualisiert (Mara).`);
+  console.log(`[seed-mod-prompts] ${TENANT_B2C_SLUG} aktualisiert (Mara + B2C-Scoring).`);
 
   // B2B-Update
   await patchTenant(sessionToken, b2b.id, {
@@ -423,8 +465,10 @@ async function main() {
       avatarInitials: "N",
       leadType: "B2B",
     },
+    scoringPrompt: MOD_B2B_SCORING_PROMPT,
+    qualificationLabels: { ...MOD_B2B_LABELS },
   });
-  console.log(`[seed-mod-prompts] ${TENANT_B2B_SLUG} aktualisiert (Nora).`);
+  console.log(`[seed-mod-prompts] ${TENANT_B2B_SLUG} aktualisiert (Nora + B2B-Scoring).`);
 
   // Verifikation: noch einmal die Liste ziehen und Felder bestaetigen
   const verify = await listTenants(sessionToken);

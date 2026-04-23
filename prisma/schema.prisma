@@ -41,6 +41,14 @@ model Tenant {
   webWidgetPublicKey  String?    @unique          // Oeffentlicher Key (pub_xxx)
   webWidgetConfig     Json?                       // Widget-Config-Felder, siehe docs/decisions/phase-3b-spec-reconciliation.md
 
+  // Scoring-Customization (ADR scoring-per-tenant, 23.04.2026)
+  // scoringPrompt: tenant-spezifischer GPT-Scoring-Prompt. Null = Default nutzen.
+  // qualificationLabels: UI-Labels fuer die LeadQualification-Enum-Keys
+  //   (Struktur: {UNQUALIFIED: string, MARKETING_QUALIFIED: string, ...}).
+  //   Null = Enum-Keys als Labels nutzen.
+  scoringPrompt       String?    @db.Text
+  qualificationLabels Json?
+
   conversations    Conversation[]
   leads            Lead[]
   campaigns        Campaign[]
@@ -138,6 +146,11 @@ model Lead {
   campaignId       String?           // Kampagnen-Zuordnung
   abTestVariant    String?           // "A" oder "B" – welche Variante wurde gesendet
   source           String?           // Lead-Quelle: "qr", "link", "organic", "broadcast"
+  // Scoring-Signale (ADR scoring-per-tenant, 23.04.2026)
+  // scoringSignals: String-Array (2-4 Eintraege) mit konkreten Beobachtungen
+  //   aus dem letzten GPT-Scoring-Call. Ersetzt das frueher nicht
+  //   persistierte reasoning-Feld. Null = noch kein Scoring-Call.
+  scoringSignals   Json?
   createdAt        DateTime          @default(now())
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)

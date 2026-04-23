@@ -13,12 +13,14 @@ import { getTenantByPhoneId } from "@/modules/tenant/resolver";
 import { encryptText, decryptText } from "@/modules/encryption/aes";
 import { generateReply } from "./claude";
 import { scoreLeadFromConversation } from "./gpt";
+import { loadScoringPrompt } from "./scoring";
 import { sendMessage } from "@/modules/whatsapp/client";
 import { auditLog } from "@/modules/compliance/audit-log";
 import { notifyHighScoreLead } from "@/modules/crm/lead-notification";
 import { pushLeadToHubSpot } from "@/modules/crm/hubspot";
 import { loadSystemPrompt } from "./system-prompts";
 import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
 import { processMessage } from "@/lib/bot/processMessage";
 
 // ---------- Retry-Konfiguration ----------
@@ -162,13 +164,14 @@ function runScoringPipeline(
   conversationId: string,
   tenantId: string,
   tenantName: string,
+  scoringPrompt: string,
   fullHistory: Array<{ role: "user" | "assistant"; content: string }>,
   lastUserMessage: string
 ): void {
   const scoringText = formatConversationForScoring(fullHistory);
 
   withRetry(
-    () => scoreLeadFromConversation(scoringText),
+    () => scoreLeadFromConversation(scoringText, scoringPrompt),
     "GPT Lead-Scoring"
   )
     .then(async (scoreResult) => {
@@ -232,6 +235,10 @@ function runScoringPipeline(
         }
       }
 
+      // Signals JSON-serialisieren. Scoring-Response liefert immer ein
+      // String-Array (Zod-validiert in gpt.ts).
+      const signalsJson: Prisma.InputJsonValue = scoreResult.signals ?? [];
+
       // OPT 2: Upsert-Ergebnis direkt nutzen statt erneut zu laden
       const upsertedLead = await db.lead.upsert({
         where: { conversationId },
@@ -241,6 +248,7 @@ function runScoringPipeline(
           score: scoreResult.score,
           qualification: scoreResult.qualification || "UNQUALIFIED",
           status: "NEW",
+          scoringSignals: signalsJson,
           ...(campaignId ? { campaignId } : {}),
           ...(abTestVariant ? { abTestVariant } : {}),
           ...(leadSourceResolved ? { source: leadSourceResolved } : {}),
@@ -249,6 +257,7 @@ function runScoringPipeline(
           score: scoreResult.score,
           qualification: scoreResult.qualification || "UNQUALIFIED",
           status: finalStatus,
+          scoringSignals: signalsJson,
         },
         select: { pipelineStatus: true, dealValue: true, notes: true },
       });
@@ -541,10 +550,16 @@ export async function handleIncomingMessage(
       { role: "assistant" as const, content: claudeResult.reply },
     ];
 
+    // Scoring-Prompt pro Tenant aufloesen (Default wenn Feld leer).
+    const resolvedScoringPrompt = loadScoringPrompt({
+      scoringPrompt: tenant.scoringPrompt,
+    });
+
     runScoringPipeline(
       conversation.id,
       tenant.id,
       tenant.name,
+      resolvedScoringPrompt,
       fullHistory,
       message.text
     );

@@ -1,8 +1,238 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-23
-**Aktuelle Phase:** MOD-Outreach aktiv; Datenschutzerklaerung auf Kanzlei-Stand
-**Letzter Commit:** 12ac262 — fix(compliance): Art. 27 DSGVO — Prighter EU-Vertreter in Datenschutzerklärung
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Scoring-Refactor umgesetzt
+**Letzter Commit:** (ausstehend — Working-Tree, Freigabe-abhaengig)
+
+---
+
+## Scoring-Refactor 23.04.2026 — Scoring pro Tenant + Signals + Mara-Temperature-Fix
+
+**Timestamp:** 2026-04-23, spaeter Nachmittag
+**Scope:** ADR-002 (docs/decisions/adr-002-scoring-per-tenant.md).
+**Migration:** `20260423115051_scoring_per_tenant_and_signals` (deployed).
+**Commit:** steht aus — Working-Tree bereit, warte auf Freigabe.
+
+### Gefixte Risiken (aus Architektur-Scan 23.04. Vormittag)
+- **R-1 (HOCH) Scoring-Prompt-Mismatch:** gefixt. Scoring-Prompt ist jetzt
+  tenant-konfigurierbar (`Tenant.scoringPrompt`). MOD-B2C- und MOD-B2B-
+  Nischen-Prompts in `src/modules/bot/scoring/mod-b2c.ts` +
+  `mod-b2b.ts`. Seed setzt sie fuer die beiden Demo-Tenants.
+- **R-4 Keine Signale-Rueckgabe:** gefixt. GPT-Scoring gibt jetzt
+  `signals: string[]` zurueck (2-6 Eintraege, Zod-validiert), persistiert
+  in `Lead.scoringSignals`. Dashboard rendert Bullet-List in der
+  Conversation-Detail-Seitenleiste.
+- **R-6 Keine Temperature-Kontrolle:** gefixt (partiell). Mara laeuft jetzt
+  mit `temperature: 0.3` hartcodiert (`src/modules/bot/claude.ts`). Pro-
+  Tenant-Override bleibt als TD-Post-Demo-03.
+
+### Schema-Aenderungen
+- `Tenant.scoringPrompt: String? @db.Text` (nullable, Default = null)
+- `Tenant.qualificationLabels: Json?` (nullable, Default = null)
+- `Lead.scoringSignals: Json?` (nullable, Default = null)
+- Enum `LeadQualification` bleibt UNVERAENDERT (5 Stufen).
+
+### Neue Module / Routen
+- `src/modules/bot/scoring/` — index.ts (loader + Zod-Schema), defaults.ts,
+  mod-b2c.ts, mod-b2b.ts.
+- `src/app/api/dashboard/settings/scoring/route.ts` — GET/PATCH.
+- `src/app/dashboard/settings/scoring/page.tsx` — Editor fuer
+  scoringPrompt + qualificationLabels.
+- `tests/scoring-per-tenant.test.ts` — 21 neue Tests, alle gruen.
+
+### Geaenderte Dateien
+- `prisma/schema.prisma` — 3 neue Felder
+- `src/modules/bot/gpt.ts` — Scoring-Prompt-Param + Zod-Parse + signals
+- `src/modules/bot/claude.ts` — temperature: 0.3 + TD-Post-Demo-03
+- `src/modules/bot/handler.ts` — scoringPrompt durchreichen, signals
+  persistieren (Konsumenten-Audit: WhatsApp-Pfad)
+- `src/lib/bot/processMessage.ts` — analog (Web-Widget-Pfad)
+- `src/modules/compliance/audit-log.ts` — neue Action `dashboard.scoring_updated`
+- `src/app/api/admin/tenants/[id]/route.ts` — scoringPrompt +
+  qualificationLabels im Admin-Zod-Schema
+- `src/app/api/dashboard/conversations/[id]/route.ts` — API liefert
+  qualificationLabels + scoringSignals
+- `src/app/dashboard/conversations/[id]/page.tsx` — Labels-Mapping via
+  API-Response, neue "Signale"-InfoCard
+- `src/app/dashboard/settings/SettingsSidebar.tsx` — "Scoring"-Eintrag
+- `src/scripts/seed-mod-education-prompts.ts` — setzt MOD-B2C-/B2B-
+  Scoring-Prompts + Labels
+
+### Verifikation
+- Migration: `prisma migrate deploy` sauber, 7 Migrations applied.
+- Typecheck: `tsc --noEmit` — 0 Fehler in meinem Scope (8 pre-existing
+  Fehler in `tests/auth.test.ts`, Promise-vs-string, nicht durch diesen
+  Refactor verursacht).
+- Build: `npm run build` gruen.
+- Tests: 21 neue Tests gruen. 5 pre-existing auth-Tests schlagen fehl
+  (gleicher Grund — pre-existing).
+- Grep-Check `reasoning` im Scoring-Pfad: 0 Treffer.
+- Grep-Check `SCORING_SYSTEM_PROMPT`: 0 Treffer.
+- Admin-PATCH-Schema akzeptiert jetzt scoringPrompt + qualificationLabels
+  (Prisma.DbNull-Handling fuer "Default nutzen").
+
+### Offene Post-Demo-Tech-Debts
+TD-Post-Demo-01 bis -05 in `docs/tech-debt.md` dokumentiert:
+- TD-Post-Demo-01: Scoring-Debouncing
+- TD-Post-Demo-02: Claude-Modell pro Tenant
+- TD-Post-Demo-03: Temperature pro Tenant (Kommentar in claude.ts)
+- TD-Post-Demo-04: Rate-Limit-Bypass fuer Admin-Testing
+- TD-Post-Demo-05: Signal-Kategorisierung mit Icon-System
+
+### Abweichung vom User-Prompt (bewusst)
+Der Prompt benutzt im Output-Schema und Labels-Schema die Kurzformen
+"MQL" und "SQL". Das `LeadQualification`-Enum heisst aber in der DB
+`MARKETING_QUALIFIED` und `SALES_QUALIFIED` — diese Namen wurden durchgaengig
+verwendet (Zod-Schema, Labels-Keys, Scoring-Prompts), weil der User-Prompt
+explizit "Enum LeadQualification bleibt unveraendert" vorschreibt. MQL/SQL
+wurden nur als Default-UI-Label verwendet, nicht als Enum-Key. Siehe
+Hand-Off, Abschnitt 6.
+
+---
+
+## Mara-Tuning Session 23.04.2026 — Architektur-Scan (Read-Only)
+
+**Timestamp:** 2026-04-23, Nachmittag
+**Ziel:** Landkarte der Mara-Prompt-Architektur und des Scoring-Flows
+vor dem Tuning der 10 Test-Szenarien fuer den MOD-Demo-Call 29.04.
+**Status:** Keine Code-Aenderung. Nur Befund-Dokumentation.
+
+### Kernbefunde
+
+1. **Mara-System-Prompt** liegt in der DB als Feld `Tenant.systemPrompt`
+   (`prisma/schema.prisma:22`, `@db.Text`). Nicht im Code. Ein eigener
+   Prompt pro Tenant (B2C: `mod-education-demo-b2c` → Mara,
+   B2B: `mod-education-demo-b2b` → Nora). Fallback in
+   `src/modules/bot/system-prompts/` nur wenn `systemPrompt` leer ist
+   (`loadSystemPrompt()` in `system-prompts/index.ts:224-243`). Gesetzt
+   wurde der Mara-Prompt initial via Seed-Script
+   `src/scripts/seed-mod-education-prompts.ts` (POST an Admin-API).
+
+2. **Editier-Pfade fuer Philipp:**
+   - **Tenant-Dashboard (empfohlen fuer Tuning):**
+     Login als MOD-B2C-Tenant → `/dashboard/settings/prompt` →
+     System-Prompt editieren → Speichern. API-Backend:
+     `POST /api/dashboard/settings/prompt` — Zod-Limit **20.000 Zeichen**
+     (`src/app/api/dashboard/settings/prompt/route.ts:36`).
+   - **Admin-Panel (Fallback):** `/admin` → Tenants → PATCH via
+     `/api/admin/tenants/[id]` — Zod-Limit **30.000 Zeichen**
+     (`src/app/api/admin/tenants/[id]/route.ts:52`).
+   - **Script-Seed (Bulk):**
+     `SEED_TARGET_URL=... ADMIN_SECRET=... npx tsx
+     src/scripts/seed-mod-education-prompts.ts`
+
+3. **Scoring-Flow (WICHTIGSTE Erkenntnis):**
+   - **Typ:** Separater zweiter LLM-Call (OpenAI GPT-4o,
+     `src/modules/bot/gpt.ts:82`).
+   - **Trigger:** `runScoringPipeline()` laeuft asynchron (fire-and-forget)
+     NACH JEDER Bot-Antwort — nicht erst am Gespraechsende
+     (`src/lib/bot/processMessage.ts:475-487`). Bei 10 Nachrichten =
+     10 Scoring-Calls = 10x GPT-4o-Kosten.
+   - **Scoring-Prompt** ist hartcodiert in `gpt.ts:36-53`
+     (`SCORING_SYSTEM_PROMPT`) und auf **DACH-B2B-Vertrieb** geeicht
+     (Budget, Dringlichkeit, Terminbereitschaft). Fuer MOD-B2C
+     (Arbeitssuchende, Bildungsgutschein) passt das
+     Bewertungsraster nicht 1:1 — Risiko fuer Demo-Call am 29.04.
+   - **Kein Signale-Array, keine Top-3-Signale.** Rueckgabe ist nur
+     `{score: 0-100, qualification: UNQUALIFIED/MQL/SQL/OPPORTUNITY/
+     CUSTOMER, reasoning: string}`. Reasoning wird gespeichert in
+     `Lead.aiSummary`? Nein — es wird NICHT persistiert, nur geloggt
+     (`gpt.ts:130-135`, `processMessage.ts:230-243`). Persistiert
+     wird nur `score` + `qualification` auf `Lead`.
+   - **Status-Hochstufung:** Score >= 76 → `LeadStatus.CONTACTED`,
+     sonst `NEW` (`processMessage.ts:183`). Score > 70 loest
+     E-Mail-Benachrichtigung (Resend) + optionalen HubSpot-Push aus.
+
+4. **Dashboard-Output:** `/dashboard/conversations/[id]` zeigt in der
+   Seitenleiste nur `Score /100`, `Qualification-Badge (Neu/MQL/SQL/
+   Opportunity/Customer)`, `Pipeline-Status`, `Deal-Wert`,
+   `Quelle`, `Termin`. **Kein `top_signals`, kein `Einschaetzung`,
+   kein `Conversion-Trigger`-Feld.** Quelle: `src/app/dashboard/
+   conversations/[id]/page.tsx:270-320`.
+
+5. **LLM-Konfiguration Mara (Claude):**
+   - Modell: `claude-sonnet-4-20250514` hartcodiert
+     (`src/modules/bot/claude.ts:106`) — nicht aus ENV/DB.
+   - `max_tokens: 1024`, **KEIN temperature**, **KEIN top_p** (Anthropic-
+     Defaults greifen, Temperature = 1.0).
+   - Kein Tenant-Override moeglich.
+
+6. **Widget-Test-Zugriff fuer Philipp:**
+   - **Schnellster Weg:** Dashboard-Login als MOD-B2C-Tenant →
+     `/dashboard/settings/widget` → rechter iframe `Vorschau` zeigt
+     `/embed/widget?key=<publicKey>` direkt live
+     (`src/app/dashboard/settings/widget/page.tsx:448-456`).
+     Kein externer Embed noetig.
+   - **Alternativ direkte URL:**
+     `https://ai-conversion.ai/embed/widget?key=pub_NjEW32lw7XossvAG`.
+   - **Legacy-Test-Route:** `/test/[slug]` existiert fuer den
+     Demo-Modus ohne Public-Key (`src/app/test/[slug]/page.tsx`).
+
+7. **Konversations-Persistierung:**
+   - Prisma-Models: `Conversation` (`channel: WHATSAPP|WEB`,
+     `status: ACTIVE|PAUSED|CLOSED|ARCHIVED`, `widgetSessionToken`,
+     `widgetVisitorMeta`, `consentGiven`), `Message`
+     (`contentEncrypted @db.Text`, AES-256-GCM), `Lead` (1:1 zur
+     Conversation via `conversationId @unique`).
+   - **Abschluss-Trigger:** Conversation wird **NICHT automatisch**
+     bei Mara-Abschluss-Satz geschlossen. Einziger Close-Pfad ist
+     STOP-Befehl durch den User (`processMessage.ts:360-363`) oder
+     Cleanup-Cron nach Retention-Frist. Scoring ist davon unabhaengig.
+
+### Identifizierte Risiken / Inkonsistenzen
+
+- **R-1 Scoring-Prompt-Mismatch (HOCH):** `SCORING_SYSTEM_PROMPT`
+  in `gpt.ts` ist auf B2B-Vertrieb geeicht (Budget, Entscheider,
+  Termin). MOD-B2C-Leads (Arbeitssuchende, Bildungsgutschein-Kandidaten)
+  werden damit strukturell niedrig gescored. Vor Demo-Call anpassen
+  oder Risiko kommunizieren.
+- **R-2 Zeichen-Limit-Drift (MITTEL):** Dashboard-API erlaubt 20.000
+  Zeichen, Admin-API 30.000, Seed-Script prueft 30.000. Prompt-
+  Wachstum >20k Zeichen zwingt Philipp ins Admin-Panel. Kein
+  Kommentar dokumentiert, warum die Limits divergieren — potentielle
+  Regel-5-Verletzung (Spec-Bezug in Kommentaren).
+- **R-3 Scoring-Overhead (MITTEL):** Scoring laeuft nach JEDER
+  User-Nachricht. Bei 10-Nachrichten-Gespraech → 10 GPT-4o-Calls.
+  Kein Debounce, kein "erst scoren wenn X Nachrichten". Kostenrelevant
+  ab Pilot-Skalierung; fuer Demo-Call noch egal.
+- **R-4 Keine Signale-Rueckgabe (MITTEL):** Dashboard zeigt Score,
+  kein `top_signals`, keine `Einschaetzung`. Falls die MOD-Demo genau
+  diese Felder zeigen soll (wie vom User in der Aufgabe erwaehnt),
+  muss das Scoring erweitert werden (neues Feld im Lead-Model oder
+  Reasoning-Feld persistieren).
+- **R-5 Model-Hardcoding (NIEDRIG):** `claude-sonnet-4-20250514`
+  hartcodiert. Kein Tenant-Override, kein ENV-Flag. Modell-Wechsel
+  erfordert Deploy.
+- **R-6 Missing Temperature (NIEDRIG):** Claude-Call ohne explizite
+  Temperature — Anthropic-Default greift (1.0). Fuer konsistente
+  Mara-Antworten im Tuning waere 0.3-0.5 besser steuerbar.
+- **R-7 Rate-Limit beim Tuning (OPERATIV):** Widget-Session-Endpoint
+  limitiert **10 Sessions/IP/Stunde**
+  (`src/app/api/widget/session/route.ts:84`). Bei >10 Test-Chats aus
+  derselben IP innerhalb einer Stunde: 429. Philipp muss bestehende
+  Session weiter nutzen oder 1h warten.
+- **R-8 Kein Hot-Reload fuer Prompt-Aenderungen:** `loadSystemPrompt()`
+  liest `tenant.systemPrompt` bei jeder Message frisch aus der DB
+  (`processMessage.ts:396-404`). Damit ist der Tuning-Loop
+  **save → neuer Chat → sofortiges Resultat**, kein Deploy noetig.
+  Positiv — aber: der iframe-Preview-Cache im Dashboard bleibt per
+  `previewNonce` kontrolliert, kein Auto-Refresh. Fuer Tuning-Speed:
+  neue Session im Widget starten, nicht bestehende weiterfuehren.
+
+### Empfohlener Tuning-Workflow (Hand-Off an ConvArch)
+
+1. Prompt editieren: `/dashboard/settings/prompt` (eingeloggt als
+   MOD-B2C-Tenant) → Speichern.
+2. Widget-Test neben dran: `/dashboard/settings/widget` → iframe-
+   Preview rechts → "Neue Session" durch Reload des iframes
+   (`previewNonce++`) oder das echte Widget unter
+   `https://ai-conversion.ai/embed/widget?key=pub_NjEW32lw7XossvAG`.
+3. Nach jeder Szenario-Runde Lead-Score im Dashboard checken unter
+   `/dashboard/conversations/[id]`.
+4. **Entscheidung fuer 29.04.-Demo:** Wenn Scoring-Output mit DACH-B2B-
+   Heuristik fuer MOD-B2C unpassend ist — entweder Scoring-Prompt
+   (`gpt.ts:36-53`) MOD-spezifisch anpassen (separater ADR), oder
+   die Scoring-Darstellung fuer den Demo-Call bewusst ausblenden.
 
 ---
 

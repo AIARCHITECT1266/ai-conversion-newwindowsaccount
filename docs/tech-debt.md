@@ -2213,3 +2213,119 @@ Eintrag (TD-Compliance-18) fokussiert auf die **vertragliche** Seite:
 welche AVVs sind unterzeichnet, welche Drittland-Mechanismen greifen.
 Beide Tasks laufen parallel. Bei GDD-Vorlage-Nutzung (Kanzlei-Keller)
 werden beide Themenfelder mit einem Template abgedeckt.
+
+## Post-Demo Scoring-Pipeline (ADR-002, 23.04.2026)
+
+### TD-Post-Demo-01: Scoring-Debouncing
+
+#### Status
+Bewusst verschoben auf nach dem MOD-Demo-Call 29.04.2026.
+
+#### Problem
+`runScoringPipeline` laeuft asynchron nach JEDER Bot-Antwort. Bei einem
+10-Nachrichten-Gespraech entstehen 10 GPT-4o-Calls. Fuer den Demo-Call
+am 29.04. ist das akzeptabel, aber bei Pilot-Skalierung kostenrelevant
+und potenziell rate-limit-problematisch.
+
+#### Gewuenschte Loesung
+Throttle nach letztem Scoring-Call — z.B. "mindestens 60 Sekunden
+Konversations-Pause oder Gespraech beendet", bevor erneut gescored
+wird. Konservative Variante: Nur am Ende des Gespraechs scoren
+(auto-close-Trigger benoetigt, existiert heute nicht).
+
+#### Wann fixen
+Nach dem 29.04.-Demo, vor dem ersten zahlenden Pilot-Kunden.
+
+### TD-Post-Demo-02: Claude-Modell pro Tenant override-faehig
+
+#### Status
+Bewusst verschoben auf nach dem MOD-Demo-Call 29.04.2026.
+
+#### Problem
+`claude-sonnet-4-20250514` ist in `src/modules/bot/claude.ts` hartcodiert.
+Kein ENV-Flag, kein Tenant-Override. Fuer kuenftige Nischen mit anderen
+Latenz- oder Qualitaets-Praeferenzen (z.B. Opus fuer komplexe B2B-
+Gespraeche, Haiku fuer Low-Latency-Massen-Chats) muss der Code deployed
+werden.
+
+#### Gewuenschte Loesung
+Neues Feld `Tenant.claudeModel: String?` mit Default = aktuelles
+Sonnet-4. Whitelist im Backend gegen Modell-Injection. Dashboard-
+Setting fuer Admin-User.
+
+#### Wann fixen
+Nach erstem Pilot-Kunden, wenn echter Tuning-Bedarf sichtbar wird.
+
+### TD-Post-Demo-03: Temperature pro Tenant konfigurierbar
+
+#### Status
+Bewusst verschoben auf nach dem MOD-Demo-Call 29.04.2026.
+
+#### Problem
+`temperature: 0.3` ist in `src/modules/bot/claude.ts` hartcodiert
+(Kommentar TD-Post-Demo-03 markiert die Stelle). Fuer das Tuning
+verschiedener Nischen-Tonalitaeten koennte ein Tenant-Override
+sinnvoll sein.
+
+#### Gewuenschte Loesung
+Neues Feld `Tenant.botTemperature: Float?` (Range 0.0-1.0). Default =
+0.3. Dashboard-Slider mit 0.1-Schritten.
+
+#### Wann fixen
+Nach erstem Pilot-Kunden, zusammen mit TD-Post-Demo-02.
+
+### TD-Post-Demo-04: Rate-Limit-Bypass fuer Admin-Testing
+
+#### Status
+Bewusst verschoben auf nach dem MOD-Demo-Call 29.04.2026.
+
+#### Problem
+Widget-Session-Endpoint limitiert 10 Sessions/IP/Stunde
+(`src/app/api/widget/session/route.ts:84`). Beim Durchtesten von 10
+Test-Szenarien aus einer IP (Philipp fuer den Demo-Call) hart an der
+Grenze.
+
+#### Gewuenschte Loesung
+Admin-Header oder signierter Test-Token, der das Rate-Limit umgeht.
+Nur fuer eingeloggte Admin-Sessions, streng auditiert.
+
+#### Wann fixen
+Nach dem 29.04.-Demo. Work-around bis dahin: Philipp nutzt iframe-
+Reload in `/dashboard/settings/widget` (zaehlt als eine Session pro
+Config-Fetch), oder 1h-Pause zwischen Test-Serien.
+
+### TD-Post-Demo-05: Signal-Kategorisierung mit Icon-System
+
+#### Status
+Bewusst verschoben auf nach erstem Pilot mit echten Signal-Daten.
+
+#### Problem
+Signals werden aktuell als reine Text-Bullets gerendert, ohne
+Kategorisierung (positiv/negativ/neutral/Risiko). Das ist bewusst so
+(ADR-002, "Abgelehnte Alternativen"): ohne Datenbasis ist jede
+Kategorisierung willkuerlich.
+
+#### Gewuenschte Loesung
+Nach Sammlung von ~100 echten Scoring-Calls ueber 2-3 Pilot-Kunden:
+Manuelle Auswertung der Signals, Erkennung wiederkehrender
+Kategorien, Mapping-Tabelle + Icon-Set. Dashboard-Rendering erweitert.
+
+#### Wann fixen
+Nach erstem Pilot-Kunden mit >=100 gesammelten Signal-Arrays.
+
+### TD-Post-Demo-06: Enum-Naming-Review LeadQualification
+
+**Status:** Open, Post-Demo, niedrige Prioritaet
+
+**Kontext:** Die DB-Enum LeadQualification nutzt lange Keys
+(MARKETING_QUALIFIED, SALES_QUALIFIED) waehrend Marketing-Sprache
+MQL/SQL ist. Abweichung im Scoring-Refactor 23.04.2026 dokumentiert.
+
+**Warum nicht gefixt:** PostgreSQL-Enum-Rename mit bestehenden
+Daten ist ein One-Way-Door (neuer Enum erzeugen, Spalte migrieren,
+alter Enum droppen). Risiko > Nutzen, weil Enum-Keys intern sind
+und User nur die tenant.qualificationLabels sehen.
+
+**Wann relevant:** Wenn wir ohnehin auf String-Column statt Enum
+migrieren (z.B. fuer voll-dynamische Qualification-Stufen pro
+Tenant). Bis dahin: deferred.

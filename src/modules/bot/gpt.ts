@@ -1,11 +1,24 @@
 // ============================================================
 // GPT-4o Lead-Scoring – Automatische Bewertung von Leads
-// Analysiert den Gesprächsverlauf und gibt einen Score (0–100)
-// sowie eine Qualifikationsstufe zurück.
+//
+// Analysiert den Gespraechsverlauf mit einem scoring-spezifischen
+// System-Prompt (pro Tenant konfigurierbar, siehe scoring/index.ts)
+// und gibt einen validierten Score + Qualifikations-Stufe +
+// 2-4 konkrete Signals zurueck.
+//
+// Der Scoring-System-Prompt liegt jetzt in
+// src/modules/bot/scoring/defaults.ts als DEFAULT_SCORING_PROMPT
+// und wird bei Aufruf vom Caller (processMessage) mitgegeben.
+//
+// ADR: docs/decisions/adr-002-scoring-per-tenant.md
 // ============================================================
 
 import OpenAI from "openai";
 import type { LeadQualification } from "@/generated/prisma/enums";
+import {
+  ScoringResponseSchema,
+  type ScoringResponse,
+} from "./scoring";
 
 // ---------- Lazy-Init Client ----------
 
@@ -27,30 +40,9 @@ export interface LeadScoreResult {
   success: boolean;
   score?: number; // 0–100
   qualification?: LeadQualification;
-  reasoning?: string; // Interne Begründung (wird nicht an Nutzer gezeigt)
+  signals?: string[]; // 2-4 konkrete Beobachtungen aus dem Gespraech
   error?: string;
 }
-
-// ---------- Scoring-Prompt ----------
-
-const SCORING_SYSTEM_PROMPT = `Du bist ein Lead-Scoring-Experte für den DACH-B2B-Markt.
-Analysiere den folgenden Gesprächsverlauf und bewerte den Lead.
-
-BEWERTUNGSKRITERIEN:
-- Kaufinteresse (0-25 Punkte): Aktives Interesse, konkrete Fragen zu Produkt/Preis
-- Budget-Signale (0-25 Punkte): Hinweise auf Budget, Unternehmensgröße, Entscheidungsbefugnis
-- Dringlichkeit (0-25 Punkte): Zeitdruck, akute Probleme, laufende Evaluierung
-- Gesprächsqualität (0-25 Punkte): Engagement, Antwortlänge, Bereitschaft zum Termin
-
-QUALIFIKATIONSSTUFEN:
-- UNQUALIFIED: Score 0-20 (kein erkennbares Interesse)
-- MARKETING_QUALIFIED: Score 21-50 (grundsätzliches Interesse, noch kein konkreter Bedarf)
-- SALES_QUALIFIED: Score 51-75 (konkreter Bedarf, aktive Evaluierung)
-- OPPORTUNITY: Score 76-90 (Terminbereitschaft, Entscheidungsnähe)
-- CUSTOMER: Score 91-100 (Kaufzusage oder bestehender Kunde)
-
-Antworte AUSSCHLIESSLICH im folgenden JSON-Format:
-{"score": <number>, "qualification": "<string>", "reasoning": "<string>"}`;
 
 // Maximale Konversationslaenge fuer Scoring (Token-Schutz)
 const MAX_CONVERSATION_LENGTH = 10_000;
@@ -58,13 +50,17 @@ const MAX_CONVERSATION_LENGTH = 10_000;
 // ---------- Lead bewerten ----------
 
 /**
- * Bewertet einen Lead anhand des Gesprächsverlaufs mit GPT-4o.
+ * Bewertet einen Lead anhand des Gespraechsverlaufs mit GPT-4o.
  * Wird nach jeder Nutzer-Nachricht aufgerufen um den Score zu aktualisieren.
  *
- * @param conversationText - Gesprächsverlauf als formatierter Text
+ * @param conversationText - Gespraechsverlauf als formatierter Text
+ * @param scoringPrompt - Tenant-spezifischer System-Prompt (via
+ *   loadScoringPrompt geladen). Bei leerem Tenant-Feld liefert der
+ *   Loader DEFAULT_SCORING_PROMPT — dieser Parameter ist daher nie leer.
  */
 export async function scoreLeadFromConversation(
-  conversationText: string
+  conversationText: string,
+  scoringPrompt: string
 ): Promise<LeadScoreResult> {
   // Konversationstext begrenzen um Token-Kosten zu kontrollieren
   const truncatedText = conversationText.length > MAX_CONVERSATION_LENGTH
@@ -80,11 +76,11 @@ export async function scoreLeadFromConversation(
     const response = await client.chat.completions.create(
       {
         model: "gpt-4o",
-        temperature: 0.1, // Niedrige Temperatur für konsistente Bewertung
-        max_tokens: 256,
+        temperature: 0.1, // Niedrige Temperatur fuer konsistente Bewertung
+        max_tokens: 512, // Hochgesetzt gegenueber 256: signals brauchen mehr Platz
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: SCORING_SYSTEM_PROMPT },
+          { role: "system", content: scoringPrompt },
           { role: "user", content: truncatedText },
         ],
       },
@@ -96,49 +92,47 @@ export async function scoreLeadFromConversation(
       return { success: false, error: "Keine Antwort von GPT-4o erhalten" };
     }
 
-    let parsed: { score: unknown; qualification: unknown; reasoning: unknown };
+    let rawJson: unknown;
     try {
-      parsed = JSON.parse(content);
+      rawJson = JSON.parse(content);
     } catch {
       console.error("[GPT-4o] JSON-Parse fehlgeschlagen", {
-        content: content.slice(0, 100),
+        contentLength: content.length,
+        // DSGVO: Inhalt nicht loggen
       });
       return { success: false, error: "GPT-Antwort ist kein gueltiges JSON" };
     }
 
-    // Score validieren
-    const rawScore = Number(parsed.score);
-    if (!Number.isFinite(rawScore)) {
-      return { success: false, error: "GPT-Score ist keine gueltige Zahl" };
+    // Zod-Validierung gegen ScoringResponseSchema
+    const parseResult = ScoringResponseSchema.safeParse(rawJson);
+    if (!parseResult.success) {
+      console.error("[GPT-4o] Schema-Validierung fehlgeschlagen", {
+        issues: parseResult.error.issues.map((i) => ({
+          path: i.path.join("."),
+          code: i.code,
+        })),
+      });
+      return {
+        success: false,
+        error: "GPT-Antwort entspricht nicht dem erwarteten Schema",
+      };
     }
-    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 
-    // Qualifikation validieren
-    const validQualifications: LeadQualification[] = [
-      "UNQUALIFIED",
-      "MARKETING_QUALIFIED",
-      "SALES_QUALIFIED",
-      "OPPORTUNITY",
-      "CUSTOMER",
-    ];
-
-    const qualStr = typeof parsed.qualification === "string" ? parsed.qualification : "";
-    const qualification = validQualifications.includes(qualStr as LeadQualification)
-      ? (qualStr as LeadQualification)
-      : "UNQUALIFIED";
+    const parsed: ScoringResponse = parseResult.data;
 
     console.log("[GPT-4o] Lead bewertet", {
-      score,
-      qualification,
+      score: parsed.score,
+      qualification: parsed.qualification,
+      signalsCount: parsed.signals.length,
       tokensUsed: response.usage?.total_tokens,
-      // DSGVO: Keine Gesprächsinhalte loggen
+      // DSGVO: Keine Gespraechsinhalte loggen, keine Signal-Texte loggen
     });
 
     return {
       success: true,
-      score,
-      qualification,
-      reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : undefined,
+      score: parsed.score,
+      qualification: parsed.qualification as LeadQualification,
+      signals: parsed.signals,
     };
   } catch (error) {
     const errorMessage =

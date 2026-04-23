@@ -12,9 +12,11 @@ import { generateReply } from "@/modules/bot/claude";
 import { scoreLeadFromConversation } from "@/modules/bot/gpt";
 import { auditLog } from "@/modules/compliance/audit-log";
 import { loadSystemPrompt } from "@/modules/bot/system-prompts";
+import { loadScoringPrompt } from "@/modules/bot/scoring";
 import { notifyHighScoreLead } from "@/modules/crm/lead-notification";
 import { pushLeadToHubSpot } from "@/modules/crm/hubspot";
 import type { MessageRole, LeadStatus } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
 
 // ---------- Typen ----------
 
@@ -151,13 +153,14 @@ function runScoringPipeline(
   conversationId: string,
   tenantId: string,
   tenantName: string,
+  scoringPrompt: string,
   fullHistory: Array<{ role: "user" | "assistant"; content: string }>,
   lastUserMessage: string
 ): void {
   const scoringText = formatConversationForScoring(fullHistory);
 
   withRetry(
-    () => scoreLeadFromConversation(scoringText),
+    () => scoreLeadFromConversation(scoringText, scoringPrompt),
     "GPT Lead-Scoring"
   )
     .then(async (scoreResult) => {
@@ -222,6 +225,10 @@ function runScoringPipeline(
         }
       }
 
+      // Signals JSON-serialisieren: Prisma akzeptiert InputJsonValue,
+      // unsere Scoring-Response liefert immer ein String-Array.
+      const signalsJson: Prisma.InputJsonValue = scoreResult.signals ?? [];
+
       const upsertedLead = await db.lead.upsert({
         where: { conversationId },
         create: {
@@ -230,6 +237,7 @@ function runScoringPipeline(
           score: scoreResult.score,
           qualification: scoreResult.qualification || "UNQUALIFIED",
           status: "NEW",
+          scoringSignals: signalsJson,
           ...(campaignId ? { campaignId } : {}),
           ...(abTestVariant ? { abTestVariant } : {}),
           ...(leadSourceResolved ? { source: leadSourceResolved } : {}),
@@ -238,6 +246,7 @@ function runScoringPipeline(
           score: scoreResult.score,
           qualification: scoreResult.qualification || "UNQUALIFIED",
           status: finalStatus,
+          scoringSignals: signalsJson,
         },
         select: { pipelineStatus: true, dealValue: true, notes: true },
       });
@@ -392,11 +401,14 @@ export async function processMessage(
     // Nutzer-Nachricht verschluesselt speichern
     await saveMessage(conversationId, "USER", message);
 
-    // Tenant-Daten fuer System-Prompt laden
+    // Tenant-Daten fuer System-Prompt UND Scoring-Prompt laden.
+    // Scoring-Prompt wird fuer runScoringPipeline benoetigt — wir holen
+    // ihn im selben Query, damit kein zweiter DB-Roundtrip entsteht.
     const tenant = await db.tenant.findUnique({
       where: { id: tenantId },
       select: {
         systemPrompt: true,
+        scoringPrompt: true,
         paddlePlan: true,
         brandName: true,
         name: true,
@@ -478,10 +490,16 @@ export async function processMessage(
       { role: "assistant" as const, content: claudeResult.reply },
     ];
 
+    // Scoring-Prompt pro Tenant aufloesen (Default wenn Feld leer).
+    const resolvedScoringPrompt = loadScoringPrompt({
+      scoringPrompt: tenant.scoringPrompt,
+    });
+
     runScoringPipeline(
       conversationId,
       tenantId,
       tenant.name,
+      resolvedScoringPrompt,
       fullHistory,
       message
     );

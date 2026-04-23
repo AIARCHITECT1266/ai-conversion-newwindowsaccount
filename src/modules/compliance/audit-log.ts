@@ -36,6 +36,7 @@ type AuditAction =
   | "widget.public_key_generated"
   | "widget.toggled"
   | "dashboard.prompt_updated"
+  | "dashboard.scoring_updated"
   | "admin.demo_seed_mod_education";
 
 // DSGVO: Felder die nie in Details auftauchen duerfen

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/shared/db";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { decryptText } from "@/modules/encryption/aes";
+import { loadQualificationLabels } from "@/modules/bot/scoring";
 
 export async function GET(
   _req: NextRequest,
@@ -20,34 +21,43 @@ export async function GET(
 
   const { id } = await params;
 
-  const conversation = await db.conversation.findFirst({
-    where: { id, tenantId: tenant.id },
-    include: {
-      messages: {
-        orderBy: { timestamp: "asc" },
-        select: {
-          id: true,
-          role: true,
-          contentEncrypted: true,
-          messageType: true,
-          timestamp: true,
+  // Tenant-Labels parallel laden (zweites Lightweight-Query, damit
+  // Dashboard die tenant-spezifischen Qualification-Labels anzeigen kann).
+  const [conversation, tenantRecord] = await Promise.all([
+    db.conversation.findFirst({
+      where: { id, tenantId: tenant.id },
+      include: {
+        messages: {
+          orderBy: { timestamp: "asc" },
+          select: {
+            id: true,
+            role: true,
+            contentEncrypted: true,
+            messageType: true,
+            timestamp: true,
+          },
+        },
+        lead: {
+          select: {
+            id: true,
+            score: true,
+            qualification: true,
+            status: true,
+            pipelineStatus: true,
+            dealValue: true,
+            source: true,
+            appointmentAt: true,
+            createdAt: true,
+            scoringSignals: true,
+          },
         },
       },
-      lead: {
-        select: {
-          id: true,
-          score: true,
-          qualification: true,
-          status: true,
-          pipelineStatus: true,
-          dealValue: true,
-          source: true,
-          appointmentAt: true,
-          createdAt: true,
-        },
-      },
-    },
-  });
+    }),
+    db.tenant.findUnique({
+      where: { id: tenant.id },
+      select: { qualificationLabels: true },
+    }),
+  ]);
 
   if (!conversation) {
     return NextResponse.json(
@@ -73,6 +83,18 @@ export async function GET(
     };
   });
 
+  // Signals aus Prisma-JSON sauber auf string[] herunterbrechen. Fremd-
+  // geschriebene Eintraege oder Legacy-null bleiben sicher behandelt.
+  const signalsRaw = conversation.lead?.scoringSignals;
+  const scoringSignals: string[] = Array.isArray(signalsRaw)
+    ? signalsRaw.filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+    : [];
+
+  // Tenant-Qualification-Labels aufloesen (Fallback auf Defaults via Loader).
+  const qualificationLabels = loadQualificationLabels({
+    qualificationLabels: tenantRecord?.qualificationLabels,
+  });
+
   return NextResponse.json({
     conversation: {
       id: conversation.id,
@@ -89,11 +111,19 @@ export async function GET(
       messages,
       lead: conversation.lead
         ? {
-            ...conversation.lead,
+            id: conversation.lead.id,
+            score: conversation.lead.score,
+            qualification: conversation.lead.qualification,
+            status: conversation.lead.status,
+            pipelineStatus: conversation.lead.pipelineStatus,
+            dealValue: conversation.lead.dealValue,
+            source: conversation.lead.source,
             appointmentAt: conversation.lead.appointmentAt?.toISOString() ?? null,
             createdAt: conversation.lead.createdAt.toISOString(),
+            scoringSignals,
           }
         : null,
     },
+    qualificationLabels,
   });
 }

@@ -15,6 +15,7 @@ import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 import { auditLog } from "@/modules/compliance/audit-log";
 import { generatePublicKey } from "@/lib/widget/publicKey";
 import { hasPlanFeature } from "@/lib/plan-limits";
+import { QualificationLabelsSchema } from "@/modules/bot/scoring";
 
 // Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
 const TENANT_PUBLIC_SELECT = {
@@ -72,6 +73,11 @@ const updateTenantSchema = z.object({
       leadType: z.enum(["B2C", "B2B"]).optional(),
     })
     .optional(),
+  // Scoring-Customization (ADR scoring-per-tenant).
+  // scoringPrompt: null = Default nutzen. String >= 50 Zeichen sonst.
+  // qualificationLabels: null = Default-Labels. Objekt-Struktur s. Schema.
+  scoringPrompt: z.string().min(50).max(30000).nullable().optional(),
+  qualificationLabels: QualificationLabelsSchema.nullable().optional(),
   isActive: z.boolean().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "Mindestens ein Feld muss angegeben werden",
@@ -146,11 +152,22 @@ export async function PATCH(
 
     const data = parseResult.data;
 
+    // qualificationLabels: Prisma unterscheidet zwischen JSON-`null` und DB-NULL.
+    // Der Client sendet null um "Default nutzen" zu signalisieren — das muss
+    // als Prisma.DbNull persistiert werden, damit die Spalte SQL-NULL bleibt.
+    const labelsUpdate: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue | undefined =
+      data.qualificationLabels === undefined
+        ? undefined
+        : data.qualificationLabels === null
+          ? Prisma.DbNull
+          : (data.qualificationLabels as Prisma.InputJsonValue);
+
     // Widget-Aktivierung: Plan pruefen + Public-Key generieren falls noch keiner da ist
     // webWidgetConfig: partiell mergen statt ueberschreiben
     const updateData: Prisma.TenantUpdateInput = {
       ...data,
       webWidgetConfig: undefined,
+      qualificationLabels: labelsUpdate,
     };
 
     // Vorab-Lese nur wenn noetig (Activation oder Config-Merge)
