@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-23
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Scoring-Refactor umgesetzt
-**Letzter Commit:** (ausstehend — Working-Tree, Freigabe-abhaengig)
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Scoring-Refactor deployed
+**Letzter Commit:** 0c86baa — feat(scoring): scoring per tenant + signals + mara temperature fix (ADR-002)
 
 ---
 
@@ -11,7 +11,14 @@
 **Timestamp:** 2026-04-23, spaeter Nachmittag
 **Scope:** ADR-002 (docs/decisions/adr-002-scoring-per-tenant.md).
 **Migration:** `20260423115051_scoring_per_tenant_and_signals` (deployed).
-**Commit:** steht aus — Working-Tree bereit, warte auf Freigabe.
+**Commit:** `0c86baa` — feat(scoring): scoring per tenant + signals +
+mara temperature fix (ADR-002). Gepusht auf `origin/master`.
+**Vercel-Deploy:** automatisch ausgeloest, Status `Building` zum Zeitpunkt
+des Status-Updates (Production-Environment, vercel ls zeigt 13s alt).
+**Fix vor Commit:** TD-Post-Demo-06 (Enum-Naming-Review) in
+docs/tech-debt.md ergaenzt. Audit-Log-Call
+`dashboard.scoring_updated` war bereits in der Settings-Route
+vorhanden (Zeile 104) — keine Nachlieferung noetig.
 
 ### Gefixte Risiken (aus Architektur-Scan 23.04. Vormittag)
 - **R-1 (HOCH) Scoring-Prompt-Mismatch:** gefixt. Scoring-Prompt ist jetzt
