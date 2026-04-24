@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/shared/db";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { decryptText } from "@/modules/encryption/aes";
+import { loadQualificationLabels } from "@/modules/bot/scoring";
+import type { LeadQualification } from "@/generated/prisma/enums";
 
 // GET /api/dashboard/stats — Tenant wird aus dem Cookie aufgelöst
 export async function GET() {
@@ -25,6 +27,7 @@ export async function GET() {
     pipelineRaw,
     messagesLast24h,
     appointmentsLast24h,
+    tenantLabelConfig,
   ] = await Promise.all([
     // Conversations heute
     db.conversation.count({
@@ -88,6 +91,14 @@ export async function GET() {
         appointmentAt: { not: null },
       },
     }),
+
+    // Tenant-Labels fuer Pipeline-Stufen (ADR-002 scoring-per-tenant).
+    // Nur das Labels-Feld — Tenant-Identitaet ist bereits durch
+    // getDashboardTenant() authentisiert; kein Cross-Tenant-Risiko.
+    db.tenant.findUnique({
+      where: { id: tenantId },
+      select: { qualificationLabels: true },
+    }),
   ]);
 
   // Konversionsrate berechnen
@@ -95,16 +106,17 @@ export async function GET() {
     ? Math.round((customerLeads / totalLeads) * 100)
     : 0;
 
-  // Pipeline-Verteilung aufbereiten
-  const qualificationLabels: Record<string, string> = {
-    UNQUALIFIED: "Neu",
-    MARKETING_QUALIFIED: "Kontaktiert",
-    SALES_QUALIFIED: "Termin",
-    OPPORTUNITY: "Konvertiert",
-    CUSTOMER: "Verloren",
-  };
-  // Reihenfolge der Pipeline-Stufen
-  const qualificationOrder = [
+  // Pipeline-Verteilung aufbereiten.
+  // Labels kommen primaer aus tenant.qualificationLabels (ADR-002
+  // scoring-per-tenant). Wenn Feld null oder unvollstaendig ist,
+  // faellt loadQualificationLabels() feldweise auf DEFAULT_QUALIFICATION_LABELS
+  // zurueck — kein Crash bei partieller Konfiguration.
+  const qualificationLabels = loadQualificationLabels({
+    qualificationLabels: tenantLabelConfig?.qualificationLabels,
+  });
+
+  // Reihenfolge der Pipeline-Stufen — Enum-Keys stabil (ADR-002: Enum bleibt)
+  const qualificationOrder: LeadQualification[] = [
     "UNQUALIFIED",
     "MARKETING_QUALIFIED",
     "SALES_QUALIFIED",
