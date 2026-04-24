@@ -93,12 +93,20 @@ export default function AdminDashboard() {
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Preview-Login-Magic-Link (TD-Pilot-08)
+  const [magicLinkLoadingId, setMagicLinkLoadingId] = useState<string | null>(null);
+  const [magicLinkResult, setMagicLinkResult] = useState<{
+    loginPath: string;
+    expiresAt: string;
+    tenantSlug: string;
+  } | null>(null);
 
-  // Escape schließt Edit-Modal / Delete-Dialog / Menü
+  // Escape schließt Modals in Prioritaets-Reihenfolge (neuestes zuerst)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        if (deleteTarget) setDeleteTarget(null);
+        if (magicLinkResult) setMagicLinkResult(null);
+        else if (deleteTarget) setDeleteTarget(null);
         else if (editingTenant) setEditingTenant(null);
         else if (selectedTenant) setSelectedTenant(null);
         else if (openMenuId) setOpenMenuId(null);
@@ -106,7 +114,7 @@ export default function AdminDashboard() {
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [editingTenant, selectedTenant, openMenuId, deleteTarget]);
+  }, [editingTenant, selectedTenant, openMenuId, deleteTarget, magicLinkResult]);
 
   // Click-Outside schliesst Dropdown
   useEffect(() => {
@@ -197,6 +205,33 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Preview-Login-Magic-Link generieren (TD-Pilot-08)
+  const generateMagicLink = useCallback(async (tenantId: string) => {
+    setOpenMenuId(null);
+    setMagicLinkLoadingId(tenantId);
+    try {
+      const res = await fetch(`/api/admin/tenants/${tenantId}/magic-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purpose: "preview-login" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unbekannter Fehler" }));
+        throw new Error(err.error ?? "Fehler beim Generieren");
+      }
+      const data = (await res.json()) as {
+        loginPath: string;
+        expiresAt: string;
+        tenantSlug: string;
+      };
+      setMagicLinkResult(data);
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Fehler beim Generieren");
+    } finally {
+      setMagicLinkLoadingId(null);
+    }
+  }, []);
 
   // Stats für einen Tenant finden
   function getTenantStats(tenantId: string): TenantStats | undefined {
@@ -503,6 +538,15 @@ export default function AdminDashboard() {
                                   Bearbeiten
                                 </button>
                                 <button
+                                  onClick={() => generateMagicLink(tenant.id)}
+                                  disabled={magicLinkLoadingId === tenant.id}
+                                  className="w-full px-4 py-2.5 text-left text-sm text-gray-300 transition-colors hover:bg-white/[0.04] hover:text-white disabled:opacity-50"
+                                >
+                                  {magicLinkLoadingId === tenant.id
+                                    ? "Generiere…"
+                                    : "Preview-Login-Link generieren"}
+                                </button>
+                                <button
                                   onClick={() => {
                                     setOpenMenuId(null);
                                     setDeleteTarget({ id: tenant.id, name: tenant.name });
@@ -636,6 +680,14 @@ export default function AdminDashboard() {
           saving={saving}
           onClose={() => setEditingTenant(null)}
           onSave={(updates) => saveTenant(editingTenant.id, updates)}
+        />
+      )}
+
+      {/* Modal: Preview-Login-Magic-Link (TD-Pilot-08) */}
+      {magicLinkResult && (
+        <MagicLinkModal
+          result={magicLinkResult}
+          onClose={() => setMagicLinkResult(null)}
         />
       )}
     </div>
@@ -1555,6 +1607,195 @@ function EditTenantModal({
             className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
           >
             {saving ? "Speichere…" : "Speichern"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Modal: Preview-Login-Magic-Link (TD-Pilot-08) ----------
+
+function MagicLinkModal({
+  result,
+  onClose,
+}: {
+  result: { loginPath: string; expiresAt: string; tenantSlug: string };
+  onClose: () => void;
+}) {
+  // Zieldomain initial = aktuelle Browser-Origin. Admin kann auf
+  // Vercel-Preview-Subdomain umschreiben (z.B.
+  // https://ai-conversion-git-xxx-ai-conversion.vercel.app).
+  const [domain, setDomain] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+
+  // Origin erst clientseitig setzen (SSR-safe — obwohl page.tsx
+  // "use client" ist, bleibt der Hook-Boundary sauber)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setDomain(window.location.origin);
+    }
+  }, []);
+
+  // Reaktiv gebauter Link. Trailing-Slash defensiv strippen, damit
+  // `domain + loginPath` keine doppelten Slashes erzeugt.
+  const normalizedDomain = domain.trim().replace(/\/+$/, "");
+  const fullLink = normalizedDomain + result.loginPath;
+
+  // Ablauf-Zeit fuer Subtitle-Anzeige (Browser-Locale)
+  const expiresAtDate = new Date(result.expiresAt);
+  const expiresAtLabel = expiresAtDate.toLocaleString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(fullLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* Clipboard-API in manchen Browsern gated — Admin kann manuell markieren */
+    }
+  }
+
+  function handleOpen() {
+    if (!normalizedDomain) return;
+    window.open(fullLink, "_blank", "noopener,noreferrer");
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl p-8"
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--gold-border)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/15">
+          <svg
+            className="h-6 w-6 text-purple-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 005.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+        </div>
+        <h3
+          className="mb-1 text-xl font-semibold text-white"
+          style={{ fontFamily: "var(--serif)" }}
+        >
+          Preview-Login-Link generiert
+        </h3>
+        <p className="mb-6 text-sm" style={{ color: "var(--text-muted)" }}>
+          <span className="font-mono">{result.tenantSlug}</span>
+          <span className="mx-2">·</span>
+          gueltig bis {expiresAtLabel}
+        </p>
+
+        {/* Zieldomain-Input */}
+        <div className="mb-4">
+          <label
+            className="mb-1 block text-xs"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Zieldomain
+          </label>
+          <input
+            type="text"
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            placeholder="https://ai-conversion.ai"
+            className="w-full rounded-lg px-4 py-2.5 font-mono text-sm text-white placeholder-gray-600 outline-none transition focus:border-[rgba(201,168,76,0.35)]"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--gold-border)",
+            }}
+          />
+          <p className="mt-1 text-[11px]" style={{ color: "var(--text-muted)" }}>
+            Leer lassen fuer aktuelle Domain. Fuer Preview-Deploy die
+            Vercel-Subdomain eintragen.
+          </p>
+        </div>
+
+        {/* Vollstaendiger Login-Link (readonly) */}
+        <div className="mb-4">
+          <label
+            className="mb-1 block text-xs"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Vollstaendiger Login-Link
+          </label>
+          <div
+            className="flex items-center gap-2 rounded-lg p-3 font-mono text-xs break-all"
+            style={{
+              background: "var(--bg)",
+              border: "1px solid var(--gold-border)",
+              color: "var(--gold)",
+            }}
+          >
+            <span className="flex-1 select-all">{fullLink}</span>
+          </div>
+        </div>
+
+        {/* Copy-Button */}
+        <button
+          onClick={handleCopy}
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition"
+          style={{
+            border: "1px solid var(--gold-border)",
+            color: copied ? "#8b5cf6" : "var(--gold)",
+            background: copied ? "rgba(139,92,246,0.08)" : "transparent",
+          }}
+        >
+          {copied ? (
+            <>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Kopiert!
+            </>
+          ) : (
+            <>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Link kopieren
+            </>
+          )}
+        </button>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="rounded-lg px-4 py-2 text-sm transition"
+            style={{
+              border: "1px solid var(--gold-border)",
+              color: "var(--gold)",
+            }}
+          >
+            Schliessen
+          </button>
+          <button
+            onClick={handleOpen}
+            disabled={!normalizedDomain}
+            className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
+          >
+            Link oeffnen
           </button>
         </div>
       </div>

@@ -7,7 +7,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { randomBytes } from "crypto";
+import { randomBytes, createHash } from "crypto";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/shared/db";
@@ -16,6 +16,7 @@ import { auditLog } from "@/modules/compliance/audit-log";
 import { generatePublicKey } from "@/lib/widget/publicKey";
 import { hasPlanFeature } from "@/lib/plan-limits";
 import { QualificationLabelsSchema } from "@/modules/bot/scoring";
+import { getClientIp } from "@/shared/rate-limit";
 
 // Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
 const TENANT_PUBLIC_SELECT = {
@@ -299,7 +300,7 @@ export async function DELETE(
 // ---------- POST: Dashboard-Token neu generieren ----------
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -317,7 +318,22 @@ export async function POST(
         dashboardToken: hashToken(rawToken),
         dashboardTokenExpiresAt: new Date(Date.now() + MAGIC_LINK_EXPIRY_MS),
       },
-      select: { id: true, name: true },
+      select: { id: true, name: true, slug: true },
+    });
+
+    // Audit-Log fuer 72h-Token-Regen (TD-Pilot-08 Bonus-Fix: Enum-Wert
+    // admin.token_regenerated war bereits deklariert, wurde aber nie
+    // befeuert — jetzt geschlossen).
+    const ip = getClientIp(request);
+    const ipHash = createHash("sha256").update(ip).digest("hex").slice(0, 16);
+    auditLog("admin.token_regenerated", {
+      tenantId: tenant.id,
+      ip: ipHash,
+      details: {
+        tenantSlug: tenant.slug,
+        expiresInSeconds: Math.round(MAGIC_LINK_EXPIRY_MS / 1000),
+        source: "admin-ui-or-script",
+      },
     });
 
     console.log("[Admin] Dashboard-Token regeneriert", { tenantId: tenant.id });
