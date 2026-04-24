@@ -1,8 +1,29 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-24
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2a gemerged, Prod-Verifikation ausstehend
-**Letzter Commit:** b385eb2 — Merge fix/label-drift: resolve qualification labels via tenant config (ADR-002)
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); TD-Pilot-08 Magic-Link-Generator gebaut, Preview-URL-Unlock bereit
+**Letzter Commit:** (wird nach Commit gefuellt)
+
+---
+
+## 24.04.2026 — TD-Pilot-08: Admin-Magic-Link-Generator
+
+Neuer Endpoint POST /api/admin/tenants/[id]/magic-link erzeugt
+1h-TTL Magic-Links fuer Preview-URL-Login im Admin-Dashboard.
+Loest Cookie-Domain-Scope-Problem zwischen ai-conversion.ai und
+Vercel-Preview-Subdomain.
+
+- Neue Datei: src/app/api/admin/tenants/[id]/magic-link/route.ts
+- UI-Erweiterung: src/app/admin/page.tsx (Dropdown-Eintrag
+  "Preview-Login-Link generieren" + MagicLinkModal mit
+  Zieldomain-Input, Copy-Button, Oeffnen-Button)
+- Bonus: AuditLog-Aufruf in bestehender
+  POST /api/admin/tenants/[id] nachgetragen (admin.token_regenerated
+  war im Enum deklariert, wurde aber nie befeuert — jetzt geschlossen)
+- Neue AuditAction: admin.magic_link_regenerated
+- Discovery: docs/discovery-td-pilot-08-admin-magic-link.md
+- Branch: feat/admin-magic-link-generator
+- Kein Schema-Change, rein additive Erweiterung
 
 ---
 

@@ -7,6 +7,7 @@
 type AuditAction =
   | "admin.login"
   | "admin.login_failed"
+  | "admin.magic_link_regenerated"
   | "admin.tenant_created"
   | "admin.tenant_updated"
   | "admin.tenant_deleted"
