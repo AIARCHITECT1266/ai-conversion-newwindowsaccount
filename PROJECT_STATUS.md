@@ -1,8 +1,31 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-23
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Scoring-Refactor deployed
-**Letzter Commit:** 0c86baa — feat(scoring): scoring per tenant + signals + mara temperature fix (ADR-002)
+**Letzte Aktualisierung:** 2026-04-24
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Dashboard-Redesign-Discovery abgeschlossen
+**Letzter Commit:** 889cafc — chore(db): apply scoring migration to prod + document migration workflow
+
+---
+
+## 24.04.2026 — Discovery fuer Dashboard-Redesign abgeschlossen
+
+Vorbereitung fuer den Komplett-Umbau der `/dashboard`-Uebersicht zum
+Stripe-stil Daily-Insights-Dashboard fuer den MOD-Demo-Call 29.04.
+Pure Inspektion, keine Code-Aenderungen.
+
+- Vollstaendiger Discovery-Report: `docs/discovery-dashboard-redesign.md`
+- 8 Sektionen: Tech-Stack, Design-System, Dashboard-Struktur,
+  Daten-Layer, Multi-Tenant-Kontext, Aggregations-Logik, Conventions,
+  Risiken + offene Fragen
+- Kernbefunde:
+  - Next.js 15, React 19, Tailwind v4 (CSS-first, kein tailwind.config)
+  - Keine shadcn/ui, keine Chart-Library installiert
+  - Inline-Design-Tokens werden in jeder Dashboard-Page redefiniert
+    (Drift-Risiko)
+  - Kein `/dashboard/layout.tsx` — Top-Nav liegt inline in `page.tsx`
+  - Koexistierende Datenlade-Patterns: Server Component + Prisma
+    (Conversations) vs. Client-Fetch + 30s-Poll (Uebersicht)
+  - Label-Drift zwischen `api/dashboard/stats` (hartcodiert, teils
+    falsch), Conversation-Detail (Defaults) und ADR-002 Tenant-Labels
 
 ---
 
