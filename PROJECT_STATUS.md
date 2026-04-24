@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-24
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); TD-Pilot-08 Magic-Link-Generator gebaut, Preview-URL-Unlock bereit
-**Letzter Commit:** (wird nach Commit gefuellt)
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); TD-Pilot-08 gemerged, Preview-URL-Unlock live
+**Letzter Commit:** 1f83583 — Merge feat/admin-magic-link-generator: preview-url magic-link generator for admin
 
 ---
 
@@ -24,6 +24,11 @@ Vercel-Preview-Subdomain.
 - Discovery: docs/discovery-td-pilot-08-admin-magic-link.md
 - Branch: feat/admin-magic-link-generator
 - Kein Schema-Change, rein additive Erweiterung
+
+**Status (Update 24.04. Abend):** Merged zu master,
+Production-Deploy getriggert. Branch
+feat/admin-magic-link-generator bleibt lokal+remote bis
+Produktions-Verifikation durch Philipp.
 
 ---
 
