@@ -1,8 +1,21 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-24
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Dashboard-Redesign-Discovery abgeschlossen
-**Letzter Commit:** 889cafc — chore(db): apply scoring migration to prod + document migration workflow
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2a Label-Drift-Fix auf Branch
+**Letzter Commit:** cbaa031 — docs(dashboard): add phase 1 discovery report for redesign
+
+---
+
+## 24.04.2026 — Phase 2a: Label-Drift-Fix (stats endpoint)
+
+Der Stats-Endpoint hardcoded Qualification-Labels mit
+CUSTOMER→"Verloren" (semantisch falsch) und ignorierte
+ADR-002 Tenant-Labels. Fix lädt jetzt tenant.qualificationLabels
+primär, Fallback auf DEFAULT_QUALIFICATION_LABELS.
+
+- Datei: src/app/api/dashboard/stats/route.ts
+- Branch: fix/label-drift
+- Kein API-Shape-Change, rein semantischer Wert-Fix
 
 ---
 
