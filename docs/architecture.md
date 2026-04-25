@@ -453,6 +453,51 @@ Folgenscheidungen:
 | — | `aiSummary`-Schema additiv erweitert: `topSignals[]` + `einschaetzung` (21.04.2026) | Kein DB-Schema-Change (Feld ist `@db.Text` JSON). Interface-Erweiterung in Dashboard `crm/page.tsx` als optionale Felder, backward-compatible mit bestehenden Leads ohne Re-Generation. Claude-Analyse-Prompt in `/api/dashboard/leads/[id]/summary` liefert die zwei neuen Felder fuer neue/regenerierte Analysen. Dashboard-UI rendert beide Sektionen konditional |
 | — | Marketing-Positionierung auf "Bildungstraeger" (22./23.04.2026) | Hero, Meta, OG, Twitter-Tags einheitlich auf "KI-Lead-Qualifizierung fuer Bildungstraeger". WhatsApp aus Marketing-Copy entfernt (Pricing-Labels → "KI-Bots (Web-Widget)"), nur noch als Roadmap-Chip "WhatsApp Cloud API (Q3 2026)" sichtbar (Meta-Verifizierung pending, TD-Marketing-03). Branchen-Sektion auskommentiert (Nischen-Positionierung, dedizierte `/steuerberater`-Landing-Page geplant, TD-Marketing-04). Nicht System- sondern Copy-Aenderung — hier gelistet weil sie die Positionierungs-Grundlage fuer alle Produktentscheidungen liefert |
 
+### Dashboard-Chrome-Zentralisierung (25.04.2026)
+
+**Entscheidung:** Top-Nav, Brand-Header und Bot-Status werden
+aus src/app/dashboard/page.tsx in ein gemeinsames
+src/app/dashboard/layout.tsx (Server Component) extrahiert.
+Design-Tokens fuer das Dashboard wandern aus Inline-`<style>`-
+Blocks in die globals.css (CSS-Custom-Properties unter `:root`).
+Sub-Pages werden von redundantem Chrome (eigene `<header>`-Tags,
+Back-Buttons in List-Pages, redundante min-h-screen-Wrapper)
+befreit.
+
+**Begruendung:** Vor dieser Aenderung existierten drei
+Inline-Token-Patterns ueber mehrere Sub-Pages mit Drift-
+Risiko (Discovery-Report R-1) und ein durch jede Sub-Page
+dupliziertes Header-Pattern (R-2). Konversationen war nur
+via Footer-Link erreichbar. Settings-Sub-Pages waren
+dreifach in min-h-screen-Wrappern verschachtelt.
+
+**Konsequenzen:**
+- Konversationen ist neuer Top-Nav-Tab zwischen Uebersicht
+  und CRM
+- Detail-Pages (`[id]`-Routes) behalten ihre eigene
+  `router.back()`-Mechanik, weil sie aus mehreren Quellen
+  erreichbar sind
+- PDF-Template-Style-Blocks in `crm/page.tsx` und
+  `campaigns/page.tsx` bleiben unangetastet (HTML-String-
+  Templates fuer Proposal-PDF-Export)
+- `getDashboardTenant()` ist jetzt mit `react.cache()` gewrappt,
+  um Doppel-Queries pro Request zu vermeiden (Layout + Sub-
+  Page koennen den Tenant unabhaengig abfragen)
+- Settings-Layout-Wrapper (`settings/layout.tsx`) bleibt — er
+  ist nicht redundant, sondern Settings-spezifisch
+
+**Tech-Debt:**
+- Sub-Page-Inline-Tokens werden in Phase 2b nicht migriert
+  (TD-Post-Demo-11) — Demo-Pfad ist nicht betroffen
+- AI-Studio-Dropdown ist temporaer aus dem Top-Nav entfernt
+  (TD-Post-Demo) — Web-Widget ist Hauptprodukt, AI-Studio
+  ist sekundaeres Feature
+
+**Reversibilitaet:** Two-Way-Door. Layout, cache-Wrap und
+Sub-Page-Cleanups sind als 11 atomare Commits implementiert.
+Bei einem Bruch ist `git revert` auf einzelne Commits oder
+den Merge-Commit moeglich.
+
 **Verweis:** Ausführliche Entscheidungen in `docs/decisions/`.
 Re-Evaluations-Prozess (ADR-Workflow) in
 `WEB_WIDGET_INTEGRATION.md` § "Änderungs-Protokoll".
@@ -533,7 +578,17 @@ an Nebentabellen, neuen Dashboard-Features, UI-Anpassungen.
 Solche Änderungen gehören in `PROJECT_STATUS.md` und ggf.
 `docs/decisions/`.
 
-**Letzte Aktualisierung:** 2026-04-23 — Sync fuer System-Aenderungen
+**Letzte Aktualisierung:** 2026-04-25 — Phase 2b Dashboard-
+Chrome-Zentralisierung komplettiert. Sektion 8 erweitert um
+"Dashboard-Chrome-Zentralisierung (25.04.2026)" — Layout-
+Extraktion, Token-Migration nach globals.css, Sub-Page-Cleanup
+(8 Pages), `react.cache()`-Wrap fuer `getDashboardTenant()`. 13
+atomare Commits auf `feat/dashboard-layout-refactor`. Sektion-
+11-Trigger "Signifikante Refactorings der grossen Komponenten"
+und "Architektur-Entscheidung mit systemweiter Auswirkung"
+erfuellt.
+
+**Davor:** 2026-04-23 — Sync fuer System-Aenderungen
 seit 19.04.: MOD-Demo-Infrastruktur (Admin-Endpoint + 5 Seed/Verify-
 Scripts + `aiSummary`-JSON-Erweiterung um `topSignals` + `einschaetzung`),
 `parseLeadType()` + `parseVisitorDisplayName()` Helper, Dashboard-
@@ -546,7 +601,7 @@ in Frontend-Routen, Admin-API-Schema-Erweiterung um
 ADR + Marketing-Positionierung auf "Bildungstraeger" in
 Entscheidungstabelle.
 
-**Davor:** 2026-04-13 — Sentry Error-Monitoring in Externe Services,
+**Davor davor:** 2026-04-13 — Sentry Error-Monitoring in Externe Services,
 Security-Tabelle, Technologie-Stack und Entscheidungstabelle ergaenzt.
 DB-Split dokumentiert
 (teal-battery/red-mirror, zwei Instanzen). Commit-Stand: `87d98ec`.

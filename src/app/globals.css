@@ -26,6 +26,26 @@
   --font-family-body: "Inter", system-ui, sans-serif;
 }
 
+/* Dashboard-Design-Tokens (Phase 2b Migration).
+   Bewusst unter :root und NICHT in @theme — die Tokens sollen
+   reine CSS-Custom-Properties bleiben, keine Tailwind-Utility-
+   Klassen erzeugen. Verwendung in JSX ueber `var(--name)` oder
+   `bg-[var(--name)]`-Arbitrary-Value-Schreibweise. Werte 1:1
+   identisch zur frueheren Inline-Definition in
+   src/app/dashboard/page.tsx. */
+:root {
+  --bg: #07070d;
+  --surface: #0e0e1a;
+  --gold: #c9a84c;
+  --gold-border: rgba(201, 168, 76, 0.1);
+  --gold-border-hover: rgba(201, 168, 76, 0.35);
+  --purple: #8b5cf6;
+  --text: #ede8df;
+  --text-muted: rgba(237, 232, 223, 0.45);
+  --serif: Georgia, serif;
+  --sans: var(--font-inter), system-ui, sans-serif;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--color-navy-950); }

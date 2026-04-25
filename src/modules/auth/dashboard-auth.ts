@@ -4,6 +4,7 @@
 // Bei Lookup: empfangener Token wird gehasht und verglichen.
 // ============================================================
 
+import { cache } from "react";
 import { createHash } from "crypto";
 import { cookies, headers } from "next/headers";
 import { db } from "@/shared/db";
@@ -24,44 +25,57 @@ export function hashToken(token: string): string {
  * Loest den Tenant anhand des dashboard_token Cookies auf.
  * Token wird vor DB-Lookup gehasht. Expiry wird geprueft.
  * Gibt null zurueck wenn kein gueltiger Token vorhanden.
+ *
+ * react.cache()-Wrap (Phase 2b.5.1): Layout und Sub-Pages koennen
+ * den Tenant unabhaengig voneinander abfragen. cache() dedupliziert
+ * diese Aufrufe per-Request, vermeidet redundante DB-Roundtrips.
+ * Cache-Scope ist strikt request-lokal — kein Cross-Request- oder
+ * Cross-Tenant-Leak moeglich.
  */
-export async function getDashboardTenant(): Promise<{
-  id: string;
-  name: string;
-  brandName: string;
-  paddlePlan: string | null;
-} | null> {
-  // Token aus Cookie oder Middleware-Header lesen
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const token =
-    cookieStore.get("dashboard_token")?.value ??
-    headerStore.get("x-dashboard-token") ??
-    null;
+export const getDashboardTenant = cache(
+  async (): Promise<{
+    id: string;
+    name: string;
+    brandName: string;
+    paddlePlan: string | null;
+  } | null> => {
+    // Token aus Cookie oder Middleware-Header lesen
+    const cookieStore = await cookies();
+    const headerStore = await headers();
+    const token =
+      cookieStore.get("dashboard_token")?.value ??
+      headerStore.get("x-dashboard-token") ??
+      null;
 
-  if (!token) return null;
+    if (!token) return null;
 
-  // Token hashen bevor DB-Lookup (DB speichert nur Hashes)
-  const tokenHash = hashToken(token);
+    // Token hashen bevor DB-Lookup (DB speichert nur Hashes)
+    const tokenHash = hashToken(token);
 
-  const tenant = await db.tenant.findUnique({
-    where: { dashboardToken: tokenHash },
-    select: {
-      id: true,
-      name: true,
-      brandName: true,
-      paddlePlan: true,
-      isActive: true,
-      dashboardTokenExpiresAt: true,
-    },
-  });
+    const tenant = await db.tenant.findUnique({
+      where: { dashboardToken: tokenHash },
+      select: {
+        id: true,
+        name: true,
+        brandName: true,
+        paddlePlan: true,
+        isActive: true,
+        dashboardTokenExpiresAt: true,
+      },
+    });
 
-  if (!tenant || !tenant.isActive) return null;
+    if (!tenant || !tenant.isActive) return null;
 
-  // Token-Ablauf pruefen
-  if (tenant.dashboardTokenExpiresAt && tenant.dashboardTokenExpiresAt < new Date()) {
-    return null;
+    // Token-Ablauf pruefen
+    if (tenant.dashboardTokenExpiresAt && tenant.dashboardTokenExpiresAt < new Date()) {
+      return null;
+    }
+
+    return {
+      id: tenant.id,
+      name: tenant.name,
+      brandName: tenant.brandName,
+      paddlePlan: tenant.paddlePlan,
+    };
   }
-
-  return { id: tenant.id, name: tenant.name, brandName: tenant.brandName, paddlePlan: tenant.paddlePlan };
-}
+);

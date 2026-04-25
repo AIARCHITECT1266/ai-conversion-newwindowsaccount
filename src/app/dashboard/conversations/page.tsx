@@ -29,7 +29,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowLeft,
   MessageSquare,
   ChevronLeft,
   ChevronRight,
@@ -226,16 +225,11 @@ export default async function ConversationsListPage({
   const to = Math.min(page * PAGE_SIZE, total);
 
   return (
-    <div className="min-h-screen bg-[#07070d] text-[#ede8df]">
+    <div>
       <div className="mx-auto max-w-5xl px-6 py-8">
-        {/* Zurueck-Link */}
-        <Link
-          href="/dashboard"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-white"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Dashboard
-        </Link>
+        {/* Phase 2b.4a.3: Back-Button "Dashboard" entfernt — Top-Nav
+            (Phase 2b.2) liefert Pfad zur Uebersicht. Page-Title und
+            Channel-Filter bleiben. */}
 
         {/* Ueberschrift */}
         <div className="mb-6">

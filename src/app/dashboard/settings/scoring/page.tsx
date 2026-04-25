@@ -15,8 +15,7 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Save, Loader2, Info, RotateCcw } from "lucide-react";
-import Link from "next/link";
+import { Save, Loader2, Info, RotateCcw } from "lucide-react";
 
 // ---------- Typen ----------
 
@@ -125,16 +124,10 @@ export default function ScoringSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07070d] text-[#ede8df]">
+    <div>
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <Link
-          href="/dashboard"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-white"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Dashboard
-        </Link>
-
+        {/* Phase 2b.4a.6: Redundanter min-h-screen-Wrapper und
+            Back-Button entfernt. */}
         <div className="mb-6">
           <h1 className="text-lg font-semibold">Scoring-Einstellungen</h1>
           <p className="mt-1 text-xs text-[#ede8df]/50">

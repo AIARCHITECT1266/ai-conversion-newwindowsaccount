@@ -63,26 +63,19 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="relative min-h-screen text-white" style={{ background: "#07070d", fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
-      <style>{`:root{--bg:#07070d;--surface:#0e0e1a;--gold:#c9a84c;--gold-border:rgba(201,168,76,0.1);--purple:#8b5cf6;--serif:Georgia,serif}`}</style>
-
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute -left-[10%] -top-[5%] h-[600px] w-[600px] rounded-full bg-[rgba(201,168,76,0.05)] blur-[160px]" />
-        <div className="absolute -right-[5%] top-[30%] h-[400px] w-[400px] rounded-full bg-[rgba(139,92,246,0.04)] blur-[140px]" />
-      </div>
-
-      <header className="relative z-10 backdrop-blur-md" style={{ borderBottom: "1px solid var(--gold-border)", background: "rgba(7,7,13,0.8)" }}>
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <a href="/dashboard" className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-xs text-slate-400 hover:border-[rgba(201,168,76,0.2)] hover:text-[#c9a84c] transition-colors">
-              <ArrowLeft className="h-3.5 w-3.5" /> Dashboard
-            </a>
-            <h1 className="flex items-center gap-2 text-lg font-semibold">
-              <UserCheck className="h-5 w-5 text-emerald-400" />
-              <span style={{ fontFamily: "Georgia, serif", color: "#c9a84c" }}>Clients</span>
-              <span className="text-sm font-normal text-slate-500">• {tenantName}</span>
-            </h1>
-          </div>
+    <div className="relative">
+      {/* Phase 2b.4a.1: Inline-Style-Token-Block, eigener <header>
+          mit Back-Button und min-h-screen-Wrapper entfernt — kommt
+          jetzt aus globals.css + /dashboard/layout.tsx. Page-Title
+          + Badges + Refresh-Button bleiben als Page-spezifischer
+          Heading-Block. */}
+      <div className="mx-auto max-w-5xl px-6 py-4">
+        <div className="flex items-center justify-between">
+          <h1 className="flex items-center gap-2 text-lg font-semibold">
+            <UserCheck className="h-5 w-5 text-emerald-400" />
+            <span style={{ fontFamily: "Georgia, serif", color: "#c9a84c" }}>Clients</span>
+            <span className="text-sm font-normal text-slate-500">• {tenantName}</span>
+          </h1>
           <div className="flex items-center gap-3">
             {totalValue > 0 && (
               <div className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.05)] px-3 py-1.5">
@@ -99,9 +92,9 @@ export default function ClientsPage() {
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="relative z-10 mx-auto max-w-5xl px-6 py-6">
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-[#c9a84c]" /></div>
         ) : clients.length === 0 ? (
@@ -154,7 +147,7 @@ export default function ClientsPage() {
             })}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
