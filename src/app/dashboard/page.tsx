@@ -5,10 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Bot,
   MessageSquare,
-  Users,
-  TrendingUp,
   Send,
-  Zap,
   Clock,
   CheckCircle2,
   XCircle,
@@ -27,6 +24,8 @@ import {
   Unlink,
   Megaphone,
 } from "lucide-react";
+import KpiCards from "./_components/KpiCards";
+import TrendChart from "./_components/TrendChart";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -114,19 +113,6 @@ const qualColors: Record<string, string> = {
   OPPORTUNITY: "text-emerald-400",
   CUSTOMER: "text-amber-400",
 };
-
-function ScoreBar({ score }: { score: number }) {
-  const color =
-    score >= 80 ? "bg-emerald-500" : score >= 50 ? "bg-[#c9a84c]" : "bg-red-500/70";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 rounded-full bg-white/[0.06]">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }} />
-      </div>
-      <span className="text-xs text-slate-400">{score}</span>
-    </div>
-  );
-}
 
 /* ───────────────────────────── HubSpot-Einstellungen ──────────────── */
 
@@ -380,36 +366,6 @@ export default function TenantDashboard() {
 
   const spring = { type: "spring" as const, stiffness: 80, damping: 20 };
 
-  // KPI-Daten aufbereiten
-  const kpis = stats
-    ? [
-        {
-          label: "Nachrichten heute",
-          value: stats.botActivity.messagesLast24h.toLocaleString("de-DE"),
-          icon: MessageSquare,
-          color: "purple",
-        },
-        {
-          label: "Aktive Gespräche",
-          value: stats.kpis.activeConversations.toString(),
-          icon: Users,
-          color: "emerald",
-        },
-        {
-          label: "Neue Leads",
-          value: stats.kpis.newLeadsToday.toString(),
-          icon: TrendingUp,
-          color: "blue",
-        },
-        {
-          label: "Konversionsrate",
-          value: `${stats.kpis.conversionRate}%`,
-          icon: Zap,
-          color: "amber",
-        },
-      ]
-    : [];
-
   // Defensive ?? []-Guards: die API garantiert Arrays (siehe
   // /api/dashboard/stats), aber ein zusaetzliches Sicherheitsnetz
   // gegen zukuenftige Shape-Regressionen schadet nicht.
@@ -450,34 +406,14 @@ export default function TenantDashboard() {
           </div>
         ) : stats ? (
           <>
-            {/* KPI-Karten */}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {kpis.map((kpi, i) => {
-                const Icon = kpi.icon;
-                const iconColors: Record<string, string> = {
-                  purple: "text-purple-400/70",
-                  emerald: "text-emerald-400/70",
-                  blue: "text-blue-400/70",
-                  amber: "text-[#c9a84c]/70",
-                };
-                return (
-                  <motion.div
-                    key={kpi.label}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...spring, delay: i * 0.06 }}
-                    className="group rounded-2xl p-6 transition-colors hover:border-[rgba(201,168,76,0.18)]"
-                    style={{ background: 'var(--surface)', border: '1px solid var(--gold-border)' }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <Icon className={`h-5 w-5 ${iconColors[kpi.color]}`} />
-                    </div>
-                    <p className="text-4xl font-bold tracking-tight" style={{ fontFamily: 'var(--serif)', color: 'var(--text)' }}>{kpi.value}</p>
-                    <p className="mt-2.5 text-xs tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>{kpi.label}</p>
-                    <p className="mt-2 text-[10px] text-slate-500">Noch keine Vergleichsdaten</p>
-                  </motion.div>
-                );
-              })}
+            {/* KPI-Karten + Trend-Chart (Phase 2c.2a/2c.2b/2c.2c).
+                Self-contained Components mit eigenem Fetch — kein
+                Polling. Live-Updates fuer KPIs als TD-Post-Demo,
+                falls Demo-Wert besteht. */}
+            <KpiCards />
+
+            <div className="mt-8">
+              <TrendChart />
             </div>
 
             {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}
