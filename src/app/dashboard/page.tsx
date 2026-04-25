@@ -29,6 +29,7 @@ import TrendChart from "./_components/TrendChart";
 import TopSignals from "./_components/TopSignals";
 import ActionBoard from "./_components/ActionBoard";
 import LivePulse from "./_components/LivePulse";
+import ConversationAnalyticsTeaser from "./_components/ConversationAnalyticsTeaser";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -601,6 +602,16 @@ export default function TenantDashboard() {
 
             {/* HubSpot-Integration */}
             <HubSpotSettings />
+
+            {/* Coming-Soon-Teaser (Phase 2c.4): Demo-Narrativ am Ende
+                des Dashboards — signalisiert dass weitere Insights-
+                Bereiche im Pilot zusammen mit dem Tenant entwickelt
+                werden. Position bewusst nach HubSpot-Settings, weil
+                HubSpot eine Setup-Sektion ist und der Teaser den
+                inhaltlichen Schluss bildet. */}
+            <div className="mt-5">
+              <ConversationAnalyticsTeaser />
+            </div>
           </>
         ) : null}
       </div>
