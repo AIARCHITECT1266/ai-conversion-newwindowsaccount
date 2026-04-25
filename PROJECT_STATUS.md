@@ -1,8 +1,76 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-25
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2c.3 (Top-Signals + Action-Board) abgeschlossen, naechster Schritt 2c.4 Polish + Live-Puls + Coming-Soon-Teaser
-**Letzter Commit:** e9f22ae (feat/dashboard-content-2c, ungemerged)
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2c komplett auf master deployed, naechster Schritt Phase 2d (Seed-Daten, Sonntag) und Production-Verifikation auf MOD-B2C
+**Letzter Commit:** 1d1a050 (docs/architecture, feat/dashboard-content-2c) — Phase 2c.4 abgeschlossen, Merge folgt
+
+---
+
+## Phase 2c.4 — Polish + Merge + Production (25.04.2026)
+
+Build-Prompt 4 auf feat/dashboard-content-2c. Letzte Polish-Items
+fuer die MOD-Demo am 29.04., dann Merge nach master und
+Production-Deploy. Schliesst Phase 2c als Ganzes ab.
+
+**Sub-Phase 4.0 — Audit (BLOCKING):**
+Schema-Check (kein Touch noetig — beide Items reine UI/Polish),
+Pattern-Inventur (Settings-Sidebar als Coming-Soon-Pattern-Vorlage
+identifiziert: gedimmt + cursor-not-allowed + title-Tooltip),
+Branch-State-Check (9 Commits ahead, nur Discovery-Doc untracked
+wie erwartet).
+
+**Sub-Phase 4.1 — Clients-Tab Coming Soon (d400ef5):**
+DashboardTopNav.tsx: `comingSoon: true` an Clients-Tab.
+Render-Branch fuer Coming-Soon-Tabs als `<span>` (statt Link)
+mit cursor-not-allowed, opacity-50, "BALD"-Badge,
+title="Bald verfuegbar". Konsistenz mit SettingsSidebar.tsx
+(COMING_SOON_ITEMS-Pattern). TD-Pre-Demo-1 erledigt.
+
+**Sub-Phase 4.2 — Live-Puls-Indikator (d4e1542):**
+Neue Component `_components/LivePulse.tsx`. Pulsierender
+emerald-Dot (`animate-pulse`) + "Live"-Text + Sekunden-Counter
+seit Mount. Mobile (<640px): Counter via `hidden sm:inline`
+ausgeblendet. Integration als Page-Header (h1 "Uebersicht" +
+LivePulse rechts) oberhalb der KpiCards-Section.
+Bewusste Demo-Vereinfachung — TD-Post-Demo-Live-Pulse-Real
+(echtes Polling) eingetragen.
+
+**Sub-Phase 4.3 — Coming-Soon-Teaser (7eaa1b4):**
+Neue Component `_components/ConversationAnalyticsTeaser.tsx`.
+Card mit gestrichelter Border, Hourglass-Icon, "Bald verfuegbar"-
+Header, Serif-Headline "Konversations-Analytics", zwei
+Demo-Fragen, Pilot-Hinweis. Position am Ende des Dashboards
+(nach HubSpotSettings) als inhaltlicher Schluss.
+
+**Sub-Phase 4.4 — Discovery-Doc finalisiert (9a791fc):**
+docs/discovery-phase-2c-content.md um Sektion 10 erweitert:
+Phase-2c-Komplett-Uebersicht, alle Sub-Phasen-Commits, alle
+vier API-Routes mit Beispiel-Responses, Component-Hierarchie,
+Tech-Debt-Befunde, Lessons Learned (Schema-Audit-Wert,
+Single-Source-of-Truth, Component-Isolation, Pattern-Reuse).
+
+**Sub-Phase 4.5 — architecture.md erweitert (1d1a050):**
+Sektion 8 ergaenzt um "Dashboard-Content Phase 2c (25.04.2026)":
+API-Routes-Liste, Components-Liste, Lead↔Client-Asymmetrie
+(verwaiste Clients in MOD-B2C-Prod, Konsequenz fuer Clients-
+Tab Coming-Soon) — erfuellt TD-Post-Demo-Clients-3. Sektion 11
+Footer mit Phase-2c-Eintrag oberhalb Phase-2b.
+
+**Bundle-Delta:** Wird nach Sub-Phase 4.7 (Final-Build) hier
+eingetragen.
+
+**Tech-Debt-Status (eingegangen in Phase 2c gesamt):**
+- TD-Post-Demo-19 (maskId-Duplikate-Migration)
+- TD-Post-Demo-Timezone (Date-Range-Audit)
+- TD-Post-Demo-Live-Pulse-Real (LivePulse mit echtem Polling)
+- TD-Post-Demo-Clients-2 (Clients-Tab UX-Patch)
+- TD-Post-Demo-Clients-3 (Lead↔Client-Datenmodell-Fix)
+
+**Tech-Debt-Status (abgebaut in Phase 2c gesamt):**
+- TD-Pre-Demo-1 (Clients-Tab Coming-Soon — erledigt in 4.1)
+
+**Production-Verifikation:** Erfolgt in Sub-Phase 4.8 nach
+Vercel-Deploy. Live-Stand wird im naechsten Commit eingetragen.
 
 ---
 
