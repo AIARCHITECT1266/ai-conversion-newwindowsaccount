@@ -508,6 +508,81 @@ Re-Evaluations-Prozess (ADR-Workflow) in
   Pilot-Blocker (inkl. TD-Compliance-07 EU-Vertreter, TD-Compliance-09
   Telefonnummer) erledigt + manueller MOD-Test mit AG.
 
+### Dashboard-Content Phase 2c (25.04.2026)
+
+**Entscheidung:** Vier neue tenant-isolierte Dashboard-API-Routes
+und sechs neue Components (KpiCards, TrendChart, TopSignals,
+ActionBoard, LivePulse, ConversationAnalyticsTeaser). Aufgeteilt
+in vier Sub-Phasen mit getrenntem Risiko-Footprint.
+
+**API-Routes (alle GET, alle Composite-Key tenant-isoliert):**
+
+| Route | Zweck | Phase |
+|---|---|---|
+| `/api/dashboard/trends?range=7\|14` | Tagesweise Aggregation: messages, conversations, leads, appointments | 2c.1 |
+| `/api/dashboard/signals?limit=10` | Aggregierte `Lead.scoringSignals` mit Counter + Coverage-Anteil | 2c.1 |
+| `/api/dashboard/labels` | Tenant-spezifische `qualificationLabels` (ADR-002) mit Default-Fallback | 2c.1 |
+| `/api/dashboard/action-board` | Drei Buckets in einer Promise.all-Query: waitingForFollowUp, recentlyContacted, appointmentsToday | 2c.3 |
+
+**Components (`src/app/dashboard/_components/`):**
+
+| Component | Datenquelle | Phase |
+|---|---|---|
+| `KpiCards.tsx` | `/trends` + `/labels` | 2c.2a |
+| `TrendChart.tsx` | `/trends` | 2c.2b |
+| `TopSignals.tsx` | `/signals` | 2c.3 |
+| `ActionBoard.tsx` | `/action-board` + `/labels` | 2c.3 |
+| `LivePulse.tsx` | — (visuell) | 2c.4 |
+| `ConversationAnalyticsTeaser.tsx` | — (Coming-Soon) | 2c.4 |
+
+**Lead↔Client-Asymmetrie:**
+
+`Client` ist 1:1 mit `Lead` via `Client.leadId` verknuepft, aber
+historische Daten zeigen verwaiste Clients in MOD-B2C-Prod
+(Master-Handoff TEIL 4) ohne korrespondierende Lead-Eintraege.
+Konsequenz fuer Phase 2c.4: Clients-Tab ist Pre-Demo deaktiviert
+(Coming-Soon-Pattern aus SettingsSidebar.tsx). Lead-zentrierte
+Sichten (TopSignals, ActionBoard) umgehen das Problem komplett,
+weil sie ueber `db.lead` aggregieren. TD-Post-Demo-Clients-2 fuer
+UX-Patch + TD-Post-Demo-Clients-3 fuer Datenmodell-Fix erfasst.
+
+**Konsequenzen:**
+- Identifier-Resolution-Helper `resolveLeadDisplayIdentifier()`
+  in `src/lib/widget/publicKey.ts` zentralisiert die Display-
+  Logik. Drei lokale `maskId()`-Duplikate (dashboard/page.tsx,
+  crm/page.tsx, conversations/[id]/page.tsx) bleiben unangetastet
+  (Scope-Disziplin) — Migration als TD-Post-Demo-19
+- KpiCards/TrendChart/TopSignals/ActionBoard sind self-contained
+  (eigener Fetch, eigene Loading-/Error-/Empty-States) — kein
+  gemeinsamer State-Container, keine Cross-Component-Dependencies
+- `recharts ^3.x` ist neue Dependency (~95 KB gzipped, einmal pro
+  Page-Bundle). Bundle-Delta /dashboard: 120/333 → 122/335 kB
+  (Page-Code/First-Load-JS) inkl. Lucide-Icons fuer beide
+  Phase-2c.3-Components
+- `/api/dashboard/action-board` nutzt Berlin-Tag DST-aware
+  via `Intl.DateTimeFormat longOffset` fuer Termin-Filter
+
+**Tech-Debt (eingegangen):**
+- TD-Post-Demo-19: maskId-Duplikate-Migration auf
+  `resolveLeadDisplayIdentifier()`
+- TD-Post-Demo-Timezone: Audit aller Date-Range-Queries auf
+  Timezone-Konsistenz
+- TD-Post-Demo-Live-Pulse-Real: LivePulse mit echtem Polling-
+  Status verbinden, sobald Auto-Refresh implementiert ist
+- TD-Post-Demo-Clients-2: Clients-Tab UX-Patch (Coming-Soon
+  bleibt bis Datenmodell-Fix fertig)
+- TD-Post-Demo-Clients-3: Lead↔Client-Datenmodell-Fix
+  (verwaiste Clients in MOD-B2C-Prod)
+
+**Reversibilitaet:** Two-Way-Door. Alle Phase-2c-Aenderungen
+sind auf einem dedizierten Branch (`feat/dashboard-content-2c`,
+13 Commits) implementiert. Bei Production-Bruch ist
+`git revert -m 1 <merge-commit>` moeglich, ohne andere
+Phase-2b-Aenderungen anzufassen.
+
+**Verweis:** Vollstaendige Phase-Inventur in
+`docs/discovery-phase-2c-content.md` (Sektion 10).
+
 ---
 
 ## 9. Technologie-Stack
@@ -578,7 +653,20 @@ an Nebentabellen, neuen Dashboard-Features, UI-Anpassungen.
 Solche Änderungen gehören in `PROJECT_STATUS.md` und ggf.
 `docs/decisions/`.
 
-**Letzte Aktualisierung:** 2026-04-25 — Phase 2b Dashboard-
+**Letzte Aktualisierung:** 2026-04-25 — Phase 2c Dashboard-
+Content komplettiert. Sektion 8 erweitert um "Dashboard-Content
+Phase 2c (25.04.2026)" — vier neue API-Routes (`/trends`,
+`/signals`, `/labels`, `/action-board`), sechs neue Components
+(KpiCards, TrendChart, TopSignals, ActionBoard, LivePulse,
+ConversationAnalyticsTeaser), Lead↔Client-Asymmetrie als
+Datenmodell-Befund dokumentiert (verwaiste Clients in MOD-B2C-
+Prod, Konsequenz: Clients-Tab Pre-Demo Coming-Soon). Bundle-
+Delta /dashboard: 120/333 → 122/335 kB. Aufgeteilt in vier
+Sub-Phasen 2c.1 (APIs), 2c.2 (KpiCards+TrendChart),
+2c.3 (TopSignals+ActionBoard), 2c.4 (Polish+Merge) auf
+`feat/dashboard-content-2c`.
+
+**Davor:** 2026-04-25 — Phase 2b Dashboard-
 Chrome-Zentralisierung komplettiert. Sektion 8 erweitert um
 "Dashboard-Chrome-Zentralisierung (25.04.2026)" — Layout-
 Extraktion, Token-Migration nach globals.css, Sub-Page-Cleanup
