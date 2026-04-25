@@ -1,8 +1,47 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-24
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); TD-Pilot-08 gemerged, Preview-URL-Unlock live
-**Letzter Commit:** 1f83583 — Merge feat/admin-magic-link-generator: preview-url magic-link generator for admin
+**Letzte Aktualisierung:** 2026-04-25
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2b komplettiert, bereit fuer Phase 2c
+**Letzter Commit:** (wird nach Merge gefuellt)
+
+---
+
+## Phase 2b — Dashboard Layout-Refactor (25.04.2026)
+
+Komplettiert in einer Session (10:00-12:30) ueber 11 Commits
+auf feat/dashboard-layout-refactor.
+
+**Sub-Phasen:**
+- 2b.1: Design-Tokens nach globals.css (additiv, dfc5a40)
+- 2b.2: /dashboard/layout.tsx + DashboardTopNav-
+  Subcomponent (3ca6cb1)
+- 2b.3: page.tsx Inline-Header entfernt (45795b7)
+- 2b.4-Hotfix: TopNav-Encoding-Fix nach Anzeige-Artefakt-
+  Diagnose (2abd7e4)
+- 2b.4a.1-6: Sub-Page-Cleanups (clients, broadcasts,
+  conversations, campaigns, crm, settings/prompt+scoring+
+  widget) (737e286, b18c5c6, 8c8db0f, 714e8af, 2b2339c,
+  7c0662e)
+- 2b.5.1: react.cache()-Wrap fuer getDashboardTenant() (a34cf09)
+- 2b.5.2: architecture.md-Update (1d7f4bf)
+- 2b.5.3: PROJECT_STATUS.md-Update
+
+**Verifikation:** alle 11 Routes auf Localhost durchgeklickt
+(internal-admin-Tenant), Top-Nav rendert auf allen Routes,
+Active-State korrekt (inkl. Praefix-Match auf Detail-Pages),
+Settings-Sidebar funktioniert, kein doppelter Header mehr,
+Detail-Pages-Back-Mechanik (router.back()) bleibt erhalten.
+
+**Tech-Debt-Stand:**
+- Abgebaut: Discovery-R-1 (Token-Drift), R-2 (Header-
+  Duplikation)
+- Aufgenommen: TD-Post-Demo-11 (Sub-Page-Inline-Token-
+  Migration), TD-Post-Demo-12 (Sub-Page-Chrome-Konsistenz),
+  TD-Post-Demo-16 (Tab-Label-Umlaute), TD-Post-Demo-17
+  (SSL-Mode-Update bei Prisma 9), TD-Post-Demo-18 (Web-
+  Widget Plan-Gating umkehren)
+
+**Bereit fuer Phase 2c-Start.**
 
 ---
 
