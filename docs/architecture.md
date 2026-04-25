@@ -4,8 +4,8 @@
 > grob?". Lebendes Dokument — wird bei jeder System-Änderung
 > aktualisiert (siehe CLAUDE.md Regel 1).
 >
-> **Letzte Aktualisierung:** 2026-04-23 (Datenschutz-Kanzlei-Stand, MOD-Demo-Infrastruktur, visitorDisplayName, leadType)
-> **Stand des Codes:** Commit 5174acd (Datenschutzerklärung komplett auf IT-Recht-Kanzlei-Stand)
+> **Letzte Aktualisierung:** 2026-04-25 (Phase 2c.3: Top-Signals + Action-Board auf Dashboard-Uebersicht; neue API `/api/dashboard/action-board`; Display-Identifier-Resolution zentralisiert in `lib/widget/publicKey.ts`)
+> **Stand des Codes:** Commit 5174acd (Datenschutzerklärung komplett auf IT-Recht-Kanzlei-Stand) + feat/dashboard-content-2c
 
 ---
 
@@ -57,7 +57,7 @@ Gruppiert nach Zweck:
 | Gruppe | Routen | Auth |
 |---|---|---|
 | **Admin** | `/api/admin/*` — login, tenants (erweitertes Zod-Schema akzeptiert `botName`, `botSubtitle`, `avatarInitials`, `leadType` in `webWidgetConfig`), stats, plan-prompts, `demo-seed/mod-education` (POST seedet 8 fiktive B2C-Demo-Leads für MOD-Pilot, GET listet aktuellen Stand) | Session-Cookie nach `ADMIN_SECRET` |
-| **Dashboard** | `/api/dashboard/*` — me, stats, conversations, leads, campaigns, broadcasts, clients, crm, export, settings, widget-config (GET/PATCH), widget-config/generate-key (POST), widget-config/toggle (POST) | Magic-Link-Token (`dashboard_token` Cookie) |
+| **Dashboard** | `/api/dashboard/*` — me, stats, conversations, leads, campaigns, broadcasts, clients, crm, export, settings, widget-config (GET/PATCH), widget-config/generate-key (POST), widget-config/toggle (POST), `trends`, `signals`, `labels`, `action-board` (alle Phase 2c) | Magic-Link-Token (`dashboard_token` Cookie) |
 | **Widget** | `/api/widget/*` — config, session, message, poll | `webWidgetPublicKey` + Session-Token |
 | **Webhooks** | `/api/webhook/whatsapp`, `/api/paddle/webhook` | HMAC-Signatur |
 | **Cron** | `/api/cron/cleanup`, `/api/cron/followup` | `CRON_SECRET` Header |

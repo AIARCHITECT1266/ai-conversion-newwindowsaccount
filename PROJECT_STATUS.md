@@ -1,8 +1,64 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-25
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2b komplettiert, bereit fuer Phase 2c
-**Letzter Commit:** (wird nach Merge gefuellt)
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2c.3 (Top-Signals + Action-Board) abgeschlossen, naechster Schritt 2c.4 Polish + Live-Puls + Coming-Soon-Teaser
+**Letzter Commit:** (wird nach Commit gefuellt)
+
+---
+
+## Phase 2c.3 — Top-Signals + Action-Board (25.04.2026)
+
+Build-Prompt 3 auf feat/dashboard-content-2c. Schema-Audit blockierend, dann Build in 5 Sub-Phasen.
+
+**Sub-Phase 3.0 — Schema-Audit (BLOCKING):**
+Lead-Modell auditiert. Befund: `displayName` ist kein Lead-Feld, lebt in
+`Conversation.widgetVisitorMeta` (Json). LeadStatus-Enum vollstaendig.
+User-Entscheidung: Option A — Display-Identifier abgeleitet via Conversation-Join,
+kein Schema-Touch. Praezisierung: Single Source of Truth in
+`src/lib/widget/publicKey.ts`, API-Field `displayIdentifier` (nicht `displayName`),
+ActionBoard-Fallback "Unbenannter Lead".
+
+**Sub-Phase 3.1 — API /api/dashboard/action-board:**
+Drei tenant-isolierte Buckets in einer Promise.all-Query:
+- `waitingForFollowUp`: status NEW/CONTACTED, kein Termin, followUpCount<3,
+  lastFollowUpAt null oder >24h alt; sort by score desc, createdAt desc
+- `recentlyContacted`: status CONTACTED, lastFollowUpAt in letzten 24h;
+  sort by lastFollowUpAt desc
+- `appointmentsToday`: appointmentAt im Berlin-Tag (DST-aware via
+  Intl.DateTimeFormat longOffset); sort by appointmentAt asc
+Limit 25 pro Bucket. Response inkludiert displayIdentifier, topSignal
+(erstes valides scoringSignal), Counts.
+
+**Sub-Phase 3.2 — TopSignals.tsx:**
+Self-contained Client-Component, fetcht /api/dashboard/signals?limit=10.
+Premium-Liste mit Count-Badges, Bar-Width proportional zu max-count.
+Loading-Skeleton, Empty-State, Coverage-Anzeige (X von Y Leads, Z%).
+
+**Sub-Phase 3.3 — ActionBoard.tsx:**
+3-Spalten-Board (mobile-first stacked, lg+ nebeneinander). Lead-Karten
+mit displayIdentifier, Score-Badge (4-stufige Tone-Skala), Pipeline+
+Qualification-Pills, Top-Signal als Italic-Zitat. Channel-Marker (WA-Badge
+oder Globe-Icon). "Als kontaktiert markieren"-Button disabled mit
+"Im Pilot verfuegbar"-Tooltip — Demo-Storytelling fuer Live-Mutation
+Post-Demo. Per-Tenant qualificationLabels via /api/dashboard/labels mit
+Enum-Key-Fallback.
+
+**Sub-Phase 3.4 — Integration:**
+TopSignals und ActionBoard zwischen TrendChart und bestehender
+Conversations+Lead-Pipeline-Sektion eingesetzt. Vertikale Komposition,
+kein Layout-Bruch der bestehenden Sektionen.
+
+**Sub-Phase 3.5 — Build:**
+Bundle: /dashboard 122 kB Page-Code, 335 kB First Load JS
+(vorher 120/333; +2 kB fuer beide neuen Components inkl. Lucide-Icons).
+TypeScript-Check sauber, Next-Build kompiliert ohne Errors. /api/dashboard/
+action-board als Dynamic Route registriert.
+
+**Helper-Erweiterung (Single Source of Truth):**
+`src/lib/widget/publicKey.ts` um `maskExternalId()` und
+`resolveLeadDisplayIdentifier()` erweitert. Lokale `maskId()`-Duplikate
+in dashboard/page.tsx, crm/page.tsx und conversations/[id]/page.tsx
+bleiben unangetastet (Scope-Disziplin) — Migration als TD-Post-Demo-19.
 
 ---
 

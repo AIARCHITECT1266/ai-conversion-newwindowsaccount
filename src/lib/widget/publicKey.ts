@@ -169,8 +169,8 @@ export function parseConfig(raw: unknown): ResolvedTenantConfig {
 // name/firstName-Felder im Schema. Bei Widget-Embed-Integrationen kann
 // das einbettende System einen displayName beim Session-Start mitgeben,
 // z.B. aus bereits bekannten Kunden-Daten (Logged-In-User) oder als
-// Demo-Seed-Marker. Dashboard-UI faellt auf maskId(externalId) zurueck
-// wenn kein displayName vorhanden — siehe crm/page.tsx, conversations/page.tsx.
+// Demo-Seed-Marker. Dashboard-UI faellt auf maskExternalId() zurueck
+// wenn kein displayName vorhanden.
 export function parseVisitorDisplayName(raw: unknown): string | null {
   if (!raw || typeof raw !== "object") return null;
   const value = (raw as Record<string, unknown>).displayName;
@@ -180,6 +180,38 @@ export function parseVisitorDisplayName(raw: unknown): string | null {
   // UI-Ueberflutung (lange Strings koennten Kanban-Karten sprengen).
   if (trimmed.length < 1 || trimmed.length > 120) return null;
   return trimmed;
+}
+
+// Maskiert eine externalId fuer DSGVO-konforme Dashboard-Anzeige.
+// Format: "abc •••• xy" (3 Zeichen Prefix, 2 Zeichen Suffix). Bei zu
+// kurzen oder fehlenden IDs nur Platzhalter. Seit Phase 3a.5 ist
+// Conversation.externalId nullable (Web-Channel hat keine WhatsApp-ID).
+//
+// Single Source of Truth fuer Dashboard-Maskierung. Lokale Duplikate
+// in dashboard/page.tsx, crm/page.tsx und conversations/[id]/page.tsx
+// existieren historisch und werden Post-Demo zentralisiert.
+export function maskExternalId(externalId: string | null): string {
+  if (!externalId || externalId.length <= 6) return "•••••";
+  return externalId.slice(0, 3) + " •••• " + externalId.slice(-2);
+}
+
+// Liefert einen anzeigbaren Identifier fuer einen Lead in Dashboard-UI.
+// Reihenfolge:
+//   1. widgetVisitorMeta.displayName (wenn parseVisitorDisplayName-konform)
+//   2. maskExternalId(externalId) (WhatsApp-Channel)
+//   3. "•••••" (Web ohne Meta)
+// Garantiert non-empty String — Caller braucht keinen Fallback.
+//
+// Genutzt vom Action-Board (Phase 2c.3) und kuenftigen Dashboard-
+// Widgets, die Lead-Identifiers anzeigen, ohne ein separates
+// displayName-Feld auf Lead zu erfordern (siehe ADR/Phase 2c.3-Audit).
+export function resolveLeadDisplayIdentifier(args: {
+  widgetVisitorMeta: unknown;
+  externalId: string | null;
+}): string {
+  const fromMeta = parseVisitorDisplayName(args.widgetVisitorMeta);
+  if (fromMeta) return fromMeta;
+  return maskExternalId(args.externalId);
 }
 
 // ---------- leadType (Tenant-Klassifikation, Dashboard-only) ----------

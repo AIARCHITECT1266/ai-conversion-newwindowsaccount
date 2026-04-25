@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import KpiCards from "./_components/KpiCards";
 import TrendChart from "./_components/TrendChart";
+import TopSignals from "./_components/TopSignals";
+import ActionBoard from "./_components/ActionBoard";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -414,6 +416,22 @@ export default function TenantDashboard() {
 
             <div className="mt-8">
               <TrendChart />
+            </div>
+
+            {/* Top-Signale (Phase 2c.3): aggregierte scoringSignals
+                ueber alle Tenant-Leads. Self-contained, fetcht
+                /api/dashboard/signals. */}
+            <div className="mt-8">
+              <TopSignals />
+            </div>
+
+            {/* Action-Board (Phase 2c.3): drei Spalten mit den
+                wichtigsten anstehenden Lead-Aktionen. Mobile-First
+                stacked, ab lg drei Spalten. "Als kontaktiert
+                markieren"-Action ist im Pilot deaktiviert
+                (Inline-Mutation kommt Post-Demo). */}
+            <div className="mt-8">
+              <ActionBoard />
             </div>
 
             {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}

@@ -2377,3 +2377,38 @@ und INSERT in `_prisma_migrations` nachgerueckt.
 Erste Woche nach Demo-Call (03.05.-10.05.2026). Vor naechster Migration
 zwingend. Gefahr sonst: jede kuenftige Schema-Aenderung hat denselben
 Fallout.
+
+### TD-Post-Demo-19: Lokale `maskId()`-Duplikate zentralisieren
+
+**Status:** Open, Post-Demo, NIEDRIGE Prioritaet.
+
+**Problem:**
+In drei Dashboard-Pages existieren wortgleiche `maskId()`-Helper:
+- `src/app/dashboard/page.tsx:80-83`
+- `src/app/dashboard/crm/page.tsx:203-206`
+- `src/app/dashboard/conversations/[id]/page.tsx:102`
+
+Phase 2c.3 hat im Zuge der ActionBoard-Integration die kanonische
+Funktion `maskExternalId()` plus eine Convenience-Wrapper
+`resolveLeadDisplayIdentifier()` in `src/lib/widget/publicKey.ts`
+etabliert (Single Source of Truth). Die drei lokalen Duplikate
+wurden bewusst nicht angetastet — Scope-Disziplin: ActionBoard-
+Build sollte nicht zusaetzlich drei Dashboard-Pages anfassen, weil
+jede dieser Pages eigene Lead/Conversation-Shape-Annahmen hat und
+ein Refactor-Audit eigene Verifikation braucht.
+
+**Risiko bis zum Fix:**
+Drift. Wenn das DSGVO-Maskierungs-Format (3 Zeichen Prefix, 2
+Zeichen Suffix) sich aendert (z.B. weil Datenschutz-Gutachten
+strenger wird), muessen vier Stellen synchron angepasst werden.
+
+**Gewuenschte Loesung:**
+1. Lokale `maskId`-Funktionen aus den drei Dashboard-Pages entfernen.
+2. Import auf `maskExternalId` aus `@/lib/widget/publicKey` umstellen.
+3. Optionale weitere Stellen identifizieren, die direkt
+   `conversation.externalId` rendern und auf `resolveLeadDisplayIdentifier`
+   umstellen koennten (DRY-Bonus, nicht zwingend).
+
+**Wann fixen:** Erste Refactor-Welle nach Demo-Call. Zusammen mit
+TD-Post-Demo-11 (Sub-Page-Inline-Token-Migration) bietet sich an —
+beide Refactors touchen dieselben Sub-Pages.
