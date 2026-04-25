@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Save, Loader2, Info } from "lucide-react";
-import Link from "next/link";
+import { Save, Loader2, Info } from "lucide-react";
 
 export default function PromptSettingsPage() {
   const [prompt, setPrompt] = useState("");
@@ -56,16 +55,11 @@ export default function PromptSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07070d] text-[#ede8df]">
+    <div>
       <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Zurueck-Link */}
-        <Link
-          href="/dashboard"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-white"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Dashboard
-        </Link>
+        {/* Phase 2b.4a.6: Redundanter min-h-screen-Wrapper und
+            Back-Button entfernt — Settings-Layout liefert Wrapper,
+            Top-Nav (Phase 2b.2) den Pfad zur Uebersicht. */}
 
         {/* Ueberschrift + Plan-Badge */}
         <div className="mb-6">
