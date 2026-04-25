@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-25
 **Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2c.3 (Top-Signals + Action-Board) abgeschlossen, naechster Schritt 2c.4 Polish + Live-Puls + Coming-Soon-Teaser
-**Letzter Commit:** (wird nach Commit gefuellt)
+**Letzter Commit:** e9f22ae (feat/dashboard-content-2c, ungemerged)
 
 ---
 
