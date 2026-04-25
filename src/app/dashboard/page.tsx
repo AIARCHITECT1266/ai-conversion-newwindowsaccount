@@ -292,22 +292,6 @@ export default function TenantDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [aiStudioOpen, setAiStudioOpen] = useState(false);
-  const aiStudioRef = useRef<HTMLDivElement>(null);
-
-  // Klick ausserhalb schliesst AI Studio Dropdown
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (aiStudioRef.current && !aiStudioRef.current.contains(e.target as Node)) {
-        setAiStudioOpen(false);
-      }
-    }
-    if (aiStudioOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [aiStudioOpen]);
-
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -443,126 +427,15 @@ export default function TenantDashboard() {
   }
 
   return (
-    <div
-      className="relative min-h-screen text-white"
-      style={{ background: 'var(--bg)', fontFamily: 'var(--sans)' }}
-    >
-      {/* Design-Token CSS-Variablen (Fonts via next/font im Layout) */}
-      <style>{`
-        :root {
-          --bg: #07070d;
-          --surface: #0e0e1a;
-          --gold: #c9a84c;
-          --gold-border: rgba(201,168,76,0.1);
-          --gold-border-hover: rgba(201,168,76,0.35);
-          --purple: #8b5cf6;
-          --text: #ede8df;
-          --text-muted: rgba(237,232,223,0.45);
-          --serif: Georgia, serif;
-          --sans: var(--font-inter), system-ui, sans-serif;
-        }
-      `}</style>
+    <div className="relative">
+      {/* Phase 2b.3: Inline-Header, Top-Nav und Token-Block sind jetzt
+          im gemeinsamen Layout (src/app/dashboard/layout.tsx) bzw.
+          globals.css. Diese Page rendert nur noch Dashboard-Inhalt. */}
 
-      {/* Hintergrund-Glows */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute -left-[10%] -top-[5%] h-[600px] w-[600px] rounded-full bg-[rgba(201,168,76,0.05)] blur-[160px]" />
-      </div>
-
-      {/* ═══ Header ═══ */}
-      <header className="relative z-10" style={{ borderBottom: '1px solid var(--gold-border)', background: 'rgba(7,7,13,0.85)', backdropFilter: 'blur(12px)' }}>
-        <div className="mx-auto max-w-7xl px-6">
-          {/* Obere Zeile: Brand + Status + Aktionen */}
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
-              <h1 className="flex items-baseline gap-2">
-                <span style={{ fontFamily: 'var(--serif)', color: 'var(--gold)', fontSize: '1.2rem', fontWeight: 700 }}>AI Conversion.</span>
-                <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>{tenantName ?? "Dashboard"}</span>
-              </h1>
-              {/* Bot-Status — subtiler Indikator */}
-              <div className="flex items-center gap-1.5 pl-4 border-l border-white/[0.06]">
-                <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                <span className="text-[11px] text-emerald-400/70">Bot aktiv</span>
-                <a href="/dashboard/bot-test" className="text-[10px] text-[#ede8df]/40 hover:text-[#c9a84c] transition-colors underline underline-offset-2">Verkaufsgespräch testen</a>
-                <a href="/dashboard/settings/prompt" className="text-[10px] text-[#ede8df]/40 hover:text-[#c9a84c] transition-colors underline underline-offset-2">Prompt anpassen</a>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={fetchStats} title="Aktualisieren"
-                className="rounded-lg p-2 text-slate-600 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
-                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              </button>
-              <button onClick={() => setChatOpen(!chatOpen)} title="Plattform-Hilfe"
-                className="rounded-lg p-2 text-slate-600 hover:text-purple-400 hover:bg-purple-500/5 transition-colors">
-                <HelpCircle className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex items-center gap-1 -mb-px">
-            {[
-              { href: "/dashboard", label: "Uebersicht", icon: Activity, active: true },
-              { href: "/dashboard/crm", label: "CRM", icon: Kanban },
-              { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone },
-              { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send },
-              { href: "/dashboard/clients", label: "Clients", icon: Users },
-              // Phase 6.5: Settings-Einstieg. active-State bleibt false,
-              // weil dieser Tab-Bar-Code nur im Kontext von
-              // dashboard/page.tsx (/dashboard) rendert — auf den
-              // Settings-Seiten selbst gibt es die eigene Sidebar-
-              // Navigation. Ein dynamischer Active-Check via
-              // usePathname() waere hier immer false, deshalb
-              // statisch weggelassen.
-              { href: "/dashboard/settings", label: "Einstellungen", icon: Settings },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <a key={item.href} href={item.href}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 ${
-                    item.active
-                      ? "border-[#c9a84c] text-[#c9a84c]"
-                      : "border-transparent text-slate-500 hover:text-[#ede8df]/80 hover:border-white/10"
-                  }`}>
-                  <Icon className="h-3.5 w-3.5" />
-                  {item.label}
-                </a>
-              );
-            })}
-
-            {/* AI Studio Dropdown */}
-            <div ref={aiStudioRef} className="relative">
-              <button
-                onClick={() => setAiStudioOpen(!aiStudioOpen)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 ${
-                  aiStudioOpen
-                    ? "border-[#c9a84c]/50 text-[#c9a84c]"
-                    : "border-transparent text-slate-500 hover:text-[#ede8df]/80 hover:border-white/10"
-                }`}
-              >
-                <Zap className="h-3.5 w-3.5" />
-                AI Studio
-                <ChevronDown className={`h-3 w-3 transition-transform ${aiStudioOpen ? "rotate-180" : ""}`} />
-              </button>
-
-              {aiStudioOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 rounded-xl border border-white/[0.06] bg-[#0e0e1a] shadow-xl z-[100] overflow-visible">
-                  <a href="/dashboard/assets/generator"
-                    className="flex items-center gap-2 px-4 py-3 text-sm text-[#ede8df]/70 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
-                    <Zap className="h-4 w-4" /> Asset Generator
-                  </a>
-                  <a href="/dashboard/assets/ai-modul"
-                    className="flex items-center gap-2 px-4 py-3 text-sm text-[#ede8df]/70 hover:text-[#c9a84c] hover:bg-white/[0.03] transition-colors">
-                    <MessageSquare className="h-4 w-4" /> AI Modul
-                  </a>
-                </div>
-              )}
-            </div>
-          </nav>
-        </div>
-      </header>
-
-      {/* Dashboard-Inhalt */}
-      <main className="relative z-10 mx-auto max-w-7xl px-6 py-8">
+      {/* Dashboard-Inhalt — Wrapper-`<div>` statt `<main>`, weil das
+          umgebende /dashboard/layout.tsx bereits ein `<main>` setzt
+          und nested `<main>` semantisch nicht zulaessig ist. */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-8">
         {/* Fehlermeldung */}
         {error && (
           <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
@@ -762,7 +635,7 @@ export default function TenantDashboard() {
             <HubSpotSettings />
           </>
         ) : null}
-      </main>
+      </div>
 
       {/* ──────────── Plattform-Bot Chat-Widget ──────────── */}
       <AnimatePresence>
