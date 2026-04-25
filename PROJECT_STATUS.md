@@ -56,8 +56,13 @@ API-Routes-Liste, Components-Liste, Lead↔Client-Asymmetrie
 Tab Coming-Soon) — erfuellt TD-Post-Demo-Clients-3. Sektion 11
 Footer mit Phase-2c-Eintrag oberhalb Phase-2b.
 
-**Bundle-Delta:** Wird nach Sub-Phase 4.7 (Final-Build) hier
-eingetragen.
+**Bundle-Delta /dashboard (Final-Build 25.04.):**
+- Phase 2c.3: 122 kB Page-Code, 335 kB First Load JS
+- Phase 2c.4: 123 kB Page-Code, 335 kB First Load JS
+- Delta 2c.3 → 2c.4: +1 kB Page-Code (LivePulse +
+  ConversationAnalyticsTeaser, Lucide-Icons bereits im Bundle)
+- Delta Phase-2b → Phase-2c: +114 kB Page-Code
+  (recharts ~95 kB + Lucide-Icons + neue Components)
 
 **Tech-Debt-Status (eingegangen in Phase 2c gesamt):**
 - TD-Post-Demo-19 (maskId-Duplikate-Migration)
