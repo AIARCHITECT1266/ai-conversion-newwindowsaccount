@@ -7,10 +7,10 @@
 // (src/app/dashboard/layout.tsx). Active-State via usePathname.
 // "exact: true" fuer /dashboard, sonst Praefix-Match damit
 // Detail-Pages den entsprechenden Tab aktiv halten
-// (z.B. /dashboard/clients/[id] → Tab "Clients").
+// (z.B. /dashboard/clients/[id] -> Tab "Clients").
 //
 // Konversationen ist neu (Phase 2b.2) und ersetzt den frueheren
-// "Alle anzeigen →"-Footer-Link auf der Top-5-Conversations-
+// "Alle anzeigen"-Footer-Link auf der Top-5-Conversations-
 // Card als primaeren Einstiegspunkt.
 // ============================================================
 
@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 
 const TABS = [
-  { href: "/dashboard", label: "Übersicht", icon: Activity, exact: true },
+  { href: "/dashboard", label: "Uebersicht", icon: Activity, exact: true },
   { href: "/dashboard/conversations", label: "Konversationen", icon: MessageSquare, exact: false },
   { href: "/dashboard/crm", label: "CRM", icon: Kanban, exact: false },
   { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone, exact: false },
