@@ -1080,34 +1080,20 @@ function CampaignsPage() {
   }
 
   return (
-    <div className="relative min-h-screen text-white" style={{ background: "#07070d", fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
-      <style>{`
-        :root {
-          --bg: #07070d; --surface: #0e0e1a; --gold: #c9a84c;
-          --gold-border: rgba(201,168,76,0.1); --gold-border-hover: rgba(201,168,76,0.35);
-          --purple: #8b5cf6; --text: #ede8df; --text-muted: rgba(237,232,223,0.45); --serif: Georgia, serif;
-        }
-      `}</style>
-
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute -left-[10%] -top-[5%] h-[600px] w-[600px] rounded-full bg-[rgba(201,168,76,0.05)] blur-[160px]" />
-        <div className="absolute -right-[5%] top-[30%] h-[400px] w-[400px] rounded-full bg-[rgba(139,92,246,0.04)] blur-[140px]" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 backdrop-blur-md" style={{ borderBottom: "1px solid var(--gold-border)", background: "rgba(7,7,13,0.8)" }}>
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <a href="/dashboard" className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-xs text-slate-400 hover:border-[rgba(201,168,76,0.2)] hover:text-[#c9a84c] transition-colors">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Dashboard
-            </a>
-            <h1 className="flex items-center gap-2 text-lg font-semibold">
-              <Megaphone className="h-5 w-5 text-[#c9a84c]" />
-              <span style={{ fontFamily: "Georgia, serif", color: "#c9a84c" }}>Kampagnen</span>
-              <span className="text-sm font-normal text-slate-500">• {tenantName}</span>
-            </h1>
-          </div>
+    <div className="relative">
+      {/* Phase 2b.4a.4: App-Style-Block, eigener <header> mit
+          Back-Button und min-h-screen-Wrapper entfernt — kommt
+          jetzt aus globals.css + /dashboard/layout.tsx. Page-Title +
+          Action-Buttons (Vorlagen, Neue Kampagne, Refresh) bleiben.
+          Der PDF-Template-Style-Block weiter oben (Z. ~874) bleibt
+          unveraendert — das ist Print-CSS fuer den QR-Code-Export. */}
+      <div className="mx-auto max-w-5xl px-6 py-4">
+        <div className="flex items-center justify-between">
+          <h1 className="flex items-center gap-2 text-lg font-semibold">
+            <Megaphone className="h-5 w-5 text-[#c9a84c]" />
+            <span style={{ fontFamily: "Georgia, serif", color: "#c9a84c" }}>Kampagnen</span>
+            <span className="text-sm font-normal text-slate-500">• {tenantName}</span>
+          </h1>
           <div className="flex items-center gap-3">
             <a href="/dashboard/campaigns/templates"
               className="flex items-center gap-1.5 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition-colors">
@@ -1129,9 +1115,9 @@ function CampaignsPage() {
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="relative z-10 mx-auto max-w-5xl px-6 py-6">
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-6">
         {/* Template-Lade-Hinweise */}
         {templateLoading && (
           <div className="mb-4 flex items-center gap-2 rounded-lg border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.05)] px-4 py-3 text-sm text-[#c9a84c]">
@@ -1247,7 +1233,7 @@ function CampaignsPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Modals */}
       <AnimatePresence>
