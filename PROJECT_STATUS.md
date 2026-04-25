@@ -1,8 +1,137 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-25
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2b komplettiert, bereit fuer Phase 2c
-**Letzter Commit:** (wird nach Merge gefuellt)
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2c komplett auf master deployed, naechster Schritt Phase 2d (Seed-Daten, Sonntag) und Production-Verifikation auf MOD-B2C
+**Letzter Commit:** 1d1a050 (docs/architecture, feat/dashboard-content-2c) — Phase 2c.4 abgeschlossen, Merge folgt
+
+---
+
+## Phase 2c.4 — Polish + Merge + Production (25.04.2026)
+
+Build-Prompt 4 auf feat/dashboard-content-2c. Letzte Polish-Items
+fuer die MOD-Demo am 29.04., dann Merge nach master und
+Production-Deploy. Schliesst Phase 2c als Ganzes ab.
+
+**Sub-Phase 4.0 — Audit (BLOCKING):**
+Schema-Check (kein Touch noetig — beide Items reine UI/Polish),
+Pattern-Inventur (Settings-Sidebar als Coming-Soon-Pattern-Vorlage
+identifiziert: gedimmt + cursor-not-allowed + title-Tooltip),
+Branch-State-Check (9 Commits ahead, nur Discovery-Doc untracked
+wie erwartet).
+
+**Sub-Phase 4.1 — Clients-Tab Coming Soon (d400ef5):**
+DashboardTopNav.tsx: `comingSoon: true` an Clients-Tab.
+Render-Branch fuer Coming-Soon-Tabs als `<span>` (statt Link)
+mit cursor-not-allowed, opacity-50, "BALD"-Badge,
+title="Bald verfuegbar". Konsistenz mit SettingsSidebar.tsx
+(COMING_SOON_ITEMS-Pattern). TD-Pre-Demo-1 erledigt.
+
+**Sub-Phase 4.2 — Live-Puls-Indikator (d4e1542):**
+Neue Component `_components/LivePulse.tsx`. Pulsierender
+emerald-Dot (`animate-pulse`) + "Live"-Text + Sekunden-Counter
+seit Mount. Mobile (<640px): Counter via `hidden sm:inline`
+ausgeblendet. Integration als Page-Header (h1 "Uebersicht" +
+LivePulse rechts) oberhalb der KpiCards-Section.
+Bewusste Demo-Vereinfachung — TD-Post-Demo-Live-Pulse-Real
+(echtes Polling) eingetragen.
+
+**Sub-Phase 4.3 — Coming-Soon-Teaser (7eaa1b4):**
+Neue Component `_components/ConversationAnalyticsTeaser.tsx`.
+Card mit gestrichelter Border, Hourglass-Icon, "Bald verfuegbar"-
+Header, Serif-Headline "Konversations-Analytics", zwei
+Demo-Fragen, Pilot-Hinweis. Position am Ende des Dashboards
+(nach HubSpotSettings) als inhaltlicher Schluss.
+
+**Sub-Phase 4.4 — Discovery-Doc finalisiert (9a791fc):**
+docs/discovery-phase-2c-content.md um Sektion 10 erweitert:
+Phase-2c-Komplett-Uebersicht, alle Sub-Phasen-Commits, alle
+vier API-Routes mit Beispiel-Responses, Component-Hierarchie,
+Tech-Debt-Befunde, Lessons Learned (Schema-Audit-Wert,
+Single-Source-of-Truth, Component-Isolation, Pattern-Reuse).
+
+**Sub-Phase 4.5 — architecture.md erweitert (1d1a050):**
+Sektion 8 ergaenzt um "Dashboard-Content Phase 2c (25.04.2026)":
+API-Routes-Liste, Components-Liste, Lead↔Client-Asymmetrie
+(verwaiste Clients in MOD-B2C-Prod, Konsequenz fuer Clients-
+Tab Coming-Soon) — erfuellt TD-Post-Demo-Clients-3. Sektion 11
+Footer mit Phase-2c-Eintrag oberhalb Phase-2b.
+
+**Bundle-Delta /dashboard (Final-Build 25.04.):**
+- Phase 2c.3: 122 kB Page-Code, 335 kB First Load JS
+- Phase 2c.4: 123 kB Page-Code, 335 kB First Load JS
+- Delta 2c.3 → 2c.4: +1 kB Page-Code (LivePulse +
+  ConversationAnalyticsTeaser, Lucide-Icons bereits im Bundle)
+- Delta Phase-2b → Phase-2c: +114 kB Page-Code
+  (recharts ~95 kB + Lucide-Icons + neue Components)
+
+**Tech-Debt-Status (eingegangen in Phase 2c gesamt):**
+- TD-Post-Demo-19 (maskId-Duplikate-Migration)
+- TD-Post-Demo-Timezone (Date-Range-Audit)
+- TD-Post-Demo-Live-Pulse-Real (LivePulse mit echtem Polling)
+- TD-Post-Demo-Clients-2 (Clients-Tab UX-Patch)
+- TD-Post-Demo-Clients-3 (Lead↔Client-Datenmodell-Fix)
+
+**Tech-Debt-Status (abgebaut in Phase 2c gesamt):**
+- TD-Pre-Demo-1 (Clients-Tab Coming-Soon — erledigt in 4.1)
+
+**Production-Verifikation:** Erfolgt in Sub-Phase 4.8 nach
+Vercel-Deploy. Live-Stand wird im naechsten Commit eingetragen.
+
+---
+
+## Phase 2c.3 — Top-Signals + Action-Board (25.04.2026)
+
+Build-Prompt 3 auf feat/dashboard-content-2c. Schema-Audit blockierend, dann Build in 5 Sub-Phasen.
+
+**Sub-Phase 3.0 — Schema-Audit (BLOCKING):**
+Lead-Modell auditiert. Befund: `displayName` ist kein Lead-Feld, lebt in
+`Conversation.widgetVisitorMeta` (Json). LeadStatus-Enum vollstaendig.
+User-Entscheidung: Option A — Display-Identifier abgeleitet via Conversation-Join,
+kein Schema-Touch. Praezisierung: Single Source of Truth in
+`src/lib/widget/publicKey.ts`, API-Field `displayIdentifier` (nicht `displayName`),
+ActionBoard-Fallback "Unbenannter Lead".
+
+**Sub-Phase 3.1 — API /api/dashboard/action-board:**
+Drei tenant-isolierte Buckets in einer Promise.all-Query:
+- `waitingForFollowUp`: status NEW/CONTACTED, kein Termin, followUpCount<3,
+  lastFollowUpAt null oder >24h alt; sort by score desc, createdAt desc
+- `recentlyContacted`: status CONTACTED, lastFollowUpAt in letzten 24h;
+  sort by lastFollowUpAt desc
+- `appointmentsToday`: appointmentAt im Berlin-Tag (DST-aware via
+  Intl.DateTimeFormat longOffset); sort by appointmentAt asc
+Limit 25 pro Bucket. Response inkludiert displayIdentifier, topSignal
+(erstes valides scoringSignal), Counts.
+
+**Sub-Phase 3.2 — TopSignals.tsx:**
+Self-contained Client-Component, fetcht /api/dashboard/signals?limit=10.
+Premium-Liste mit Count-Badges, Bar-Width proportional zu max-count.
+Loading-Skeleton, Empty-State, Coverage-Anzeige (X von Y Leads, Z%).
+
+**Sub-Phase 3.3 — ActionBoard.tsx:**
+3-Spalten-Board (mobile-first stacked, lg+ nebeneinander). Lead-Karten
+mit displayIdentifier, Score-Badge (4-stufige Tone-Skala), Pipeline+
+Qualification-Pills, Top-Signal als Italic-Zitat. Channel-Marker (WA-Badge
+oder Globe-Icon). "Als kontaktiert markieren"-Button disabled mit
+"Im Pilot verfuegbar"-Tooltip — Demo-Storytelling fuer Live-Mutation
+Post-Demo. Per-Tenant qualificationLabels via /api/dashboard/labels mit
+Enum-Key-Fallback.
+
+**Sub-Phase 3.4 — Integration:**
+TopSignals und ActionBoard zwischen TrendChart und bestehender
+Conversations+Lead-Pipeline-Sektion eingesetzt. Vertikale Komposition,
+kein Layout-Bruch der bestehenden Sektionen.
+
+**Sub-Phase 3.5 — Build:**
+Bundle: /dashboard 122 kB Page-Code, 335 kB First Load JS
+(vorher 120/333; +2 kB fuer beide neuen Components inkl. Lucide-Icons).
+TypeScript-Check sauber, Next-Build kompiliert ohne Errors. /api/dashboard/
+action-board als Dynamic Route registriert.
+
+**Helper-Erweiterung (Single Source of Truth):**
+`src/lib/widget/publicKey.ts` um `maskExternalId()` und
+`resolveLeadDisplayIdentifier()` erweitert. Lokale `maskId()`-Duplikate
+in dashboard/page.tsx, crm/page.tsx und conversations/[id]/page.tsx
+bleiben unangetastet (Scope-Disziplin) — Migration als TD-Post-Demo-19.
 
 ---
 

@@ -2377,3 +2377,167 @@ und INSERT in `_prisma_migrations` nachgerueckt.
 Erste Woche nach Demo-Call (03.05.-10.05.2026). Vor naechster Migration
 zwingend. Gefahr sonst: jede kuenftige Schema-Aenderung hat denselben
 Fallout.
+
+### TD-Post-Demo-19: Lokale `maskId()`-Duplikate zentralisieren
+
+**Status:** Open, Post-Demo, NIEDRIGE Prioritaet.
+
+**Problem:**
+In drei Dashboard-Pages existieren wortgleiche `maskId()`-Helper:
+- `src/app/dashboard/page.tsx:80-83`
+- `src/app/dashboard/crm/page.tsx:203-206`
+- `src/app/dashboard/conversations/[id]/page.tsx:102`
+
+Phase 2c.3 hat im Zuge der ActionBoard-Integration die kanonische
+Funktion `maskExternalId()` plus eine Convenience-Wrapper
+`resolveLeadDisplayIdentifier()` in `src/lib/widget/publicKey.ts`
+etabliert (Single Source of Truth). Die drei lokalen Duplikate
+wurden bewusst nicht angetastet — Scope-Disziplin: ActionBoard-
+Build sollte nicht zusaetzlich drei Dashboard-Pages anfassen, weil
+jede dieser Pages eigene Lead/Conversation-Shape-Annahmen hat und
+ein Refactor-Audit eigene Verifikation braucht.
+
+**Risiko bis zum Fix:**
+Drift. Wenn das DSGVO-Maskierungs-Format (3 Zeichen Prefix, 2
+Zeichen Suffix) sich aendert (z.B. weil Datenschutz-Gutachten
+strenger wird), muessen vier Stellen synchron angepasst werden.
+
+**Gewuenschte Loesung:**
+1. Lokale `maskId`-Funktionen aus den drei Dashboard-Pages entfernen.
+2. Import auf `maskExternalId` aus `@/lib/widget/publicKey` umstellen.
+3. Optionale weitere Stellen identifizieren, die direkt
+   `conversation.externalId` rendern und auf `resolveLeadDisplayIdentifier`
+   umstellen koennten (DRY-Bonus, nicht zwingend).
+
+**Wann fixen:** Erste Refactor-Welle nach Demo-Call. Zusammen mit
+TD-Post-Demo-11 (Sub-Page-Inline-Token-Migration) bietet sich an —
+beide Refactors touchen dieselben Sub-Pages.
+
+### TD-Pre-Demo-1: Clients-Tab als Coming-Soon markieren
+
+**Status:** ERLEDIGT in Phase 2c.4 (Commit `d400ef5`, 25.04.2026).
+
+**Problem (historisch):**
+Lead↔Client-Datenmodell-Inkonsistenz — verwaiste Clients in
+MOD-B2C-Prod (Master-Handoff TEIL 4) ohne korrespondierende
+Lead-Eintraege. Clients-Tab-Anzeige waere Pre-Demo unsauber.
+
+**Loesung:**
+Tab via `comingSoon: true` in `DashboardTopNav.tsx` als gedimmtes
+`<span>` (nicht klickbar, cursor-not-allowed, "BALD"-Badge,
+title="Bald verfuegbar"). Pattern-Konsistenz mit
+`SettingsSidebar.tsx` COMING_SOON_ITEMS. Existierende
+`src/app/dashboard/clients/page.tsx` bleibt im Code, ist nur
+nicht erreichbar.
+
+**Folge-Tickets:**
+- TD-Post-Demo-Clients-2 (UX-Patch fuer Clients-Tab-Wieder-Aktivierung)
+- TD-Post-Demo-Clients-3 (Lead↔Client-Datenmodell-Fix)
+
+### TD-Post-Demo-Clients-2: Clients-Tab UX-Patch nach Datenmodell-Fix
+
+**Status:** Open, Post-Demo, MITTLERE Prioritaet.
+
+**Problem:**
+Clients-Tab ist Pre-Demo deaktiviert (TD-Pre-Demo-1). Nach
+Datenmodell-Fix (TD-Post-Demo-Clients-3) muss der Tab wieder
+freigeschaltet werden, idealerweise mit verbesserten UX-Pfaden:
+- Lead-Detail-View → "Aus Lead Client erstellen"-Button mit
+  Pflichtfeld-Pruefung
+- Clients-Liste → defensive Empty-States falls weiterhin
+  verwaiste Clients existieren
+- Verlinkung Client ↔ Lead in beiden Richtungen explizit machen
+
+**Wann fixen:** Nach TD-Post-Demo-Clients-3, vor erstem
+echten Pilot-Tenant der Clients aktiv nutzt.
+
+### TD-Post-Demo-Clients-3: Lead↔Client-Datenmodell-Fix
+
+**Status:** Open, Post-Demo, MITTLERE Prioritaet.
+
+**Problem:**
+`Client.leadId` ist 1:1-FK auf `Lead`, aber MOD-B2C-Prod hat
+Clients ohne korrespondierende Leads (verwaiste Clients,
+Master-Handoff TEIL 4). Konsequenz: Aufruf von
+`/dashboard/clients` zeigt aktuell entweder Fehler oder leere
+Cards, weil das Page-Rendering ueber `Client + Client.lead`
+laeuft.
+
+**Mogliche Loesungswege:**
+1. **Daten-Migration:** Verwaiste Clients identifizieren und
+   entweder zu existierenden Leads zuordnen oder mit Lead-
+   Stub-Eintraegen versehen.
+2. **Schema-Lockerung:** `Client.leadId` nullable machen,
+   Page-Render auf optional umstellen. Risiko: laenger-frist
+   semantische Unsauberkeit.
+3. **Cleanup-Migration:** Verwaiste Clients ohne Lead-Match
+   loeschen (DSGVO-Cleanup-konform mit Audit-Log).
+
+**Empfehlung:** Option 1 (Migration mit Lead-Zuordnung), weil
+das die Architektur-Annahme "Client kommt aus Lead" konsistent
+haelt. Option 3 ist Backup wenn Daten unwiederbringlich falsch.
+
+**Wann fixen:** Vor TD-Post-Demo-Clients-2 (UX-Patch baut darauf
+auf). Idealerweise erste Tech-Debt-Sprint Post-Demo-Call.
+
+### TD-Post-Demo-Timezone: Date-Range-Audit auf Timezone-Konsistenz
+
+**Status:** Open, Post-Demo, NIEDRIGE bis MITTLERE Prioritaet.
+
+**Problem:**
+Date-Range-Berechnungen im Repo nutzen heterogene Strategien:
+- `/api/dashboard/stats`: `todayStart` via UTC (`new Date()` +
+  `setHours(0,0,0,0)` — local-server-time-basiert)
+- `/api/dashboard/action-board`: `appointmentsToday` via
+  `Intl.DateTimeFormat longOffset` mit `Europe/Berlin` (DST-aware)
+- `/api/dashboard/trends`: tagesweise Aggregation via DATE() in
+  raw-SQL (DB-server-Zeitzone-abhaengig)
+
+**Risiko:**
+Bei DST-Wechseln (letzter Sonntag im Maerz / Oktober) koennen
+KPI-Karten und Trend-Chart fuer denselben Tag verschiedene
+Zeitfenster anzeigen. Bei Cross-Timezone-Tenants (zukuenftige
+internationale Pilot-Kunden) potentiell verwirrend.
+
+**Gewuenschte Loesung:**
+- Single Source of Truth fuer Tag-Bounds: ein Helper
+  `getDayBoundsForTenant(tenantTimezone)` der alle Routes nutzen
+- Tenant-Tabelle um optionalen `timezone`-Feld erweitern
+  (Default: `Europe/Berlin`)
+- DB-Queries gegen den Helper auditieren, alle UTC-basierten
+  Tag-Bounds umstellen
+
+**Wann fixen:** Vor erstem internationalen Pilot-Kunden
+oder bei naechstem DST-Wechsel-bedingtem Bug-Report.
+
+### TD-Post-Demo-Live-Pulse-Real: LivePulse mit echtem Polling-Status verbinden
+
+**Status:** Open, Post-Demo, NIEDRIGE Prioritaet.
+
+**Problem:**
+`src/app/dashboard/_components/LivePulse.tsx` (Phase 2c.4) zeigt
+nur die Sekunden seit Component-Mount, nicht echte Polling-
+Aktivitaet. Der pulsierende Dot suggeriert dem Nutzer "Daten
+werden gerade aktualisiert", obwohl KpiCards/TrendChart/
+TopSignals/ActionBoard nach dem initialen Fetch keine weiteren
+Requests senden (nur der alte `/api/dashboard/stats`-Endpoint
+in `dashboard/page.tsx` pollt alle 30s).
+
+**Risiko:**
+Demo-funktional OK, aber semantisch irrefuehrend. Wenn ein User
+das Dashboard 10 Minuten offen laesst, zeigt LivePulse "600s"
+und wirkt aktiv — die KPI-Daten sind aber 10 Minuten alt.
+
+**Gewuenschte Loesung:**
+1. Auto-Refresh-Lifecycle in KpiCards/TrendChart/TopSignals/
+   ActionBoard implementieren (z.B. 60s-Intervall, visibility-
+   guarded analog zu `/stats`).
+2. Refresh-Counter in einen geteilten Context (z.B.
+   `DashboardLiveContext`) auslagern, an dem LivePulse hangelt.
+3. LivePulse-Anzeige umstellen auf "Letzter Refresh: vor X s".
+4. Optional: Refresh-Indikator (kurzes Aufblitzen) bei jedem
+   echten Re-Fetch.
+
+**Wann fixen:** Erste Post-Demo-Refactor-Welle, idealerweise
+zusammen mit der Konsolidierung der zwei Polling-Lifecycles
+(`/api/dashboard/stats` 30s vs. neue Self-Contained-Components).
