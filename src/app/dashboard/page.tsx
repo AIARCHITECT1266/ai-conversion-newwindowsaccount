@@ -28,6 +28,7 @@ import KpiCards from "./_components/KpiCards";
 import TrendChart from "./_components/TrendChart";
 import TopSignals from "./_components/TopSignals";
 import ActionBoard from "./_components/ActionBoard";
+import LivePulse from "./_components/LivePulse";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -408,6 +409,19 @@ export default function TenantDashboard() {
           </div>
         ) : stats ? (
           <>
+            {/* Page-Header (Phase 2c.4): "Uebersicht" + LivePulse-Indikator
+                rechts. Phase 2b.3 hatte den Inline-Header entfernt; dies
+                hier ist ein neuer, schlankerer Header speziell fuer den
+                Live-Indikator. Nicht doppelt mit dem Tab "Uebersicht" der
+                TopNav — der Tab markiert die Section, der h1 oeffnet die
+                Page-Section selbst. */}
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-2xl font-semibold text-[var(--text)]">
+                Uebersicht
+              </h1>
+              <LivePulse />
+            </div>
+
             {/* KPI-Karten + Trend-Chart (Phase 2c.2a/2c.2b/2c.2c).
                 Self-contained Components mit eigenem Fetch — kein
                 Polling. Live-Updates fuer KPIs als TD-Post-Demo,
