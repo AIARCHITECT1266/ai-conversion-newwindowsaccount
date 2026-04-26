@@ -312,15 +312,17 @@ export default function TenantDashboard() {
     }
   }, [tenantId]);
 
-  // Daten laden und alle 30s aktualisieren (pausiert wenn Tab nicht sichtbar)
+  // Daten initial laden. Phase 5c.1 (26.04.2026): 30s-Polling-Loop
+  // deaktiviert wegen Prisma Postgres HTTP-Burst-Limit-Risiko +
+  // Free-Plan-Operations-Budget. Polling-Loop verbrannte 22 DB-Calls/
+  // Min/Tab (stats-Endpoint hat 10 db.* + getDashboardTenant) und
+  // ueberschritt damit das Free-Plan-Limit von 100k Operations/Monat
+  // (Extrapolation 7-Tage-Stand 32.6k → ~140k/Monat). Initial-Fetch
+  // bleibt, sonst rendern Letzte-Gespraeche / Lead-Pipeline /
+  // Bot-Aktivitaet ohne Daten. Echtes Polling-Status-Pattern kommt
+  // mit TD-Post-Demo-Live-Pulse-Real (siehe docs/tech-debt.md).
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        fetchStats();
-      }
-    }, 30_000);
-    return () => clearInterval(interval);
   }, [fetchStats]);
 
   // Chat: Automatisch zum Ende scrollen
