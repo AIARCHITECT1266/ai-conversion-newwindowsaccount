@@ -117,9 +117,16 @@ function AnimatedNumber({
 // ---------- TrendIndicator: Pfeil + Percent ----------
 
 function TrendIndicator({ percentChange }: { percentChange: number }) {
+  // TD-Pre-Demo-3 Hotfix: Tooltip "vs. Vorwoche" am Pfeil — der
+  // percentChange in /api/dashboard/trends vergleicht current-7-Tage
+  // gegen previous-7-Tage. Title-Attribut ist Hover-only und fuegt
+  // keine sichtbare Anzeige-Aenderung hinzu.
   if (percentChange === 0) {
     return (
-      <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
+      <span
+        className="flex items-center gap-1 text-xs text-[var(--text-muted)]"
+        title="vs. Vorwoche"
+      >
         <Minus className="h-3 w-3" />
         0%
       </span>
@@ -129,7 +136,10 @@ function TrendIndicator({ percentChange }: { percentChange: number }) {
   const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
   const colorClass = isPositive ? "text-emerald-400" : "text-rose-400";
   return (
-    <span className={`flex items-center gap-1 text-xs ${colorClass}`}>
+    <span
+      className={`flex items-center gap-1 text-xs ${colorClass}`}
+      title="vs. Vorwoche"
+    >
       <Icon className="h-3 w-3" />
       {Math.abs(percentChange).toFixed(1)}%
     </span>
@@ -221,6 +231,10 @@ function ScoreBar({ breakdown, total, labels }: ScoreBarProps) {
 
 // ---------- KpiCard: einzelne Karte (Discriminated Union) ----------
 
+// TD-Pre-Demo-3 Hotfix: percentChange ist `number | null`. Bei null
+// wird der TrendIndicator NICHT gerendert — sauberer als ein
+// "−0%"-Platzhalter fuer KPIs ohne Vergleichswert (z.B. clientseitig
+// berechnete Konversionsrate ohne Wochen-vs-Wochen-Diff).
 type KpiCardProps =
   | {
       kind: "sparkline";
@@ -228,7 +242,7 @@ type KpiCardProps =
       label: string;
       value: number;
       format?: (n: number) => string;
-      percentChange: number;
+      percentChange: number | null;
       sparklineData: Array<{ value: number }>;
     }
   | {
@@ -237,7 +251,7 @@ type KpiCardProps =
       label: string;
       value: number;
       format?: (n: number) => string;
-      percentChange: number;
+      percentChange: number | null;
       breakdown: Record<Qualification, number>;
       total: number;
       labels: Record<Qualification, string>;
@@ -249,7 +263,9 @@ function KpiCard(props: KpiCardProps) {
     <div className="rounded-2xl border border-[var(--gold-border)] bg-[var(--surface)] p-5 transition-colors hover:border-[var(--gold-border-hover)]">
       <div className="mb-2 flex items-center justify-between">
         <Icon className="h-5 w-5 text-[var(--gold)]" />
-        <TrendIndicator percentChange={props.percentChange} />
+        {props.percentChange !== null && (
+          <TrendIndicator percentChange={props.percentChange} />
+        )}
       </div>
       <div className="font-serif text-4xl text-[var(--text)]">
         <AnimatedNumber value={props.value} format={props.format} />
@@ -390,7 +406,7 @@ export default function KpiCards() {
       <KpiCard
         kind="sparkline"
         icon={MessageSquare}
-        label="Nachrichten heute"
+        label="Nachrichten · letzte 7 Tage"
         value={trends.summary.messagesTotal}
         percentChange={trends.summary.messagesPercentChange}
         sparklineData={messagesSparkline}
@@ -408,7 +424,7 @@ export default function KpiCards() {
       <KpiCard
         kind="scorebar"
         icon={TrendingUp}
-        label="Neue Leads"
+        label="Neue Leads · letzte 7 Tage"
         value={trends.summary.newLeadsTotal}
         percentChange={trends.summary.newLeadsPercentChange}
         breakdown={newLeadsBreakdown}
@@ -418,10 +434,10 @@ export default function KpiCards() {
       <KpiCard
         kind="sparkline"
         icon={Zap}
-        label="Konversionsrate"
+        label="Konversionsrate · letzte 7 Tage"
         value={conversionRate}
         format={(n) => `${n.toFixed(0)}%`}
-        percentChange={0}
+        percentChange={null}
         sparklineData={conversionSparkline}
       />
     </div>
