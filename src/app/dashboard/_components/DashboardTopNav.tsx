@@ -24,6 +24,7 @@ import {
   Send,
   Users,
   Settings,
+  Calendar,
 } from "lucide-react";
 
 // Tab-Definition: `comingSoon: true` rendert den Tab gedimmt,
@@ -42,6 +43,10 @@ const TABS = [
   { href: "/dashboard/crm", label: "CRM", icon: Kanban, exact: false, comingSoon: false },
   { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone, exact: false, comingSoon: false },
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send, exact: false, comingSoon: false },
+  // Termine-Tab Phase 2e: Coming-Soon, Pattern analog Clients-Tab.
+  // Calendly/Cal.com/Microsoft-Bookings-Integration kommt im
+  // Pilot — siehe TD-Pilot-Calendly-Integration.
+  { href: "/dashboard/appointments", label: "Termine", icon: Calendar, exact: false, comingSoon: true },
   { href: "/dashboard/clients", label: "Clients", icon: Users, exact: false, comingSoon: true },
   { href: "/dashboard/settings", label: "Einstellungen", icon: Settings, exact: false, comingSoon: false },
 ] as const;
