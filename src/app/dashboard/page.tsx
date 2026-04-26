@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bot,
@@ -486,10 +487,15 @@ export default function TenantDashboard() {
                       </a>
                     </div>
                   ) : (
+                    /* Phase 2e Pflicht-Item: Items sind klickbar und
+                       fuehren auf /dashboard/conversations/<id>.
+                       <Link> statt <button onClick> — semantisch korrekt
+                       und erlaubt Right-Click-Open-in-New-Tab im Demo. */
                     conversations.map((conv) => (
-                      <div
+                      <Link
                         key={conv.id}
-                        className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-colors hover:border-[rgba(201,168,76,0.15)] hover:bg-white/[0.03]"
+                        href={`/dashboard/conversations/${conv.id}`}
+                        className="flex items-center gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-colors hover:border-[rgba(201,168,76,0.25)] hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--gold)]"
                       >
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
                           <MessageSquare className="h-4 w-4 text-slate-400" />
@@ -508,7 +514,7 @@ export default function TenantDashboard() {
                         <span className="shrink-0 text-[11px] text-slate-600">
                           {conv.lastMessageAt ? timeAgo(conv.lastMessageAt) : timeAgo(conv.updatedAt)}
                         </span>
-                      </div>
+                      </Link>
                     ))
                   )}
                 </div>
