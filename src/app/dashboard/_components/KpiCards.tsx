@@ -31,6 +31,7 @@ import {
   ArrowDownRight,
   Minus,
 } from "lucide-react";
+import { QUALIFICATION_ORDER_LOW_TO_HIGH } from "@/lib/scoring/qualification-order";
 
 // ---------- Types ----------
 
@@ -74,13 +75,11 @@ const SCORE_COLORS: Record<Qualification, { bar: string; dot: string }> = {
   CUSTOMER: { bar: "bg-[var(--gold)]", dot: "bg-[var(--gold)]" },
 };
 
-const QUALIFICATION_ORDER: Qualification[] = [
-  "UNQUALIFIED",
-  "MARKETING_QUALIFIED",
-  "SALES_QUALIFIED",
-  "OPPORTUNITY",
-  "CUSTOMER",
-];
+// Lokale Sortier-Konstante wurde nach src/lib/scoring/qualification-order.ts
+// extrahiert (Phase: Qualification-Order-Centralization). Alias hier
+// nur damit die bestehenden Render-Loop-Verwendungsstellen unveraendert
+// bleiben — Diff-Minimierung.
+const QUALIFICATION_ORDER = QUALIFICATION_ORDER_LOW_TO_HIGH;
 
 // ---------- AnimatedNumber: Counter mit framer-motion ----------
 

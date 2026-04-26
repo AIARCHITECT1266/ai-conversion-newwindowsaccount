@@ -3,7 +3,7 @@ import { db } from "@/shared/db";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { decryptText } from "@/modules/encryption/aes";
 import { loadQualificationLabels } from "@/modules/bot/scoring";
-import type { LeadQualification } from "@/generated/prisma/enums";
+import { QUALIFICATION_ORDER_LOW_TO_HIGH } from "@/lib/scoring/qualification-order";
 
 // GET /api/dashboard/stats — Tenant wird aus dem Cookie aufgelöst
 export async function GET() {
@@ -115,14 +115,11 @@ export async function GET() {
     qualificationLabels: tenantLabelConfig?.qualificationLabels,
   });
 
-  // Reihenfolge der Pipeline-Stufen — Enum-Keys stabil (ADR-002: Enum bleibt)
-  const qualificationOrder: LeadQualification[] = [
-    "UNQUALIFIED",
-    "MARKETING_QUALIFIED",
-    "SALES_QUALIFIED",
-    "OPPORTUNITY",
-    "CUSTOMER",
-  ];
+  // Reihenfolge der Pipeline-Stufen — Source of Truth in
+  // src/lib/scoring/qualification-order.ts (Phase: Qualification-
+  // Order-Centralization). API-Response bleibt low→high; Frontend
+  // (LeadPipeline-Section in dashboard/page.tsx) dreht fuer Display um.
+  const qualificationOrder = QUALIFICATION_ORDER_LOW_TO_HIGH;
   const pipelineMap = new Map<string, number>(
     pipelineRaw.map((p) => [p.qualification, p._count.id])
   );

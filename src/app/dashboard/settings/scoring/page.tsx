@@ -16,6 +16,7 @@
 
 import { useState, useEffect } from "react";
 import { Save, Loader2, Info, RotateCcw } from "lucide-react";
+import { QUALIFICATION_ORDER_LOW_TO_HIGH } from "@/lib/scoring/qualification-order";
 
 // ---------- Typen ----------
 
@@ -35,13 +36,13 @@ interface ScoringState {
   hasCustomLabels: boolean;
 }
 
-const QUALIFICATION_KEYS: Array<keyof QualificationLabels> = [
-  "UNQUALIFIED",
-  "MARKETING_QUALIFIED",
-  "SALES_QUALIFIED",
-  "OPPORTUNITY",
-  "CUSTOMER",
-];
+// Source of Truth: src/lib/scoring/qualification-order.ts
+// (Phase: Qualification-Order-Centralization). Cast auf
+// `keyof QualificationLabels` ist sicher — die Werte stimmen
+// 1:1 mit den Interface-Keys ueberein (LeadQualification-Enum).
+const QUALIFICATION_KEYS = QUALIFICATION_ORDER_LOW_TO_HIGH as ReadonlyArray<
+  keyof QualificationLabels
+>;
 
 // ---------- Page ----------
 
