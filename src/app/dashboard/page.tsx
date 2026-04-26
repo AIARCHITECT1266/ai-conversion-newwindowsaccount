@@ -431,15 +431,18 @@ export default function TenantDashboard() {
                 falls Demo-Wert besteht. */}
             <KpiCards />
 
-            <div className="mt-8">
-              <TrendChart />
-            </div>
-
             {/* "Gestern"-Section (Phase 2e): Tages-Bilanz der gestrigen
                 Leads, Berlin-Zeit DST-aware. Self-contained, fetcht
-                /api/dashboard/yesterday + /api/dashboard/labels. */}
+                /api/dashboard/yesterday + /api/dashboard/labels.
+                Position bewusst VOR TrendChart — Operations-Ritual:
+                "Was ist gestern passiert?" ist die erste Frage im
+                Daily-Meeting, Lead-Wachstum-Trend ist der Folge-Kontext. */}
             <div className="mt-8">
               <YesterdayResults />
+            </div>
+
+            <div className="mt-8">
+              <TrendChart />
             </div>
 
             {/* Top-Signale (Phase 2c.3): aggregierte scoringSignals
