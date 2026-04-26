@@ -1,8 +1,106 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-25
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04.); Phase 2c komplett auf master deployed, naechster Schritt Phase 2d (Seed-Daten, Sonntag) und Production-Verifikation auf MOD-B2C
-**Letzter Commit:** 1d1a050 (docs/architecture, feat/dashboard-content-2c) — Phase 2c.4 abgeschlossen, Merge folgt
+**Letzte Aktualisierung:** 2026-04-26
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase 2e komplett auf master gemerged + gepusht, naechster Schritt Production-Verifikation auf MOD-B2C, dann optional Build-Prompt 5b (HottestLeads + ChannelTeaser)
+**Letzter Commit:** 91b6c8c (Merge phase 2e auf master) — Vercel-Deploy auto-getriggert
+
+---
+
+## Phase 2e — Demo-Haertung (26.04.2026)
+
+Build-Prompt 5a + drei Mini-Prompts auf feature/dashboard-demo-hardening,
+dann Merge nach master in Sonntag-Abend-Session. Schliesst die
+Pflicht-Items vor der MOD-Demo ab und persistiert die Sonntag-
+Vormittag-Discovery-TDs.
+
+**Sub-Phase 5.0 — Audit (BLOCKING):**
+Conversation-Detail-Page-Audit clean (Route src/app/dashboard/
+conversations/[id]/page.tsx, ID-Field `id`). Pattern-Inventur
+identifizierte Settings-Sidebar Coming-Soon, KpiCards
+SCORE_COLORS/QUALIFICATION_ORDER, action-board getBerlinDayWindow
+als Reuse-Quellen.
+
+**Sub-Phase 5.1 — Yesterday-Results-Section (2f2f78c):**
+Neuer Endpoint `/api/dashboard/yesterday` — tenant-isoliert,
+Berlin-DST-aware via getBerlinDayWindow(daysOffset=-1).
+Component `_components/YesterdayResults.tsx` rendert 4 Bar-Cards
+(OPPORTUNITY/SQL/MQL/UNQUAL, CUSTOMER faellt weg als
+pre-Customer-Trichter), actionable-Zeile + topSignal-Zeile
+konditional. Color-Mapping matched KpiCards SCORE_COLORS.
+Berlin-Helper als shared util `src/lib/timezone-berlin.ts`
+extrahiert (action-board nutzt jetzt Import).
+
+**Sub-Phase 5.2 — Action-Board-Header Tagesbilanz (d426b4f):**
+Header zeigt drei Counts statt aggregierter Total: "N Leads
+warten · M in den letzten 24h kontaktiert · K Termine heute".
+flex-wrap auf Mobile. Singular/Plural pro Count.
+
+**Sub-Phase 5.3 — Detail-Page-Polish (entfaellt):**
+Audit in 5.0 war clean — kein Polish noetig.
+
+**Sub-Phase 5.4 — Click-in-Konversation (48db28a):**
+LetzteGespraeche-Items als `<Link href="/dashboard/conversations/<id>">`.
+Hover-State praegnanter (border-25%, bg-04), focus-visible-Outline
+mit gold-Akzent fuer Tastatur-Accessibility.
+"Alle anzeigen"-Footer-Link bleibt.
+
+**Sub-Phase 5.5 — Termine-Tab + Coming-Soon-Page (b3373ab):**
+DashboardTopNav: neuer Termine-Tab zwischen Broadcasts und Clients,
+comingSoon: true (Pattern-Konsistenz mit Clients). Neue Page
+`src/app/dashboard/appointments/page.tsx` — statische Server
+Component, Hourglass-Header + Serif-Headline + Pilot-Hinweis +
+Provider-Pills (Calendly · Cal.com · Microsoft Bookings · iCal).
+
+**Sub-Phase 5.6 — tech-debt.md 3-Klassen-Refactor (73b16b2):**
+Klassifikations-Index am Anfang: 🔴 MUST-FIX (8 Eintraege) /
+🟡 SHOULD-FIX-IF-TRIGGERED (25+) / 🟢 NICE-TO-HAVE (~14) /
+✅ ERLEDIGT (7). Body bleibt chronologisch (Per-Phase-Struktur),
+Index oben gibt Priority-View. TD-Pre-Demo-1 + TD-Pre-Demo-2
+beide ERLEDIGT-markiert.
+
+**Mini-Prompt — Section-Reorder (53f1fc6):**
+YesterdayResults-Section ueber TrendChart geschoben.
+Operations-Ritual: "Was ist gestern passiert?" ist die erste
+Frage im Daily-Meeting.
+
+**Mini-Prompt — Token-Hygiene-Refactor (cabb58e + 98f2848):**
+dashboard-links.txt jetzt zwei-Sektionen-Struktur:
+`=== AKTUELLE TOKENS ===` (ein Block pro slug+env) +
+`=== ARCHIV (alte Tokens, ungueltig) ===` (chronologisch
+absteigend). Helper `src/lib/dev-tools/token-file-writer.ts`
+mit atomarem Read-modify-write. Alle 4 Token-Scripts
+(refresh-mod-magic-links, rotate-dashboard-token,
+seed-internal-admin, seed-test-tenant-b) auf den Helper
+umgestellt. Initial-Migration: gesamter alter Datei-Bestand
+landet beim ersten Run im ARCHIV.
+
+**Mini-Prompt — Sonntag-Discovery-TDs (fb6510f):**
+8 neue TDs aus Sonntag-Vormittag-Whiteboard mit Philipp
+persistiert: TD-Pre-Demo-3 (KPI-Vergleichszeitraum-Audit),
+TD-Pilot-Lead-Source-Attribution + TD-Pilot-Channels-Reiter
+(Channel-Tracking-Strang fuer MOD-Pilot),
+TD-Pilot-Gestern-Channel-Hauptquelle + TD-Pilot-HottestLeads-
+Channel-Badge (auf Source-Attribution gekoppelt),
+TD-Post-Demo-Hottest-Leads-Threshold + TD-Pilot-Token-CLI-Tool +
+TD-Post-Demo-Reports-Reiter (Polish 🟢).
+
+**Bundle-Delta /dashboard (Final-Build vor Merge):**
+- Phase 2c.4: 123 kB Page-Code, 335 kB First Load JS
+- Phase 2e:   124 kB Page-Code, 338 kB First Load JS
+- Delta: +1 kB Page-Code, +3 kB First Load JS
+- Neu: /dashboard/appointments 283 B, /api/dashboard/yesterday 283 B
+
+**Tech-Debt-Status:**
+- Eingegangen: 8 neue Eintraege (siehe Mini-Prompt-Sonntag-Discovery)
+- Abgebaut: TD-Pre-Demo-2 (3-Klassen-Refactor)
+- Bereits zuvor abgebaut: TD-Pre-Demo-1 (Phase 2c.4 Clients-Tab)
+
+**Production-Verifikations-Stand:**
+- Vercel auto-deploy getriggert (4ba371f..91b6c8c)
+- HTTPS-Reachability: Status 307 (Auth-Redirect, korrekt)
+- UI-Verifikation pending bei Philipp mit MOD-B2C-Magic-Link
+  aus dashboard-links.txt (Block am oberen Ende der Datei,
+  generiert 2026-04-26 10:54)
 
 ---
 
