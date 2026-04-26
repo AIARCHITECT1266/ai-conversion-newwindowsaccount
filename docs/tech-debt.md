@@ -30,6 +30,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Pilot-02 | Web-Widget manuelle Aktivierung nach Tenant-Erstellung | "TD-Pilot-02" |
 | TD-Billing-01 | Payment-Provider-Ersatz fuer Paddle | "TD-Billing-01" |
 | TD-Pre-Demo-3 | KPI-Vergleichszeitraeume klaeren (vor Demo 29.04.) | "TD-Pre-Demo-3" |
+| TD-Pre-Demo-4 | Prisma-Connection-Pool-Hardening (P2037 unter Last) | "TD-Pre-Demo-4" |
 | TD-Pilot-Lead-Source-Attribution | Channel-Tracking-Voraussetzung vor MOD-Pilot | "TD-Pilot-Lead-Source-Attribution" |
 | TD-Pilot-Channels-Reiter | Sales-Workflow-Tool, baut auf Source-Attribution auf | "TD-Pilot-Channels-Reiter" |
 
@@ -66,6 +67,8 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Marketing-04 | Branchen-Sektion Landing-Pages | "TD-Marketing-04" |
 | TD-Pilot-Gestern-Channel-Hauptquelle | Sobald Source-Attribution erledigt | "TD-Pilot-Gestern-Channel-Hauptquelle" |
 | TD-Pilot-HottestLeads-Channel-Badge | Sobald Source-Attribution erledigt | "TD-Pilot-HottestLeads-Channel-Badge" |
+| TD-Process-Direct-Prod-Cooldown-Verifikation | Naechstes Direct-Prod-Workflow-Update | "TD-Process-Direct-Prod-Cooldown-Verifikation" |
+| TD-Process-Pre-Build-DB-Connection-Audit | Naechstes Build-Prompt-Template-Update | "TD-Process-Pre-Build-DB-Connection-Audit" |
 
 ### 🟢 NICE-TO-HAVE
 
@@ -90,6 +93,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Post-Demo-Hottest-Leads-Threshold | Score-Cutoff in Tenant-Settings | "TD-Post-Demo-Hottest-Leads-Threshold" |
 | TD-Pilot-Token-CLI-Tool | Wenn Token-Rotation 3+/Tag in Pilot-Phase | "TD-Pilot-Token-CLI-Tool" |
 | TD-Post-Demo-Reports-Reiter | NUR bei expliziter Pilot-User-Anfrage | "TD-Post-Demo-Reports-Reiter" |
+| TD-Post-Demo-Page-Wrapper-ZIndex-Cleanup | Symptom gefixt (Header z-30), Wurzel offen | "TD-Post-Demo-Page-Wrapper-ZIndex-Cleanup" |
 
 ### ✅ ERLEDIGT (Historie)
 
@@ -102,6 +106,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Compliance-08 | Sentry SOC 2 Bridge Letter akzeptiert | 15.04.2026 |
 | Discovery-R-1 | Token-Drift behoben (Phase 2b Token-Migration) | 25.04.2026 |
 | Discovery-R-2 | Header-Duplikation behoben (Phase 2b Layout-Refactor) | 25.04.2026 |
+| Sticky-Header-Z-Index | Phase 5c-Nav (Merge-Commit 63cc1a4) — header z-10 → z-30 | 26.04.2026 |
 
 ---
 
@@ -2963,3 +2968,174 @@ Geschaeftsleitung" oder "monatlicher PDF-Export").
 (TD-Pilot-Channels-Reiter) inkl. Export-Funktion ausreicht,
 diesen Eintrag streichen. Erst-mal abwarten, was Pilot-
 User wirklich brauchen — kein hypothetischer Build.
+
+---
+
+## Phase 5b/5c — Sonntag-Mittag-Erkenntnisse (26.04.2026)
+
+P2037-Connection-Pool-Crash beim Phase-5b-Production-Verifikations-
+Roundtrip + Sticky-Header-Z-Index-Tie-Break (Pre-Existing aus
+Phase 2b.2). Drei TDs zur Persistierung, ein ERLEDIGT-Eintrag,
+ein Polish-Followup.
+
+### TD-Pre-Demo-4: Prisma-Connection-Pool-Hardening
+
+**Klasse:** 🔴 MUST-FIX VOR DEMO (Demo am 29.04.2026 Dienstag).
+
+**Trigger:** P2037 "Too many database connections opened: too many
+connections for role 'prisma_migration'" auf Production am
+26.04.2026 12:31 unter Phase-5b-Last beobachtet (Vercel-Logs).
+Bug PERSISTIERT auch nach Phase-5b-Revert auf Phase-2e-Stand
+(verifiziert 26.04. 13:02 via Hard-Refresh-Test) — Phase 5b war
+nur Verstaerker, nicht Ausloeser.
+
+**Befund:** Das Connection-Limit fuer die Prisma-Pooler-Role
+wird erreicht bei schnellen aufeinanderfolgenden Page-Loads.
+Die Dashboard-Page macht mehrere parallele Prisma-Calls pro
+Render (KpiCards, YesterdayResults, TopSignals, ActionBoard,
+ggf. weitere) — bei 5-10 Hard-Refreshes innerhalb 30s addiert
+sich der Pool-Druck schneller als TCP-Connection-Recycle.
+
+**Aufwand:** 2-3h.
+
+**Sub-Aufgaben:**
+1. **Prisma-Singleton-Pattern verifizieren** in `src/lib/prisma.ts`
+   (oder wo der PrismaClient instantiiert wird) — Hot-Reload-safe
+   in Dev (globalThis-Cache), Singleton in Prod (kein
+   `new PrismaClient()` pro Request).
+2. **DATABASE_URL Pool-Parameter setzen:**
+   - `connection_limit` (Default ist haeufig zu hoch fuer
+     Pooler-DSN — gegen den realen Pool-Cap rechnen)
+   - `pool_timeout` (Schutz gegen unendliches Warten)
+   - `pgbouncer=true` falls Pooler-DSN (Prisma-spezifisch,
+     deaktiviert prepared statements)
+3. **getDashboardTenant-Doppellookup beheben:** aktuell
+   wahrscheinlich pro API-Route ein neuer Cookie-Token-Hash-
+   DB-Lookup. Ein Tenant-Cache pro Request via `react.cache()`
+   (analog Phase 2b.5.1 fuer den Layout-Tenant) wuerde 5+
+   Doppellookups pro Page-Load eliminieren.
+4. **Audit aller Dashboard-API-Routes** auf doppelte/parallele
+   Prisma-Calls die zusammengelegt werden koennen
+   (z.B. KpiCards + Yesterday + ActionBoard rufen alle
+   `db.lead.findMany` mit unterschiedlichen WHERE-Clauses —
+   ein einziger Aggregations-Endpoint waere effizienter).
+5. **Last-Test:** 10x Hard-Refresh innerhalb 30 Sek auf
+   MOD-B2C ohne P2037-Crash.
+6. **Architecture-Doku-Update** in `docs/architecture.md`
+   Sektion 8 (Wichtige Architektur-Entscheidungen) — Pool-
+   Konfig als bewusste Entscheidung dokumentieren.
+
+**Demo-Risiko:** HOCH. Bei Demo am Dienstag koennten
+Julius/Fabian durch schnelle Refresh-Aktionen die Page kippen.
+
+**Mitigation falls Fix nicht rechtzeitig:** Demo-Skript so
+waehlen, dass KEIN Hard-Refresh noetig wird, plus Tab-Wechsel
+statt Refresh praeferieren. Backup-Plan: Pre-Demo Token frisch
+rotieren + Single-Tab-Workflow.
+
+### TD-Process-Direct-Prod-Cooldown-Verifikation
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** Phase-5b-Verifikation am 26.04. 12:28 zeigte
+zunaechst gruenes Render, dann Crash bei Re-Refresh. Single-
+Render-Check reicht nicht als Production-Verifikation —
+Race-Conditions/Pool-Engpaesse zeigen sich erst unter Last.
+
+**Lehre:** Direct-Prod-Workflow braucht erweiterten
+Verifikations-Schritt:
+1. **Cooldown 90-120 Sek nach Push** — Vercel-Build muss
+   Ready sein, Alias-Switch durchgefuehrt.
+2. **Inkognito-Tab + frischer Token** — kein Cache-Mitnahme
+   von Pre-Push-State, kein Stale-Service-Worker.
+3. **Last-Test: 5-10x Hard-Refresh innerhalb 60 Sek** —
+   faengt intermittente Pool-/Cache-/Race-Bugs ab, die bei
+   Single-Render unentdeckt bleiben.
+4. Erst dann Phase als "verifiziert" markieren.
+
+**Aufwand:** 15 Min Doku-Update in `MASTER_HANDOFF.md`
+Workflow-Regeln-Sektion, oder als neuer ADR unter
+`docs/decisions/`.
+
+**Wann fixen:** Beim naechsten Direct-Prod-Workflow-Update
+sowieso — eingeflochten in den Standard-Build-Prompt-Flow.
+
+### TD-Process-Pre-Build-DB-Connection-Audit
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** Phase 5b hat einen neuen API-Endpoint
+(/api/dashboard/hottest-leads) hinzugefuegt ohne Connection-
+Pool-Impact-Analyse. Existierender Pool-Engpass wurde dadurch
+sichtbar — kein Phase-5b-Code-Bug, aber Pool-Limit-
+Sensitivitaet wurde nicht im Pre-Phase-Audit erkannt.
+
+**Lehre:** Bei jedem Feature-Build, der neue API-Routes oder
+DB-Queries hinzufuegt, im Pre-Phase-Audit auch Connection-
+Pool-Impact mitdenken:
+1. **Wie viele neue parallele DB-Calls pro Page-Load?** —
+   ein neuer Endpoint, der parallel zu 5 existierenden
+   gefetcht wird, vergroessert den Pool-Druck linear.
+2. **Werden bestehende Queries dedupliziert oder neu
+   hinzugefuegt?** — getDashboardTenant-Doppellookups, Lead-
+   findMany ueber dieselben Daten mit unterschiedlichem
+   WHERE.
+3. **Gibt es einen Tenant-Cache, oder doppelte Lookups?** —
+   `react.cache()`-Wrap pro Request ist Pflicht fuer alle
+   Server-Component-DB-Reads.
+
+**Aufwand:** 30 Min Erweiterung des Build-Prompt-Templates
+(neue Pre-Phase-Sektion "DB-Connection-Pool-Impact-Audit").
+
+**Wann fixen:** Beim naechsten Build-Prompt-Template-Update
+sowieso.
+
+### ERLEDIGT 26.04. — Sticky-Header-Z-Index-Tie-Break (Phase 5c-Nav)
+
+**Klasse:** ✅ ERLEDIGT in Phase 5c-Nav (Merge-Commit
+63cc1a4, 26.04.2026).
+
+**Pre-Existing-Bug:** Aus Phase 2b.2 (3ca6cb1, 25.04.2026):
+`<header>` z-10 vs. Page-Wrapper z-10 im selben Stacking-
+Context, Page-Wrapper paint-te darueber durch CSS-Document-
+Order-Tie-Break.
+
+**Fix:** Header z-10 → z-30 (Merge-Commit 63cc1a4 auf master,
+gepusht zu origin). Reine Klassen-Aenderung, Bundle
+unveraendert (124 kB Page-Code, 338 kB First Load JS).
+
+**Verifiziert:** Sticky-Header bleibt sichtbar beim Scrollen,
+keine Kollision mit Section-Headers (vor P2037-Crash
+beobachtet, Fix selbst ist code-gruen gemerged + gepusht).
+
+**Folge-TD:** TD-Post-Demo-Page-Wrapper-ZIndex-Cleanup
+(siehe naechster Eintrag).
+
+### TD-Post-Demo-Page-Wrapper-ZIndex-Cleanup
+
+**Klasse:** 🟢 NICE-TO-HAVE.
+
+**Trigger:** Phase 5c-Nav hat das Symptom gefixt (Header
+z-30), nicht die Wurzel.
+
+**Befund:** `src/app/dashboard/page.tsx` Wrapper
+`<div className="relative z-10 ...">` (Z. 400) ist
+vermutlich nicht intentional, sondern Default-Mitnahme aus
+frueherer Inline-Header-Zeit (Pre-Phase-2b — vor
+Layout-Extraktion). Der `relative z-10` hat heute keinen
+funktionalen Grund — keine `absolute`-Children innerhalb
+brauchen den Stacking-Context-Anker.
+
+**Aufwand:** 30 Min.
+
+**Action:**
+1. `z-10` aus dem Wrapper entfernen oder auf `z-0` setzen
+2. `relative` pruefen — wird es noch fuer absolute-positioned
+   Descendants gebraucht? Falls nein: auch entfernen
+3. Verifikation per Devtools-Inspektion: kein anderes
+   absolutes Element dependend auf den Stacking-Context
+
+**Bonus:** Wenn der Cleanup durchgefuehrt wird, kann der
+Header zurueck auf `z-10` (oder bei `z-30` bleiben — keine
+Pflicht). Die `z-30`-Loesung bleibt korrekt unabhaengig vom
+Cleanup.
