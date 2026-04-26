@@ -30,6 +30,7 @@ import TopSignals from "./_components/TopSignals";
 import ActionBoard from "./_components/ActionBoard";
 import LivePulse from "./_components/LivePulse";
 import ConversationAnalyticsTeaser from "./_components/ConversationAnalyticsTeaser";
+import YesterdayResults from "./_components/YesterdayResults";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -431,6 +432,13 @@ export default function TenantDashboard() {
 
             <div className="mt-8">
               <TrendChart />
+            </div>
+
+            {/* "Gestern"-Section (Phase 2e): Tages-Bilanz der gestrigen
+                Leads, Berlin-Zeit DST-aware. Self-contained, fetcht
+                /api/dashboard/yesterday + /api/dashboard/labels. */}
+            <div className="mt-8">
+              <YesterdayResults />
             </div>
 
             {/* Top-Signale (Phase 2c.3): aggregierte scoringSignals
