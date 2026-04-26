@@ -435,16 +435,9 @@ export default function TenantDashboard() {
 
             {/* "Gestern"-Section (Phase 2e): Tages-Bilanz der gestrigen
                 Leads, Berlin-Zeit DST-aware. Self-contained, fetcht
-                /api/dashboard/yesterday + /api/dashboard/labels.
-                Position bewusst VOR TrendChart — Operations-Ritual:
-                "Was ist gestern passiert?" ist die erste Frage im
-                Daily-Meeting, Lead-Wachstum-Trend ist der Folge-Kontext. */}
+                /api/dashboard/yesterday + /api/dashboard/labels. */}
             <div className="mt-8">
               <YesterdayResults />
-            </div>
-
-            <div className="mt-8">
-              <TrendChart />
             </div>
 
             {/* Top-Signale (Phase 2c.3): aggregierte scoringSignals
@@ -469,6 +462,15 @@ export default function TenantDashboard() {
                 /api/dashboard/hottest-leads. */}
             <div className="mt-8">
               <HottestLeads />
+            </div>
+
+            {/* Lead-Wachstum (Phase 2c.2b — Pre-Merge-Reorder 5b):
+                TrendChart unter HottestLeads verschoben, damit der
+                Operations-Block (Yesterday/TopSignals/ActionBoard/
+                HottestLeads) geschlossen bleibt. Analytische Section
+                folgt darunter. */}
+            <div className="mt-8">
+              <TrendChart />
             </div>
 
             {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}
