@@ -31,6 +31,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Billing-01 | Payment-Provider-Ersatz fuer Paddle | "TD-Billing-01" |
 | TD-Pilot-Lead-Source-Attribution | Channel-Tracking-Voraussetzung vor MOD-Pilot | "TD-Pilot-Lead-Source-Attribution" |
 | TD-Pilot-Channels-Reiter | Sales-Workflow-Tool, baut auf Source-Attribution auf | "TD-Pilot-Channels-Reiter" |
+| TD-Marketing-Webseite-Trial-Period-Update | Pricing-Page Trial 30→14 Tage vor zweitem Founding-Partner-Pitch | "TD-Marketing-Webseite-Trial-Period-Update" |
 
 ### 🟡 SHOULD-FIX-IF-TRIGGERED
 
@@ -71,6 +72,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Post-Demo-Active-Conversations-Snapshot | Wenn KPI-Genauigkeits-Anspruch steigt (Pilot) | "TD-Post-Demo-Active-Conversations-Snapshot" |
 | TD-Post-Demo-KPI-Range-Toggle | Pilot-Phase oder Demo-Feedback-driven nach 29.04. | "TD-Post-Demo-KPI-Range-Toggle" |
 | TD-Post-Demo-Tenant-Cache | Wenn Pool-Druck wieder steigt (parkt aus Cut 5c.2) | "TD-Post-Demo-Tenant-Cache" |
+| TD-Doc-Master-Handoff-Pricing-Outdated | Naechstes Master-Handoff-Update (Sonntag-Abend / Montag) | "TD-Doc-Master-Handoff-Pricing-Outdated" |
 
 ### 🟢 NICE-TO-HAVE
 
@@ -3395,3 +3397,110 @@ fuer "vs. Vorwoche"-Tooltip) ist Browser-abhaengig:
 **Wann fixen:** Wenn UX-Polish-Welle ansteht (typischerweise nach
 erster Pilot-Onboarding-Phase, wenn echte Nutzer-Beobachtungen
 vorliegen).
+
+---
+
+## Pricing-Korrekturen + Webseite-Update (26.04.2026)
+
+Pricing-Stand verifiziert auf ai-conversion.ai/pricing, zwei TDs
+fuer Doku/Marketing-Webseite-Konsistenz, plus Demo-Skript-Notiz
+fuer die Pricing-Frage am 29.04.
+
+**Aktuelle Pricing-Tiers (verifiziert 26.04. Nachmittag):**
+- **Starter:** 349€/Monat — 1 KI-Bot, 1 Mandant, 500 Konversationen
+- **Growth:** 699€/Monat — 3 KI-Bots, 3 Mandanten, 2.000 Konversationen
+- **Professional:** 1.299€/Monat — 10 KI-Bots, 10 Mandanten, unbegrenzt
+
+**Founding-Partner-Konditionen (Growth + Professional, 5 Slots):**
+- 30 Tage kostenlos testen (LEGACY fuer MOD; neue Partner ab jetzt
+  nur noch 14 Tage)
+- 12 Monate Preis-Lock auf Listen-Preis
+- Keine Setup-Gebuehr in der Pilotphase
+
+### TD-Doc-Master-Handoff-Pricing-Outdated
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** Beim naechsten Master-Handoff-Update sowieso
+(Sonntag-Abend oder Montag).
+
+**Befund:** `MASTER_HANDOFF_26-04_mittag.txt` TEIL 1 (Produkt-
+Kontext) enthaelt veralteten Preis "467 EUR/Monat (Growth)".
+Korrekt sind 699€/Monat.
+
+**Korrekturen:**
+- Starter: 349€/Monat
+- Growth: 699€/Monat (nicht 467)
+- Professional: 1.299€/Monat
+- 5 Founding-Partner-Slots
+
+**Aufwand:** 5 Min beim naechsten Master-Handoff-Update.
+
+**Wann fixen:** Naechste Handoff-Aktualisierung. Solange das
+Dokument von Philipp privat genutzt wird, kein externer Schaden —
+aber bei Weitergabe an ConvArch waere Falsch-Preis ein Reibungs-
+punkt.
+
+### TD-Marketing-Webseite-Trial-Period-Update
+
+**Klasse:** 🔴 MUST-FIX (vor Pilot-Phase, idealerweise vor
+zweitem Founding-Partner-Pitch nach MOD).
+
+**Trigger:** Pricing-Strategie-Aenderung von 30 auf 14 Tage Trial
+fuer neue Partner (MOD bekommt Loyalty-30-Tage als Sonderfall
+aus Erstkontakt-Phase).
+
+**Befund:** Webseite ai-conversion.ai/pricing zeigt aktuell
+"30 Tage kostenlos testen". Neuer Standard ist 14 Tage. Wenn
+zweiter Founding-Partner anfraegt, muss die Webseite stimmen —
+sonst Glaubwuerdigkeits-Verlust ("Der hat aber 30 Tage versprochen
+gekriegt").
+
+**Aufwand:** 30 Min (Marketing-Site-Update).
+
+**Sub-Aufgaben:**
+1. Pricing-Page-Komponente identifizieren (vermutlich
+   `src/app/pricing/page.tsx` oder Pricing-Komponente in
+   `src/components/`).
+2. "30 Tage" → "14 Tage" auf Growth + Professional Tier.
+3. Konsistenz-Check: andere Stellen wo "30 Tage kostenlos"
+   erwaehnt wird — Footer, FAQ, Onboarding-Mails (Resend-Templates),
+   AGB, Datenschutz?
+4. Build + Deploy-Verifikation auf Production.
+
+**Demo-Risiko (29.04.):** KEINS fuer die Demo selbst — MOD bekommt
+30 Tage explizit zugesichert. ABER: Wenn Julius/Fabian die
+Webseite waehrend der Demo aufrufen und "30 Tage" sehen, muss
+die Loyalitaets-Story klar sein:
+> "Das gilt auch noch fuer euch — wir stellen fuer Neue auf 14
+> um, ihr habt aus dem Erstkontakt 30 Tage zugesichert."
+Diese Story ist Vertrauens-Punkt, nicht Reibungs-Punkt.
+
+**Wann fixen:** Moeglichst vor 29.04. Demo (clean state ist
+besser), spaetestens vor zweitem Founding-Partner-Pitch.
+
+### Demo-29.04. Pricing-Antwort (Skript-Notiz)
+
+NICHT als TD-Eintrag, sondern als Demo-Skript-Erinnerung
+hier persistiert:
+
+Wenn Julius/Fabian fragen "Was kostet das?":
+
+> Wir haben drei Tiers — Starter 349€, Growth 699€ als Founding-
+> Partner-Empfehlung, Professional 1.299€ fuer Enterprise-Setups.
+> Fuer euch waere Growth perfekt: 3 KI-Bots, bis zu 3 Mandanten,
+> 2.000 Konversationen pro Monat.
+>
+> Founding-Partner-Konditionen (5 Slots, ihr waeret idealerweise
+> einer):
+> - 30 Tage kostenlos testen (fuer euch, Loyalitaets-Konditionen
+>   aus unserem Erstkontakt — neue Partner bekommen nur 14 Tage)
+> - 12 Monate Preis-Lock auf 699€
+> - Keine Setup-Gebuehr in der Pilotphase
+>
+> Zur Einordnung: Pro qualifiziertem BGS-Lead realistisch
+> 3.000-8.000€ Foerderung. Wenn das Tool einen zusaetzlichen Lead
+> pro Monat sichert, hat sich Growth 4-10x bezahlt gemacht.
+
+ROI-Argument als Anker, Loyalitaets-Story als Vertrauens-Punkt
+fuer den 30-vs-14-Tage-Edge-Case bei Webseite-Discrepancy.
