@@ -15,7 +15,10 @@ loadEnv({ path: ".env" });
 import { randomBytes, createHash } from "crypto";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import * as fs from "fs";
+import {
+  writeTokenBlock,
+  type TokenEnv,
+} from "../lib/dev-tools/token-file-writer";
 
 const SLUG = "test-b";
 const TENANT_NAME = "Atelier Hoffmann (Test-Tenant B)";
@@ -123,22 +126,22 @@ async function main() {
     console.log(`[seed-test-b]   Public Key: ${publicKey}`);
     console.log(`[seed-test-b]   Plan: growth_monthly`);
 
-    // Magic Link in dashboard-links.txt speichern (in .gitignore)
+    // Strukturierter Schreibvorgang via Helper (Phase 2e Hygiene-
+    // Refactor). test-b ist als Test-Tenant standardmaessig Dev —
+    // env wird nicht via DATABASE_URL geraten, weil dieses Script
+    // auf Production keinen Sinn ergibt (Atelier Hoffmann ist
+    // erfundener Tenant).
+    const tokenEnv: TokenEnv = "Dev";
     const localLink = `http://localhost:3000/dashboard/login?token=${rawToken}`;
-    const entry = [
-      "",
-      `=== Test-Tenant B (Atelier Hoffmann) ===`,
-      `Erstellt: ${new Date().toISOString()}`,
-      `Tenant-ID: ${tenant.id}`,
-      `Slug: ${SLUG}`,
-      `Public Key: ${publicKey}`,
-      `Magic Link (Lokal): ${localLink}`,
-      `Token laeuft ab: ${expiresAt.toISOString()}`,
-      `ACHTUNG: Nach erstem Login rotiert der Token (Single-Use)!`,
-      "",
-    ].join("\n");
 
-    fs.appendFileSync("dashboard-links.txt", entry);
+    writeTokenBlock({
+      slug: SLUG,
+      env: tokenEnv,
+      loginUrl: localLink,
+      tenantId: tenant.id,
+      extras: [{ label: "Public Key", value: publicKey }],
+      expiresAt,
+    });
     console.log("[seed-test-b] Magic Link gespeichert in: dashboard-links.txt");
   } finally {
     await db.$disconnect();

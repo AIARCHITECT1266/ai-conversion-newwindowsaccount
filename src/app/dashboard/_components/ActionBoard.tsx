@@ -349,31 +349,46 @@ export default function ActionBoard() {
     };
   }, []);
 
-  const totalCount = useMemo(() => {
-    if (!data) return 0;
-    return (
-      data.counts.waitingForFollowUp +
-      data.counts.recentlyContacted +
-      data.counts.appointmentsToday
-    );
-  }, [data]);
+  // Phase 2e: drei separate Counts statt aggregierter Total —
+  // Tages-Bilanz im Header zeigt Status pro Bucket.
+  const summaryLine = useMemo(() => {
+    if (loading) return "Lade naechste Schritte ...";
+    if (error || !data) return "Daten temporaer nicht verfuegbar";
+    return null;
+  }, [loading, error, data]);
 
   return (
     <section className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <div>
+        <div className="min-w-0">
           <h2 className="font-serif text-2xl text-[var(--text)]">
             Action-Board
           </h2>
-          <p className="mt-0.5 text-sm text-[var(--text-muted)]">
-            {loading
-              ? "Lade naechste Schritte ..."
-              : error
-                ? "Daten temporaer nicht verfuegbar"
-                : `${totalCount} ${
-                    totalCount === 1 ? "anstehender Schritt" : "anstehende Schritte"
-                  }`}
-          </p>
+          {summaryLine ? (
+            <p className="mt-0.5 text-sm text-[var(--text-muted)]">
+              {summaryLine}
+            </p>
+          ) : data ? (
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--text-muted)]">
+              <span>
+                {data.counts.waitingForFollowUp}{" "}
+                {data.counts.waitingForFollowUp === 1
+                  ? "Lead wartet"
+                  : "Leads warten"}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {data.counts.recentlyContacted} in den letzten 24h kontaktiert
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {data.counts.appointmentsToday}{" "}
+                {data.counts.appointmentsToday === 1
+                  ? "Termin heute"
+                  : "Termine heute"}
+              </span>
+            </p>
+          ) : null}
         </div>
       </div>
 

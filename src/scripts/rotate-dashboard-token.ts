@@ -29,7 +29,10 @@ loadEnv({ path: ".env" });
 import { randomBytes, createHash } from "crypto";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import * as fs from "fs";
+import {
+  writeTokenBlock,
+  type TokenEnv,
+} from "../lib/dev-tools/token-file-writer";
 
 // ---------- Konstanten ----------
 
@@ -91,38 +94,31 @@ async function main(): Promise<void> {
       },
     });
 
-    // Link-Eintrag an dashboard-links.txt appenden. Der Lokal-Link
-    // respektiert NEXT_PUBLIC_APP_URL aus .env.local (falls gesetzt),
-    // sonst Fallback auf http://localhost:3000 (Next.js Dev-Mode-
-    // Standard-Port). Trailing-Slashes werden defensiv entfernt.
-    //
-    // Spec-Bezug (CLAUDE.md Regel 5): Port 3001 aus dem ersten Wurf
-    // dieses Skripts war eine falsche Port-Annahme — der Dev-Server
-    // laeuft standardmaessig auf 3000, nicht auf 3001. Dieser Fix
-    // stellt den Standard wieder her und macht die Port-Annahme
-    // via ENV ueberschreibbar.
+    // Strukturierter Schreibvorgang via Helper (Phase 2e Hygiene-
+    // Refactor). Heuristik fuer env: DATABASE_URL-Host. Prisma-
+    // Postgres-Hosts mit "teal-battery" sind Production, alle anderen
+    // Dev. Der Lokal-URL respektiert NEXT_PUBLIC_APP_URL falls gesetzt.
+    const tokenEnv: TokenEnv = (process.env.DATABASE_URL ?? "").includes(
+      "teal-battery",
+    )
+      ? "Production"
+      : "Dev";
     const localBaseUrl = (
       process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     ).replace(/\/+$/, "");
-    const prodLink = `https://ai-conversion.ai/dashboard/login?token=${rawToken}`;
-    const localLink = `${localBaseUrl}/dashboard/login?token=${rawToken}`;
-    const timestamp = new Date().toISOString();
+    const loginUrl =
+      tokenEnv === "Production"
+        ? `https://ai-conversion.ai/dashboard/login?token=${rawToken}`
+        : `${localBaseUrl}/dashboard/login?token=${rawToken}`;
 
-    const entry = [
-      "",
-      `=== Dashboard Token Rotation ===`,
-      `Rotiert: ${timestamp}`,
-      `Tenant-ID: ${tenant.id}`,
-      `Slug: ${SLUG}`,
-      `Name: ${tenant.name}`,
-      `Magic Link (Production): ${prodLink}`,
-      `Magic Link (Lokal):      ${localLink}`,
-      `Token laeuft ab: ${expiresAt.toISOString()}`,
-      `Hinweis: Alle frueher generierten Tokens sind ab sofort ungueltig.`,
-      "",
-    ].join("\n");
-
-    fs.appendFileSync("dashboard-links.txt", entry);
+    writeTokenBlock({
+      slug: SLUG,
+      env: tokenEnv,
+      loginUrl,
+      tenantId: tenant.id,
+      extras: [{ label: "Name", value: tenant.name }],
+      expiresAt,
+    });
 
     // Bestaetigungs-Output auf stdout. KEINE Token-Werte, KEINE
     // Links, KEINE Hashes — siehe CLAUDE.md Self-Generated-

@@ -13,7 +13,10 @@ loadEnv({ path: ".env" });
 import { randomBytes, createHash } from "crypto";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import * as fs from "fs";
+import {
+  writeTokenBlock,
+  type TokenEnv,
+} from "../lib/dev-tools/token-file-writer";
 
 const SLUG = "internal-admin";
 
@@ -96,23 +99,30 @@ async function main() {
 
     console.log(`[Seed] Modelle aktiviert: ${models.join(", ")}`);
 
-    // Magic Link in dashboard-links.txt speichern (in .gitignore)
-    const magicLink = `https://ai-conversion.ai/dashboard/login?token=${rawToken}`;
-    const localLink = `http://localhost:3000/dashboard/login?token=${rawToken}`;
-    const entry = [
-      "",
-      `=== Internal Admin Tenant ===`,
-      `Erstellt: ${new Date().toISOString()}`,
-      `Tenant-ID: ${tenant.id}`,
-      `Slug: ${SLUG}`,
-      `Magic Link (Production): ${magicLink}`,
-      `Magic Link (Lokal): ${localLink}`,
-      `Token laeuft ab: ${expiresAt.toISOString()}`,
-      `ACHTUNG: Nach erstem Login rotiert der Token (Single-Use)!`,
-      "",
-    ].join("\n");
+    // Magic Link in dashboard-links.txt speichern (in .gitignore).
+    // Strukturierter Schreibvorgang via Helper — alter Block
+    // fuer slug+env-Key wandert in ARCHIV, neuer Block ersetzt
+    // ihn in AKTUELLE TOKENS.
+    //
+    // Heuristik fuer env: DATABASE_URL-Host. Prisma-Postgres-Hosts
+    // mit "teal-battery" sind Production, alle anderen Dev. Fallback
+    // bei unbekanntem Host: Dev (sicherer Default fuer Markierung).
+    const dbHost = (process.env.DATABASE_URL ?? "").includes("teal-battery")
+      ? "Production"
+      : "Dev";
+    const tokenEnv: TokenEnv = dbHost as TokenEnv;
+    const loginUrl =
+      tokenEnv === "Production"
+        ? `https://ai-conversion.ai/dashboard/login?token=${rawToken}`
+        : `http://localhost:3000/dashboard/login?token=${rawToken}`;
 
-    fs.appendFileSync("dashboard-links.txt", entry);
+    writeTokenBlock({
+      slug: SLUG,
+      env: tokenEnv,
+      loginUrl,
+      tenantId: tenant.id,
+      expiresAt,
+    });
 
     console.log("[Seed] Magic Link gespeichert in: dashboard-links.txt");
     console.log(`[Seed] Tenant-ID: ${tenant.id}`);

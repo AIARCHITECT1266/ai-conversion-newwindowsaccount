@@ -29,6 +29,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/shared/db";
 import { getDashboardTenant } from "@/modules/auth/dashboard-auth";
 import { resolveLeadDisplayIdentifier } from "@/lib/widget/publicKey";
+import { getBerlinDayWindow } from "@/lib/timezone-berlin";
 import type {
   Channel,
   LeadQualification,
@@ -72,25 +73,11 @@ interface ActionBoardResponse {
 
 // ---------- Helpers ----------
 
-// Berlin-Tag-Fenster: Mitternacht heute bis Mitternacht morgen,
-// als UTC-Date. Nutzt Intl.DateTimeFormat mit longOffset, damit
-// CET/CEST automatisch korrekt aufgeloest wird (kein DST-Drift).
-function getBerlinDayWindow(now: Date): { start: Date; end: Date } {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Berlin",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    timeZoneName: "longOffset",
-  }).formatToParts(now);
-  const get = (type: string) =>
-    parts.find((p) => p.type === type)?.value ?? "";
-  const dateStr = `${get("year")}-${get("month")}-${get("day")}`;
-  const offset = get("timeZoneName").replace("GMT", "") || "+00:00";
-  const start = new Date(`${dateStr}T00:00:00${offset}`);
-  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-  return { start, end };
-}
+// Berlin-Day-Window-Helper wurde in Phase 2e nach
+// `src/lib/timezone-berlin.ts` extrahiert (Reuse fuer
+// /api/dashboard/yesterday). Default-Aufruf ohne daysOffset
+// liefert den heutigen Tag — semantisch identisch mit der
+// urspruenglichen Phase-2c.3-Variante.
 
 // Erstes valides Signal aus Lead.scoringSignals extrahieren.
 // scoringSignals ist Json? in Prisma, in der Praxis string[] (laut
