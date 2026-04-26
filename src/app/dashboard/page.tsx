@@ -32,8 +32,6 @@ import ActionBoard from "./_components/ActionBoard";
 import LivePulse from "./_components/LivePulse";
 import ConversationAnalyticsTeaser from "./_components/ConversationAnalyticsTeaser";
 import YesterdayResults from "./_components/YesterdayResults";
-import HottestLeads from "./_components/HottestLeads";
-import ChannelTeaser from "./_components/ChannelTeaser";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -435,9 +433,16 @@ export default function TenantDashboard() {
 
             {/* "Gestern"-Section (Phase 2e): Tages-Bilanz der gestrigen
                 Leads, Berlin-Zeit DST-aware. Self-contained, fetcht
-                /api/dashboard/yesterday + /api/dashboard/labels. */}
+                /api/dashboard/yesterday + /api/dashboard/labels.
+                Position bewusst VOR TrendChart — Operations-Ritual:
+                "Was ist gestern passiert?" ist die erste Frage im
+                Daily-Meeting, Lead-Wachstum-Trend ist der Folge-Kontext. */}
             <div className="mt-8">
               <YesterdayResults />
+            </div>
+
+            <div className="mt-8">
+              <TrendChart />
             </div>
 
             {/* Top-Signale (Phase 2c.3): aggregierte scoringSignals
@@ -454,23 +459,6 @@ export default function TenantDashboard() {
                 (Inline-Mutation kommt Post-Demo). */}
             <div className="mt-8">
               <ActionBoard />
-            </div>
-
-            {/* Heisseste Leads (Phase 2.5b Bonus): Top 3 OPPORTUNITY-
-                Leads sortiert nach Score. Click-Through fuehrt direkt
-                in die Konversation. Self-contained, fetcht
-                /api/dashboard/hottest-leads. */}
-            <div className="mt-8">
-              <HottestLeads />
-            </div>
-
-            {/* Lead-Wachstum (Phase 2c.2b — Pre-Merge-Reorder 5b):
-                TrendChart unter HottestLeads verschoben, damit der
-                Operations-Block (Yesterday/TopSignals/ActionBoard/
-                HottestLeads) geschlossen bleibt. Analytische Section
-                folgt darunter. */}
-            <div className="mt-8">
-              <TrendChart />
             </div>
 
             {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}
@@ -631,14 +619,6 @@ export default function TenantDashboard() {
 
             {/* HubSpot-Integration */}
             <HubSpotSettings />
-
-            {/* Channel-Teaser (Phase 2.5b Bonus): Coming-Soon-Card
-                fuer Channel-Performance. Demo-Hook fuer "Welcher
-                Channel liefert die qualifizierbaren Leads?".
-                Pattern-Konsistenz mit ConversationAnalyticsTeaser. */}
-            <div className="mt-5">
-              <ChannelTeaser />
-            </div>
 
             {/* Coming-Soon-Teaser (Phase 2c.4): Demo-Narrativ am Ende
                 des Dashboards — signalisiert dass weitere Insights-
