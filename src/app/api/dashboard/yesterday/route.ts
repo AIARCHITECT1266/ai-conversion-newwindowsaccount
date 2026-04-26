@@ -31,17 +31,15 @@ import {
   getBerlinDayWindow,
   getBerlinDateIso,
 } from "@/lib/timezone-berlin";
+import { QUALIFICATION_ORDER_LOW_TO_HIGH } from "@/lib/scoring/qualification-order";
 import type { LeadQualification } from "@/generated/prisma/enums";
 
 // ---------- Konstanten ----------
 
-const QUALIFICATION_KEYS: LeadQualification[] = [
-  "UNQUALIFIED",
-  "MARKETING_QUALIFIED",
-  "SALES_QUALIFIED",
-  "OPPORTUNITY",
-  "CUSTOMER",
-];
+// Defensive Index-Pruefung gegen Schema-Drift — Source of Truth
+// fuer die Reihenfolge ist src/lib/scoring/qualification-order.ts
+// (Phase: Qualification-Order-Centralization).
+const QUALIFICATION_KEYS = QUALIFICATION_ORDER_LOW_TO_HIGH;
 
 // ---------- Response-Types ----------
 

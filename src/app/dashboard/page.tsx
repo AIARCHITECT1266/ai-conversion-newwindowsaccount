@@ -4,6 +4,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  QUALIFICATION_PIPELINE_DISPLAY,
+  QUALIFICATION_PIPELINE_DISQUALIFIED_FROM,
+} from "@/lib/scoring/qualification-order";
+import {
   Bot,
   MessageSquare,
   Send,
@@ -383,6 +387,25 @@ export default function TenantDashboard() {
   const pipeline = stats?.pipeline ?? [];
   const totalLeads = pipeline.reduce((s, p) => s + p.count, 0);
 
+  // Lead-Pipeline-Display-Reorder (Phase: Qualification-Order-
+  // Centralization): API liefert low→high, hier umgedreht auf
+  // PIPELINE_DISPLAY-Reihenfolge mit CUSTOMER oben und UNQUALIFIED
+  // als abgesetzter Disqualifikations-Bucket unten. Map fuer
+  // O(1)-Lookup, dann ueber die Display-Order iterieren — fehlende
+  // Stages bekommen count=0 + Default-Label (sollte praktisch nie
+  // vorkommen, weil API alle 5 Stages liefert).
+  const pipelineByStage = new Map(pipeline.map((p) => [p.qualification, p]));
+  const pipelineDisplay = QUALIFICATION_PIPELINE_DISPLAY.map((q) => {
+    const found = pipelineByStage.get(q);
+    return (
+      found ?? {
+        qualification: q,
+        label: q,
+        count: 0,
+      }
+    );
+  });
+
   // Auth lädt noch
   if (authLoading) {
     return (
@@ -561,10 +584,13 @@ export default function TenantDashboard() {
                   <h2 className="text-sm font-semibold tracking-wide">Lead-Pipeline</h2>
                 </div>
 
-                {/* Gestapelter Balken */}
+                {/* Gestapelter Balken — Phase: Qualification-Order-
+                    Centralization. Reihenfolge der Bar-Segmente folgt
+                    PIPELINE_DISPLAY (CUSTOMER links, UNQUALIFIED rechts),
+                    konsistent mit der Stage-Liste darunter. */}
                 <div className="mb-6 flex h-3 overflow-hidden rounded-full bg-white/[0.04]">
                   {totalLeads > 0 &&
-                    pipeline.map((stage) => (
+                    pipelineDisplay.map((stage) => (
                       <div
                         key={stage.qualification}
                         className={`${pipelineColors[stage.qualification] ?? "bg-slate-500"} transition-all`}
@@ -573,17 +599,40 @@ export default function TenantDashboard() {
                     ))}
                 </div>
 
-                {/* Stufen-Details */}
+                {/* Stufen-Details — Phase: Qualification-Order-
+                    Centralization. Order high→low (CUSTOMER oben, UNQ
+                    unten), UNQUALIFIED als abgesetzter Disqualifikations-
+                    Bucket: gedaempfte Opacity, Trennlinie davor, Hint
+                    "Disqualifiziert" als Sub-Label. */}
                 <div className="space-y-3">
-                  {pipeline.map((stage) => (
-                    <div key={stage.qualification} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`h-2.5 w-2.5 rounded-full ${pipelineColors[stage.qualification] ?? "bg-slate-500"}`} />
-                        <span className="text-xs text-slate-400">{stage.label}</span>
+                  {pipelineDisplay.map((stage) => {
+                    const isDisqualified =
+                      stage.qualification ===
+                      QUALIFICATION_PIPELINE_DISQUALIFIED_FROM;
+                    return (
+                      <div
+                        key={stage.qualification}
+                        className={
+                          isDisqualified
+                            ? "mt-2 flex items-center justify-between border-t border-white/[0.06] pt-3 opacity-60"
+                            : "flex items-center justify-between"
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2.5 w-2.5 rounded-full ${pipelineColors[stage.qualification] ?? "bg-slate-500"}`} />
+                          <span className="text-xs text-slate-400">
+                            {stage.label}
+                            {isDisqualified && (
+                              <span className="ml-1.5 text-[10px] uppercase tracking-wider text-slate-600">
+                                · Disqualifiziert
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <span className="text-sm font-semibold">{stage.count}</span>
                       </div>
-                      <span className="text-sm font-semibold">{stage.count}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="mt-5 border-t border-white/[0.06] pt-4">

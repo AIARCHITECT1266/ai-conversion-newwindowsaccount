@@ -115,6 +115,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | Sticky-Header-Z-Index | Phase 5c-Nav (Merge-Commit 63cc1a4) — header z-10 → z-30 | 26.04.2026 |
 | TD-Pre-Demo-3 | KPI-Label-Klarheit (Merge-Commit fb22b54) — "letzte 7 Tage"-Suffix + Tooltip + null-Pfeil | 26.04.2026 |
 | TD-Pre-Demo-4 | Connection-Pool-Hardening (Phase 5c.1 Polling-Disable 87ace77 + Pro-Plan-Upgrade + Phase 5c.4 Re-Apply 75c35c1) | 26.04.2026 |
+| TD-Post-Demo-Qualification-Order-Constant | Refactor: zentrale qualification-order.ts + UI-Reorder Yesterday/Pipeline (Phase: Qualification-Order-Centralization) | 26.04.2026 |
 
 ---
 

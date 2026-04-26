@@ -26,6 +26,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Sunrise } from "lucide-react";
+import { QUALIFICATION_ORDER_LOW_TO_HIGH } from "@/lib/scoring/qualification-order";
 
 // ---------- Types ----------
 
@@ -54,12 +55,15 @@ interface LabelsResponse {
 // faellt fuer Yesterday-View bewusst weg (Kunden-Konversionen
 // werden separat abgebildet, gestriger Lead-Trichter ist
 // pre-Customer).
-const DISPLAY_ORDER: Qualification[] = [
-  "OPPORTUNITY",
-  "SALES_QUALIFIED",
-  "MARKETING_QUALIFIED",
-  "UNQUALIFIED",
-];
+//
+// Phase: Qualification-Order-Centralization — Order ist jetzt
+// low→high (UNQ links, OPP rechts), konsistent mit KpiCards-
+// ScoreBar und Lead-Pipeline-API. Vorher invertiert; Aenderung
+// nur Reihenfolge, nicht Anzahl der Stages oder Filter.
+// Source: src/lib/scoring/qualification-order.ts.
+const DISPLAY_ORDER = QUALIFICATION_ORDER_LOW_TO_HIGH.filter(
+  (q) => q !== "CUSTOMER",
+) as Qualification[];
 
 // Color-Mapping — gleiche Tailwind-Klassen wie
 // `KpiCards.tsx:SCORE_COLORS` fuer dashboard-weite Konsistenz.
