@@ -33,6 +33,7 @@ import LivePulse from "./_components/LivePulse";
 import ConversationAnalyticsTeaser from "./_components/ConversationAnalyticsTeaser";
 import YesterdayResults from "./_components/YesterdayResults";
 import HottestLeads from "./_components/HottestLeads";
+import ChannelTeaser from "./_components/ChannelTeaser";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -628,6 +629,14 @@ export default function TenantDashboard() {
 
             {/* HubSpot-Integration */}
             <HubSpotSettings />
+
+            {/* Channel-Teaser (Phase 2.5b Bonus): Coming-Soon-Card
+                fuer Channel-Performance. Demo-Hook fuer "Welcher
+                Channel liefert die qualifizierbaren Leads?".
+                Pattern-Konsistenz mit ConversationAnalyticsTeaser. */}
+            <div className="mt-5">
+              <ChannelTeaser />
+            </div>
 
             {/* Coming-Soon-Teaser (Phase 2c.4): Demo-Narrativ am Ende
                 des Dashboards — signalisiert dass weitere Insights-
