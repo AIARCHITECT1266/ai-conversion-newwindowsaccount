@@ -18,10 +18,20 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local", override: true });
 loadEnv({ path: ".env" });
 
-import * as fs from "fs";
+import {
+  writeTokenBlock,
+  type TokenEnv,
+} from "../lib/dev-tools/token-file-writer";
 
 const BASE_URL = (process.env.SEED_TARGET_URL ?? "https://ai-conversion.ai").replace(/\/+$/, "");
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
+
+// Production-Heuristik: ai-conversion.ai = Production, sonst Dev.
+// Wird an den strukturierten Token-File-Writer als env-Param
+// uebergeben (Phase 2e Hygiene-Refactor).
+const TOKEN_ENV: TokenEnv = BASE_URL.includes("ai-conversion.ai")
+  ? "Production"
+  : "Dev";
 
 const TENANTS = [
   { slug: "mod-education-demo-b2c", label: "MOD B2C (Mara)" },
@@ -56,6 +66,15 @@ interface RegenResponse {
   dashboardLoginPath: string;
 }
 
+// API-Response liefert keinen Ablauf-Zeitpunkt fuer den Magic-Link.
+// Quelle der Wahrheit: SESSION_EXPIRY_MS in der Auth-Modul, dort
+// 30 Tage ab Login (Single-Use bis Login). Wir spiegeln den Wert
+// hier als Anzeige-Schaetzung — exakt-genauer Wert kann erst nach
+// dem ersten Tenant-Login bestimmt werden, vorher ist der Token
+// nur "gueltig bis 30 Tage nach erstem Login". Hier zeigen wir
+// stattdessen den 30-Tages-Horizont ab Generierung als Approximation.
+const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
 async function main() {
   const sess = await adminLogin();
   console.log("Admin-Login ok.");
@@ -66,9 +85,8 @@ async function main() {
   if (!listRes.ok) throw new Error(`list failed: ${listRes.status}`);
   const list = (await listRes.json()) as TenantListResponse;
 
-  const lines: string[] = [];
-  lines.push("");
-  lines.push(`=== Magic-Link Refresh @ ${new Date().toISOString()} ===`);
+  const generatedAt = new Date();
+  const expiresAt = new Date(generatedAt.getTime() + TOKEN_TTL_MS);
 
   for (const t of TENANTS) {
     const found = list.tenants.find((x) => x.slug === t.slug);
@@ -85,19 +103,27 @@ async function main() {
     }
     const data = (await regenRes.json()) as RegenResponse;
 
-    // Token landet NUR in dashboard-links.txt, niemals in stdout.
-    lines.push("");
-    lines.push(`--- ${t.label} (${t.slug}) ---`);
-    lines.push(`Tenant-ID: ${found.id}`);
-    lines.push(`Magic-Link: ${BASE_URL}${data.dashboardLoginPath}`);
-    lines.push(`Gueltig ab Login: 30 Tage (Single-Use bis dahin)`);
+    // Strukturierter Schreibvorgang: alter Block fuer denselben
+    // slug+env-Key wandert ins Archiv, neuer Block landet oben in
+    // AKTUELLE TOKENS. Token-Wert nur in der Datei, niemals in stdout.
+    writeTokenBlock({
+      slug: t.slug,
+      env: TOKEN_ENV,
+      loginUrl: `${BASE_URL}${data.dashboardLoginPath}`,
+      tenantId: found.id,
+      extras: [
+        { label: "Display-Name", value: t.label },
+        { label: "Gueltig ab Login", value: "30 Tage (Single-Use bis dahin)" },
+      ],
+      expiresAt,
+      generatedAt,
+    });
 
     console.log(`${t.label}: Link regeneriert, in dashboard-links.txt gespeichert.`);
   }
 
-  fs.appendFileSync("dashboard-links.txt", lines.join("\n") + "\n");
   console.log("");
-  console.log("Fertig. Links in dashboard-links.txt eingefuegt (gitignored).");
+  console.log("Fertig. Links in dashboard-links.txt aktualisiert (gitignored).");
 }
 
 main().catch((err) => {
