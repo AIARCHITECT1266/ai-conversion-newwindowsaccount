@@ -29,8 +29,6 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Pilot-01 | WhatsApp Phone ID als Pflichtfeld bei Tenant-Anlage | "TD-Pilot-01" |
 | TD-Pilot-02 | Web-Widget manuelle Aktivierung nach Tenant-Erstellung | "TD-Pilot-02" |
 | TD-Billing-01 | Payment-Provider-Ersatz fuer Paddle | "TD-Billing-01" |
-| TD-Pre-Demo-3 | KPI-Vergleichszeitraeume klaeren (vor Demo 29.04.) | "TD-Pre-Demo-3" |
-| TD-Pre-Demo-4 | Prisma-Connection-Pool-Hardening (P2037 unter Last) | "TD-Pre-Demo-4" |
 | TD-Pilot-Lead-Source-Attribution | Channel-Tracking-Voraussetzung vor MOD-Pilot | "TD-Pilot-Lead-Source-Attribution" |
 | TD-Pilot-Channels-Reiter | Sales-Workflow-Tool, baut auf Source-Attribution auf | "TD-Pilot-Channels-Reiter" |
 
@@ -69,6 +67,10 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Pilot-HottestLeads-Channel-Badge | Sobald Source-Attribution erledigt | "TD-Pilot-HottestLeads-Channel-Badge" |
 | TD-Process-Direct-Prod-Cooldown-Verifikation | Naechstes Direct-Prod-Workflow-Update | "TD-Process-Direct-Prod-Cooldown-Verifikation" |
 | TD-Process-Pre-Build-DB-Connection-Audit | Naechstes Build-Prompt-Template-Update | "TD-Process-Pre-Build-DB-Connection-Audit" |
+| TD-Post-Demo-KPI-Logic-Refactor | Pilot-Phase, sobald MOD taeglich auf Dashboard schaut | "TD-Post-Demo-KPI-Logic-Refactor" |
+| TD-Post-Demo-Active-Conversations-Snapshot | Wenn KPI-Genauigkeits-Anspruch steigt (Pilot) | "TD-Post-Demo-Active-Conversations-Snapshot" |
+| TD-Post-Demo-KPI-Range-Toggle | Pilot-Phase oder Demo-Feedback-driven nach 29.04. | "TD-Post-Demo-KPI-Range-Toggle" |
+| TD-Post-Demo-Tenant-Cache | Wenn Pool-Druck wieder steigt (parkt aus Cut 5c.2) | "TD-Post-Demo-Tenant-Cache" |
 
 ### 🟢 NICE-TO-HAVE
 
@@ -94,6 +96,8 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Pilot-Token-CLI-Tool | Wenn Token-Rotation 3+/Tag in Pilot-Phase | "TD-Pilot-Token-CLI-Tool" |
 | TD-Post-Demo-Reports-Reiter | NUR bei expliziter Pilot-User-Anfrage | "TD-Post-Demo-Reports-Reiter" |
 | TD-Post-Demo-Page-Wrapper-ZIndex-Cleanup | Symptom gefixt (Header z-30), Wurzel offen | "TD-Post-Demo-Page-Wrapper-ZIndex-Cleanup" |
+| TD-Post-Demo-KPI-Conversion-Rate-Trend | Nach TD-Post-Demo-KPI-Logic-Refactor | "TD-Post-Demo-KPI-Conversion-Rate-Trend" |
+| TD-Post-Demo-Tooltip-Library | Wenn Tooltip-Konsistenz wichtiger wird | "TD-Post-Demo-Tooltip-Library" |
 
 ### ✅ ERLEDIGT (Historie)
 
@@ -107,6 +111,8 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | Discovery-R-1 | Token-Drift behoben (Phase 2b Token-Migration) | 25.04.2026 |
 | Discovery-R-2 | Header-Duplikation behoben (Phase 2b Layout-Refactor) | 25.04.2026 |
 | Sticky-Header-Z-Index | Phase 5c-Nav (Merge-Commit 63cc1a4) — header z-10 → z-30 | 26.04.2026 |
+| TD-Pre-Demo-3 | KPI-Label-Klarheit (Merge-Commit fb22b54) — "letzte 7 Tage"-Suffix + Tooltip + null-Pfeil | 26.04.2026 |
+| TD-Pre-Demo-4 | Connection-Pool-Hardening (Phase 5c.1 Polling-Disable 87ace77 + Pro-Plan-Upgrade + Phase 5c.4 Re-Apply 75c35c1) | 26.04.2026 |
 
 ---
 
@@ -2792,28 +2798,35 @@ Demo, plus drei NICE-TO-HAVE-Items fuer Polish-Phase.
 
 ### TD-Pre-Demo-3: KPI-Vergleichszeitraeume klaeren
 
-**Klasse:** 🔴 MUST-FIX (vor Demo Dienstag 29.04.).
+**Klasse:** ✅ ERLEDIGT in Hotfix-Phase (Merge-Commit fb22b54,
+26.04.2026).
 
-**Aufwand:** 1h Audit, 30 Min Hotfix falls noetig.
+**Audit-Befund:** Werte sind korrekt — sind aber 7-Tage-Aggregate
+aus `/api/dashboard/trends?range=7`, NICHT "heute"-Werte. Labels
+auf den Karten waren irrefuehrend ("Nachrichten heute" zeigte
+7-Tage-Sum). percentChange ist current-7-Tage vs. previous-7-Tage,
+nicht "vs. Vortag-Stand 14:30" wie urspruenglich vermutet.
 
-**Befund:** KpiCards zeigen "+556%"-aehnliche
-percentChange-Werte. Unklar, ob der Vergleich gegen den
-ganzen Vortag (00:00-23:59 Berlin) gerechnet wird oder
-gegen Vortag-bis-gleiche-Uhrzeit. Bei Demo um 14:30
-koennte das inkonsistent zur Vormittag-Sicht werden,
-wenn der Trend-Chart eine andere Aggregation nutzt.
+**Hotfix-Loesung (Branch fix/kpi-cards-labels):**
+- Labels umbenannt mit "· letzte 7 Tage"-Suffix:
+  - "Nachrichten heute" → "Nachrichten · letzte 7 Tage"
+  - "Neue Leads" → "Neue Leads · letzte 7 Tage"
+  - "Konversionsrate" → "Konversionsrate · letzte 7 Tage"
+  - "Aktive Gespraeche" bleibt (echter Live-Wert)
+- KpiCardProps.percentChange Type erweitert: `number | null`
+- Konversionsrate-Karte: `percentChange={null}` statt `{0}` →
+  kein "−0%"-Pfeil-Block mehr
+- TrendIndicator hat `title="vs. Vorwoche"` als Hover-Tooltip
+- KpiCard rendert TrendIndicator nur wenn percentChange !== null
 
-**Action:** Audit-Prompt fuer Claude Code:
-> "Welche Zeit-Aggregation nutzen die KpiCards
-> percentChange-Werte? Gleicher-Zeitabschnitt-Vortag
-> vs. ganzer Vortag vs. 7T-Schnitt? Quelle:
-> /api/dashboard/trends-Response, KpiCards.tsx
-> percentChange-Render-Logik."
+**Verifikation:** Build/Typecheck gruen, Bundle unveraendert
+(125 kB Page-Code, 339 kB First Load JS).
 
-**Mitigation falls Hotfix noetig:** Tooltip oder Subtitle
-"vs. Vortag" / "vs. Vortag-Stand 14:30" auf den Karten
-ergaenzen fuer Demo-Transparenz. Keine API-Logik-Aenderung
-unter Zeitdruck — Display-Klarstellung reicht.
+**Folge-TDs:** TD-Post-Demo-KPI-Logic-Refactor (echte heute-Werte),
+TD-Post-Demo-Active-Conversations-Snapshot (historische Active-Diff),
+TD-Post-Demo-KPI-Conversion-Rate-Trend (Trend nach Logic-Refactor),
+TD-Post-Demo-KPI-Range-Toggle (Heute/Gestern/7T/30T-Wahl),
+TD-Post-Demo-Tooltip-Library (Radix-Tooltip statt HTML title).
 
 ### TD-Pilot-Lead-Source-Attribution
 
@@ -2980,7 +2993,49 @@ ein Polish-Followup.
 
 ### TD-Pre-Demo-4: Prisma-Connection-Pool-Hardening
 
-**Klasse:** 🔴 MUST-FIX VOR DEMO (Demo am 29.04.2026 Dienstag).
+**Klasse:** ✅ ERLEDIGT in Phase 5c (Polling-Disable + Pro-Plan-
+Upgrade + Phase-5b-Re-Apply, 26.04.2026).
+
+**Audit-Befund (vor Loesung):** P2037-Error war Combo aus Polling-
+Loop (22 DB-Calls/Min/Tab) und Free-Plan-Operations-Limit (100k/
+Monat, extrapoliert ~140k aktuell). Prisma Postgres ist HTTP-
+basiert (Accelerate), nicht TCP-Pool — DATABASE_URL
+connection_limit waere fehl am Platz gewesen. Wirksamer Hebel
+war Request-Volumen-Reduktion.
+
+**Loesung (drei Schritte):**
+1. **Phase 5c.1 Polling-Disable** (Merge-Commit 87ace77):
+   30s-setInterval-Block in dashboard/page.tsx entfernt, Initial-
+   Fetch fuer LetzteGespraeche/Pipeline/BotAktivitaet bleibt.
+   22 DB-Calls/Min/Tab eliminiert.
+2. **Pro-Plan-Upgrade** (10M Operations/Monat, 50GB Storage):
+   strukturelles Headroom statt nur kosmetische Optimierung.
+3. **Phase 5c.4 Phase-5b-Re-Apply** (Merge-Commit 75c35c1):
+   Cherry-Pick der drei Phase-5b-Inhalts-Commits auf den jetzt
+   stabilen Pool-Stand. HottestLeads + ChannelTeaser + Reorder
+   wieder live ohne P2037-Risiko.
+
+**Verifikation:** 10+ Hard-Refreshes auf MOD-B2C ohne P2037,
+Operations-Wachstum linear (~77 Operations pro Page-Load,
+nachvollziehbar im Prisma-Console-Dashboard).
+
+**Original-Sub-Aufgaben (NICHT mehr noetig durch Loesungs-Pfad):**
+~~Prisma-Singleton-Pattern verifizieren~~ — bereits korrekt in
+src/shared/db.ts (Phase-5c-Pool-Audit ergeben).
+~~DATABASE_URL Pool-Parameter setzen~~ — irrelevant fuer Prisma
+Postgres HTTP-API.
+~~getDashboardTenant-Doppellookup beheben~~ — geparkt als
+TD-Post-Demo-Tenant-Cache (🟡, Pilot-Phase wenn Pool-Druck
+wieder steigt).
+~~API-Route-Konsolidierung~~ — geparkt als Post-Demo-Refactor.
+~~Architecture-Doku-Update~~ — Pool-Modell-Lehre als Note in
+PROJECT_STATUS dokumentierbar.
+
+**Folge-TD:** TD-Post-Demo-Tenant-Cache.
+
+**(Historisch, vor Loesung)**
+
+**Trigger:** P2037 "Too many database connections opened: too many
 
 **Trigger:** P2037 "Too many database connections opened: too many
 connections for role 'prisma_migration'" auf Production am
@@ -3139,3 +3194,204 @@ brauchen den Stacking-Context-Anker.
 Header zurueck auf `z-10` (oder bei `z-30` bleiben — keine
 Pflicht). Die `z-30`-Loesung bleibt korrekt unabhaengig vom
 Cleanup.
+
+---
+
+## Phase 5c-Closure — Sonntag-Nachmittag-Konsolidierung (26.04.2026)
+
+Nach Pre-Demo-Code-Phase: alle MUST-FIX-TDs erledigt
+(TD-Pre-Demo-3 KPI-Labels, TD-Pre-Demo-4 Pool-Hardening). Fuenf
+neue Post-Demo-TDs als strukturierter Pilot-Roadmap-Anker, davon
+eine aus Cut-5c.2-Park (Tenant-Cache).
+
+### TD-Post-Demo-KPI-Logic-Refactor
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** Pilot-Phase Mai 2026, sobald MOD taeglich auf das
+Dashboard schaut und das Operations-Ritual "morgens auf
+Wochen-Sum-Werte schauen" als zu grob empfindet.
+
+**Befund:** KPI-Werte sind 7-Tage-Aggregate aus
+`/api/dashboard/trends?range=7`. Header-Labels seit Hotfix
+(TD-Pre-Demo-3) klar als "· letzte 7 Tage" beschriftet, aber
+Operations-Ritual ("Was ist heute schon passiert? Wie steht es
+gegen gestern um diese Uhrzeit?") braucht echte heute-vs-gestern-
+Werte mit Berlin-Timezone-Konsistenz.
+
+**Aufwand:** 2-3h.
+
+**Sub-Aufgaben:**
+1. Neue API-Route `/api/dashboard/today-vs-yesterday` ODER
+   Erweiterung von `/api/dashboard/stats` um percentChange-Felder.
+2. Berlin-Timezone-konsistent — `getBerlinDayWindow` aus
+   `src/lib/timezone-berlin.ts` nutzen (analog yesterday/route.ts).
+3. percentChange-Berechnung: heute-bis-jetzt vs. gestern-bis-
+   gleicher-Uhrzeit (nicht ganzer Vortag, sonst Verzerrung am
+   Demo-Vormittag).
+4. KpiCards.tsx auf neue API umstellen — fetch parallel zu
+   trends?range=7 oder als Ersatz, je nach Komplexitaet.
+5. Labels zurueck: "Nachrichten heute" / "Neue Leads heute" /
+   "Konversionsrate heute".
+6. Tooltip-Text aktualisieren: "vs. gestern um diese Zeit".
+
+**Wann fixen:** Pilot-Phase, vor MOD-Onboarding-Dashboard-Tour.
+Operations-Ritual-Validierung am echten Tenant.
+
+### TD-Post-Demo-Active-Conversations-Snapshot
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** Wenn KPI-Genauigkeits-Anspruch steigt (Pilot-Phase,
+nach erstem MOD-Pilot-Feedback "Aktive-Wert ist ungenau").
+
+**Befund:** "Aktive Gespraeche" KPI ist Live-Wert
+(`db.conversation.count({ where: { status: "ACTIVE" } })`), aber
+percentChange-Approximation in `/api/dashboard/trends/route.ts`
+Z. 138-141 ist Code-Comment-bestaetigt nur Naeherung
+("Approximation, weil ein echter historischer Snapshot nur mit
+Audit-Trail rekonstruierbar waere"). Aktuelle Approximation:
+Conversations, die HEUTE noch ACTIVE sind UND vor dem Current-
+Range erstellt wurden — das laesst CLOSED-Konversationen aus,
+die in der Vor-Periode ACTIVE waren.
+
+**Aufwand:** 4h (inkl. Schema + Migration + Cron).
+
+**Sub-Aufgaben:**
+1. Schema-Touch: Entweder Conversation-Audit-Trail-Field
+   (`statusHistory: Json[]`) oder separate
+   `ConversationStatusSnapshot`-Tabelle mit
+   `(conversationId, status, snapshotAt)`-Triplet.
+2. Daily-Job (Vercel Cron, analog cleanup-Cron in
+   `src/app/api/cron/cleanup/route.ts`): zu Mitternacht Berlin-Zeit
+   alle ACTIVE-Conversations als Snapshot persistieren.
+3. percentChange-Formel: heute-Live vs. Snapshot-gestern-23:59 (oder
+   Snapshot-vor-7-Tagen analog Range-7-Aggregate).
+4. Migration-Plan + Backfill-Strategie (initial leeres Snapshot-
+   Window sauber handlen — kein P2037-Echo).
+
+**Wann fixen:** Nach erstem MOD-Pilot-Feedback. Vorher unklar,
+ob die Genauigkeit den Aufwand wert ist.
+
+### TD-Post-Demo-KPI-Conversion-Rate-Trend
+
+**Klasse:** 🟢 NICE-TO-HAVE.
+
+**Trigger:** Wenn TD-Post-Demo-KPI-Logic-Refactor erledigt ist
+(braucht den heute-vs-gestern-Vergleichszeitraum als Vorgaenger).
+
+**Befund:** Konversionsrate-Karte hat aktuell `percentChange={null}`
+(Hotfix-Loesung). Sobald andere KPIs heute-vs-gestern-Vergleiche
+haben, sollte die Konversionsrate analog: heute-Konversion vs.
+gestern-Konversion (oder Wochen-vs-Vorwoche, je nach Range-Toggle).
+
+**Aufwand:** 1h (sobald Logic-Refactor steht).
+
+**Wann fixen:** Gemeinsam mit TD-Post-Demo-KPI-Logic-Refactor in
+einer Pilot-Phase-Iteration.
+
+### TD-Post-Demo-KPI-Range-Toggle
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** Pilot-Phase MOD ODER Demo-Feedback-driven nach 29.04.
+("Koennen wir auch heute / gestern / Diesen Monat sehen?").
+
+**Befund:** KpiCards zeigt fix 7-Tage-Aggregate. Pilot-User wollen
+typischerweise zwischen verschiedenen Periode-Optionen wechseln
+koennen — Operations-Ritual-Beobachtungen:
+- Morgens: "Heute" (was ist gerade los?)
+- Wochen-Review: "Diesen Monat" (Trend ueber Wochen)
+- Trend-Analyse: "30 Tage" (langfristige Entwicklung)
+- Gestern-Reflexion: "Gestern" (Tages-Ergebnis nach Schliessung)
+
+**Aufwand:** 2-3h (abhaengig von TD-Post-Demo-KPI-Logic-Refactor-
+Status — Range-Toggle-UI ist trivial, Backend-Erweiterung ist die
+eigentliche Arbeit).
+
+**Sub-Aufgaben:**
+1. Range-Toggle-UI ueber KpiCards (5 Buttons: Heute · Gestern ·
+   7 Tage · 30 Tage · Diesen Monat). Pattern-Reuse:
+   ConversationsFilter.tsx-Stil oder eigene Pill-Group.
+2. Backend-Erweiterung von `/api/dashboard/trends` um
+   `range=1`, `range=yesterday`, `range=month` (oder
+   `range=current-month` mit dynamischer-Tag-Berechnung).
+3. State-Management in KpiCards (`selectedRange`-State, fetch-
+   Re-Trigger).
+4. Synchronisation mit TrendChart? (Discovery mit MOD im Pilot —
+   Range-Sync waere konsistenter, aber Range-Independence laesst
+   Power-User flexibler vergleichen).
+
+**Demo-Hook (Pilot-Onboarding):** "Im Pilot konfigurieren wir die
+Range-Optionen mit eurem Operations-Ritual zusammen — welche
+Periode-Optionen ihr wirklich braucht."
+
+**Wann fixen:** Pilot-Phase, optional vor erster MOD-Wochen-Review
+(spaetestens Mitte Mai).
+
+### TD-Post-Demo-Tenant-Cache
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** Wenn Pool-Druck wieder steigt (Pro-Plan-Headroom
+schwindet, mehr Pilot-Tenants gleichzeitig aktiv, oder echtes
+Auto-Refresh fuer LivePulse-Real (TD-Post-Demo-Live-Pulse-Real)
+wird gebaut und braucht effiziente Tenant-Resolution).
+
+**Befund:** Cut 5c.2 aus dem urspruenglichen Phase-5c-Plan,
+geparkt nachdem Cut 5c.1 (Polling-Disable) + Pro-Plan-Upgrade
+das Pool-Druck-Problem geloest haben. Aktueller Stand:
+`getDashboardTenant` ist mit `react.cache()` gewrappt (Phase
+2b.5.1), das greift aber nur innerhalb desselben Server-Render-
+Pass. Browser-fetch zu jeder API-Route ist eigener Request-Scope
+→ pro Page-Load 7+ separate Tenant-Lookups (siehe Phase-5c-Pool-
+Audit).
+
+**Aufwand:** 2-3h.
+
+**Sub-Aufgaben:**
+1. Cookie-basierte Tenant-Resolution: dashboard_token-Cookie wird
+   einmalig im Browser-Hop validiert, anschliessend tenantId in
+   einem signierten Sub-Cookie oder Header propagiert.
+2. API-Routes pruefen den Sub-Cookie/Header statt erneuten
+   DB-Lookup.
+3. Cache-Invalidation bei Token-Rotation (Phase 2e
+   refresh-mod-magic-links muss kompatibel bleiben).
+4. Security-Review: signierter Sub-Cookie darf nicht trivial
+   faelschbar sein (HMAC mit ENV-Secret).
+
+**Wann fixen:** Wenn Operations-Counter im Prisma-Dashboard wieder
+exponentiell waechst, oder bevor Auto-Refresh-Polling fuer
+LivePulse-Real (TD-Post-Demo-Live-Pulse-Real) implementiert wird.
+
+### TD-Post-Demo-Tooltip-Library
+
+**Klasse:** 🟢 NICE-TO-HAVE.
+
+**Trigger:** Wenn Tooltip-Konsistenz wichtiger wird (UX-Feedback
+"Tooltips funktionieren nicht ueberall" oder "Hover-Delay zu lang/
+kurz", oder Mobile-Tap-Verhalten haesslich).
+
+**Befund:** HTML `title`-Attribut (Hotfix-Loesung TD-Pre-Demo-3
+fuer "vs. Vorwoche"-Tooltip) ist Browser-abhaengig:
+- Hover-Delay variiert (Chrome ~700ms, Safari ~3s)
+- Styling ist Browser-Default (nicht Brand-konform)
+- Mobile zeigt Tooltips erst auf Long-Press (oft gar nicht)
+
+**Aufwand:** 1-2h.
+
+**Sub-Aufgaben:**
+1. Radix-Tooltip oder shadcn/ui Tooltip-Component installieren
+   (peer-dep-Audit: shadcn ist im Repo nicht integriert; Radix-
+   Primitive direkt waere kleinerer Footprint).
+2. Bestehende `title`-Attribute durch Tooltip-Component ersetzen:
+   - KpiCards TrendIndicator (`vs. Vorwoche`)
+   - DashboardTopNav Coming-Soon-Tabs (`Bald verfuegbar`)
+   - SettingsSidebar COMING_SOON_ITEMS
+   - ActionBoard "Im Pilot verfuegbar"
+3. Konsistente Hover-Delay (z.B. 300ms), Brand-konformes Styling
+   (gold-Border, surface-Background).
+
+**Wann fixen:** Wenn UX-Polish-Welle ansteht (typischerweise nach
+erster Pilot-Onboarding-Phase, wenn echte Nutzer-Beobachtungen
+vorliegen).
