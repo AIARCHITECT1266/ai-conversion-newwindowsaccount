@@ -39,7 +39,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <header className="sticky top-0 z-10 border-b border-[var(--gold-border)] bg-[var(--bg)]/95 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-[var(--gold-border)] bg-[var(--bg)]/95 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex items-center justify-between py-4">
             <h1 className="font-serif text-xl tracking-tight">
