@@ -32,6 +32,7 @@ import ActionBoard from "./_components/ActionBoard";
 import LivePulse from "./_components/LivePulse";
 import ConversationAnalyticsTeaser from "./_components/ConversationAnalyticsTeaser";
 import YesterdayResults from "./_components/YesterdayResults";
+import HottestLeads from "./_components/HottestLeads";
 
 /* ───────────────────────────── Typen ───────────────────────────── */
 
@@ -461,6 +462,14 @@ export default function TenantDashboard() {
                 (Inline-Mutation kommt Post-Demo). */}
             <div className="mt-8">
               <ActionBoard />
+            </div>
+
+            {/* Heisseste Leads (Phase 2.5b Bonus): Top 3 OPPORTUNITY-
+                Leads sortiert nach Score. Click-Through fuehrt direkt
+                in die Konversation. Self-contained, fetcht
+                /api/dashboard/hottest-leads. */}
+            <div className="mt-8">
+              <HottestLeads />
             </div>
 
             {/* Mittlerer Bereich: Conversations + Lead-Pipeline */}
