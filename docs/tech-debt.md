@@ -29,6 +29,9 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Pilot-01 | WhatsApp Phone ID als Pflichtfeld bei Tenant-Anlage | "TD-Pilot-01" |
 | TD-Pilot-02 | Web-Widget manuelle Aktivierung nach Tenant-Erstellung | "TD-Pilot-02" |
 | TD-Billing-01 | Payment-Provider-Ersatz fuer Paddle | "TD-Billing-01" |
+| TD-Pre-Demo-3 | KPI-Vergleichszeitraeume klaeren (vor Demo 29.04.) | "TD-Pre-Demo-3" |
+| TD-Pilot-Lead-Source-Attribution | Channel-Tracking-Voraussetzung vor MOD-Pilot | "TD-Pilot-Lead-Source-Attribution" |
+| TD-Pilot-Channels-Reiter | Sales-Workflow-Tool, baut auf Source-Attribution auf | "TD-Pilot-Channels-Reiter" |
 
 ### 🟡 SHOULD-FIX-IF-TRIGGERED
 
@@ -61,6 +64,8 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Pilot-07 | Web-Channel-Namens-Anzeige | "TD-Pilot-07" |
 | TD-Pilot-08 | Admin-UI Dashboard-Token-Regeneration | "TD-Pilot-08" |
 | TD-Marketing-04 | Branchen-Sektion Landing-Pages | "TD-Marketing-04" |
+| TD-Pilot-Gestern-Channel-Hauptquelle | Sobald Source-Attribution erledigt | "TD-Pilot-Gestern-Channel-Hauptquelle" |
+| TD-Pilot-HottestLeads-Channel-Badge | Sobald Source-Attribution erledigt | "TD-Pilot-HottestLeads-Channel-Badge" |
 
 ### 🟢 NICE-TO-HAVE
 
@@ -82,6 +87,9 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | Phase-4c Tailwind 4 enabled-Variant | Workaround-OK | (Phase 4c Sektion) |
 | Phase-7 Rate-Limiter Dev-ephemeral | Dev-only | (Phase 7 Sektion) |
 | Phase-7 Mobile-Tastatur-Avoidance | UI-Polish | (Phase 7 Sektion) |
+| TD-Post-Demo-Hottest-Leads-Threshold | Score-Cutoff in Tenant-Settings | "TD-Post-Demo-Hottest-Leads-Threshold" |
+| TD-Pilot-Token-CLI-Tool | Wenn Token-Rotation 3+/Tag in Pilot-Phase | "TD-Pilot-Token-CLI-Tool" |
+| TD-Post-Demo-Reports-Reiter | NUR bei expliziter Pilot-User-Anfrage | "TD-Post-Demo-Reports-Reiter" |
 
 ### ✅ ERLEDIGT (Historie)
 
@@ -2767,3 +2775,191 @@ keine pro-Lead-Notes mit Verkaufs-Hinweisen.
 
 **Aufwand:** 2-3 Tage (Prompt-Engineering + Schema +
 UI-Integration).
+
+---
+
+## Phase 2e — Sonntag-Vormittag-Discovery (26.04.2026)
+
+Acht zusaetzliche TDs aus dem Sonntag-Vormittag-Whiteboard
+mit Philipp. Channel-Attribution als Schluessel-Strang fuer
+den MOD-Pilot, plus KPI-Vergleichszeitraum-Audit vor der
+Demo, plus drei NICE-TO-HAVE-Items fuer Polish-Phase.
+
+### TD-Pre-Demo-3: KPI-Vergleichszeitraeume klaeren
+
+**Klasse:** 🔴 MUST-FIX (vor Demo Dienstag 29.04.).
+
+**Aufwand:** 1h Audit, 30 Min Hotfix falls noetig.
+
+**Befund:** KpiCards zeigen "+556%"-aehnliche
+percentChange-Werte. Unklar, ob der Vergleich gegen den
+ganzen Vortag (00:00-23:59 Berlin) gerechnet wird oder
+gegen Vortag-bis-gleiche-Uhrzeit. Bei Demo um 14:30
+koennte das inkonsistent zur Vormittag-Sicht werden,
+wenn der Trend-Chart eine andere Aggregation nutzt.
+
+**Action:** Audit-Prompt fuer Claude Code:
+> "Welche Zeit-Aggregation nutzen die KpiCards
+> percentChange-Werte? Gleicher-Zeitabschnitt-Vortag
+> vs. ganzer Vortag vs. 7T-Schnitt? Quelle:
+> /api/dashboard/trends-Response, KpiCards.tsx
+> percentChange-Render-Logik."
+
+**Mitigation falls Hotfix noetig:** Tooltip oder Subtitle
+"vs. Vortag" / "vs. Vortag-Stand 14:30" auf den Karten
+ergaenzen fuer Demo-Transparenz. Keine API-Logik-Aenderung
+unter Zeitdruck — Display-Klarstellung reicht.
+
+### TD-Pilot-Lead-Source-Attribution
+
+**Klasse:** 🔴 MUST-FIX (bevor MOD-Pilot startet, Mai 2026).
+
+**Aufwand:** 3-5 Tage.
+
+**Spec:** Lead-Quellen-Tracking via UTM-Parameter aus
+Widget-Embed-URL extrahieren und persistieren.
+
+**Schema-Touch (geplant, nicht jetzt):**
+- `Lead.source: String?` (z.B. "google", "meta", "linkedin")
+- `Lead.sourceCampaign: String?` (UTM utm_campaign)
+- `Lead.sourceMedium: String?` (UTM utm_medium)
+
+**Strategische Bedeutung:** Ohne Source-Attribution kein
+Channel-Vergleich moeglich. Hauptproblem fuer Mehr-Channel-
+Kunden wie MOD (Meta-Ads + Google-Ads + organic + Webinar).
+Ohne diesen Baustein bleiben Channels-Reiter, Gestern-
+Hauptquelle und HottestLeads-Channel-Badge alle reine
+UI-Mockups.
+
+**ADR noetig:** UTM-Strategie + DSGVO-Konformitaet:
+- Cookie-Consent-Boundary fuer UTM-Persistierung
+- Hashing-Pflicht (raw UTM darf nicht persistiert werden,
+  weil potentiell pii-haltig in custom-Parametern)
+- Retention: identisch Lead.retention oder kuerzer?
+- Fallback: bei fehlendem UTM keine Source-Annahme
+
+### TD-Pilot-Channels-Reiter
+
+**Klasse:** 🔴 MUST-FIX (sobald Source-Attribution erledigt,
+also mit oder direkt nach TD-Pilot-Lead-Source-Attribution).
+
+**Aufwand:** 4-6 Tage.
+
+**Spec:** Eigener Reiter "Channels" im DashboardTopNav mit:
+- **Top-Channels Bar-Chart**: Anzahl Leads + Conversion-Rate
+  pro Channel, Periode-Toggle (Tag/Woche/Monat/Quartal/Jahr)
+- **HottestLeads pro Channel**: Drill-Down von der
+  Uebersicht-HottestLeads (siehe TD-Pilot-HottestLeads-
+  Channel-Badge), ersetzt den Google-Sheets-Workflow
+- **Conversion-Funnel pro Channel**: Lead → MQL → SQL →
+  Opportunity → Customer als Sankey oder Stacked-Bar
+- **Optional: Kosten-pro-Lead-Eingabe** pro Channel + Periode
+- **Export-Funktion** fuer Marketing-Reportings (CSV/PDF)
+
+**Co-Design** mit MOD-Pilot-Customer:
+Erst-Iteration vor MOD-Onboarding bauen, dann zusammen
+mit dem Sales-Team von MOD durchgehen, Iteration 2 nach
+Erst-Use mit echten Daten.
+
+**Validierungs-Quelle:** Philipp's eigene Erfahrung bei
+frueherem Arbeitgeber — Google-Sheets-basierter
+Channel-Tracking-Workflow im Sales-Team, woechentlich
+mehrfach besprochen, war der zentrale Steuerungs-Tool fuer
+Marketing-Budget-Allocation.
+
+### TD-Pilot-Gestern-Channel-Hauptquelle
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** SOBALD Source-Attribution erledigt
+(TD-Pilot-Lead-Source-Attribution).
+
+**Aufwand:** 30 Min.
+
+**Spec:** Eine Zeile unter Gestern-Section auf Uebersicht:
+> "Hauptquelle gestern: Meta (50%)"
+
+**Bewusst:** Single-Datum, kein Toggle, kein Vollvergleich,
+keine Drill-Down. Haelt die Uebersicht clean,
+Operations-Ritual-tauglich (Daily-Meeting-erste-Frage). Wer
+mehr will, geht in Channels-Reiter.
+
+### TD-Pilot-HottestLeads-Channel-Badge
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED.
+
+**Trigger:** SOBALD Source-Attribution erledigt
+(TD-Pilot-Lead-Source-Attribution).
+
+**Aufwand:** 30 Min.
+
+**Spec:** HottestLeads-Card auf Uebersicht (Build-Prompt 5b
+Bonus, noch nicht gebaut) bekommt ein Channel-Badge.
+
+**Pattern:** Dezent neben Score, z.B. "85 · Meta Ads" als
+Sub-Text in kleinerer Typo. Nicht in den Score-Toner
+mischen. Klick fuehrt in Channels-Reiter mit voraktivem
+Channel-Filter.
+
+### TD-Post-Demo-Hottest-Leads-Threshold
+
+**Klasse:** 🟢 NICE-TO-HAVE.
+
+**Trigger:** Wenn Score-Cutoff fuer HottestLeads
+konfigurierbar werden soll (Pilot-Tenant haette Use-Case
+fuer "Schwellenwert 70 statt 80", oder MOD-Sales-Team
+moechte den Cutoff anpassen).
+
+**Aufwand:** 1h.
+
+**Aktuell:** OPPORTUNITY-Qualification ist hartcodiert in
+HottestLeads-Filter-Logik (Build-Prompt 5b Bonus, noch
+nicht gebaut). Score-Cutoff implizit ueber das Enum.
+
+**Loesung:** Schwellenwert in Tenant-Settings exposen:
+- `Tenant.hottestLeadsThreshold: Int @default(80)`
+- Settings-Sub-Page "Dashboard"
+- HottestLeads-API liest aus Tenant-Config
+
+### TD-Pilot-Token-CLI-Tool
+
+**Klasse:** 🟢 NICE-TO-HAVE.
+
+**Trigger:** Wenn Token-Rotation 3+ mal pro Tag noetig wird
+(Pilot-Phase mit mehreren parallelen Tenants, oder Token-
+Single-Use-Verbrauch beim Demo-Klicken-und-Zurueck).
+
+**Aufwand:** 45-60 Min.
+
+**Spec:** `pnpm token <tenant>` CLI-Wrapper:
+- ruft das passende Script (refresh-mod-magic-links,
+  rotate-dashboard-token) basierend auf Slug
+- Clipboard-Integration (Link landet automatisch in
+  Zwischenablage, ohne Datei-Inspektion)
+- Optional: GUI-Notification "Token kopiert ✓"
+
+**Aktuell:** dashboard-links.txt mit AKTUELLE/ARCHIV-Struktur
+(Phase 2e Hygiene-Refactor) ist ausreichend fuer Solo-
+Founder-Phase. CLI-Wrapper waere Polish, kein Pflicht-Feature.
+
+### TD-Post-Demo-Reports-Reiter
+
+**Klasse:** 🟢 NICE-TO-HAVE.
+
+**Trigger:** NUR wenn Pilot-User explizit Custom-Reports
+anfragen (z.B. "ich brauche Quartals-Reports zur
+Geschaeftsleitung" oder "monatlicher PDF-Export").
+
+**Aufwand:** 3-5 Tage.
+
+**Spec:** Eigener Reports-Reiter mit:
+- Cross-Section-Periode-Vergleichen (Q1 vs. Q2,
+  YoY-Vergleiche)
+- Custom-Periode-Picker
+- PDF-Export mit Tenant-Brand-Layout
+- Optional: scheduled email reports
+
+**Bewusst zurueckgestellt:** Wenn Channels-Reiter
+(TD-Pilot-Channels-Reiter) inkl. Export-Funktion ausreicht,
+diesen Eintrag streichen. Erst-mal abwarten, was Pilot-
+User wirklich brauchen — kein hypothetischer Build.
