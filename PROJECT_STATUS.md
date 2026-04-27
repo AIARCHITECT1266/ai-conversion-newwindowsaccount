@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-27
 **Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Cleanup-Skript committed (transaction-safe, dry-run-default, staged), naechster Schritt: User fuehrt Stages 1-5 manuell aus (dry-run + commit pro Tenant + Final-Verifikation)
-**Letzter Commit:** PENDING (Followup-Phantom-Cleanup-Skript) — Vercel-Deploy folgt nach Push
+**Letzter Commit:** 9ed3341 (Followup-Phantom-Cleanup-Skript) — Vercel-Deploy folgt nach Push
 
 ---
 
