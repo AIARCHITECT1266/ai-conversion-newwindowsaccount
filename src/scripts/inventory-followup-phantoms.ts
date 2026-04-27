@@ -26,9 +26,9 @@ import { config } from "dotenv";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-// .env.local bevorzugt laden (analog check-db.ts)
-config({ path: ".env.local", override: true });
-config({ path: ".env" });
+// Production-DB-Inventur: explizit .env.production.local laden
+// (override: true ueberschreibt evtl. bereits geladene .env.local-Werte).
+config({ path: ".env.production.local", override: true });
 
 interface TenantAggregateRow {
   tenant_slug: string;
@@ -89,9 +89,18 @@ function printTable<T extends object>(
 
 async function main() {
   if (!process.env.DATABASE_URL) {
-    console.error("DATABASE_URL ist nicht gesetzt!");
+    console.error(
+      "[Inventory] FEHLER: DATABASE_URL nicht gesetzt. Pruefe .env.production.local.",
+    );
     process.exit(1);
   }
+
+  // Host-Preview ohne Credentials (Sicherheits-Regel CLAUDE.md):
+  // extrahiert nur den Hostname-Teil zwischen '@' und ':' bzw. '/'/'?'.
+  // Username + Password werden NICHT geloggt.
+  const hostMatch = process.env.DATABASE_URL.match(/@([^:/?]+)/);
+  const dbHost = hostMatch ? hostMatch[1] : "(host parse-error)";
+  console.log(`[Inventory] DATABASE_URL Host: ${dbHost}`);
 
   const adapter = new PrismaPg(process.env.DATABASE_URL);
   const prisma = new PrismaClient({ adapter });

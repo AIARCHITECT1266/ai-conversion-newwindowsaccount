@@ -1,8 +1,8 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Inventory committed (read-only Diagnose-Skript), naechster Schritt: Skript ausfuehren + Cleanup-Phase basierend auf Inventur-Ergebnis
-**Letzter Commit:** b928507 (Followup-Phantom-Inventory) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Inventory mit env-Fix abgeschlossen (Inventur erfolgreich gegen Production: 57 Leads, 147 Phantom-Messages ueber 4 Tenants), naechster Schritt: Cleanup-Phase 2 designen
+**Letzter Commit:** PENDING (Followup-Phantom-Inventory env-Fix) — Vercel-Deploy folgt nach Push
 
 ---
 
@@ -37,6 +37,34 @@ Tenant-Isolation unveraendert.
 `npx tsx src/scripts/inventory-followup-phantoms.ts`,
 Output an ConvArch fuer Cleanup-Scope-Entscheidung
 (Phase 2: tatsaechliches Cleanup-Skript mit Transaction).
+
+**Env-Fix-Hotfix (gleicher Tag):** Erste Skript-Ausfuehrung
+ergab 0 Treffer, weil dotenv defaultmaessig `.env.local`
+laedt (Dev-DB). Skript umgestellt auf
+`.env.production.local` mit `override: true`. Zusaetzlich:
+Host-Preview ohne Credentials (Regex `@([^:/?]+)` extrahiert
+nur den Hostname-Teil — Username + Password werden NICHT
+geloggt, konform mit CLAUDE.md-Sicherheits-Regel).
+
+**Inventur-Ergebnis (gegen Production-DB):**
+- 4 Tenants betroffen (alle aktiven Tenants):
+  - mod-education-demo-b2c: 29 Leads, 63 Phantoms (22.04.-26.04.)
+  - ai-conversion-marketing: 14 Leads, 42 Phantoms (16.04.-25.04.)
+  - internal-admin: 13 Leads, 39 Phantoms (13.04.-16.04.)
+  - mod-education-demo-b2b: 1 Lead, 3 Phantoms (23.04.-25.04.)
+- Gesamt: 57 Leads, 147 Phantom-Messages
+- Alle Timestamps EXAKT 09:00 UTC (Cron praezise, 5min-Window
+  grosszuegig genug)
+- Earliest 13.04., latest 26.04. → Cron lief ~14 Tage aktiv
+
+**Sanity-Check-Anomalie (erklaert):** strict_count=147 vs.
+loose_count=57. Diff -90 ist KEIN Pathologie-Signal, sondern
+Folge der `lead.lastFollowUpAt`-Ueberschreibung: pro Lead
+zeigt das Feld nur den LETZTEN Cron-Trigger, daher findet
+das 30min-Loose-Fenster pro Lead max. 1 Message (= 57 Leads).
+Strict_count zaehlt ueber alle Stufen (Σ followUpCount = 147).
+Strict-Strategie ist die richtige Loesung; die Loose-Query ist
+konzeptionell limitiert wegen Marker-Ueberschreibung.
 
 **Skript-Lifecycle:** Diagnostisch, nicht wiederholbare
 Infrastruktur. Nach erfolgreichem Cleanup zu archivieren in
