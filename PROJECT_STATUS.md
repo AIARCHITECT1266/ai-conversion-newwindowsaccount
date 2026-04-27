@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-27
 **Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Pre-Demo-Cron-Disable committed (Followup-Cron raus aus vercel.json), naechster Schritt Production-Verifikation auf MOD-B2C + Phantom-Message-Cleanup auf Amir-Conversation
-**Letzter Commit:** PENDING (Pre-Demo-Cron-Disable) — Vercel-Deploy folgt nach Push
+**Letzter Commit:** f371b76 (Pre-Demo-Cron-Disable) — Vercel-Deploy folgt nach Push
 
 ---
 
