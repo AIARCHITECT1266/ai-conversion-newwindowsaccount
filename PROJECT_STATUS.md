@@ -1,8 +1,55 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase KPI-Label-Precision committed (semantische Schaerfung Konversionsrate-Label vor Demo), naechster Schritt Production-Verifikation auf MOD-B2C
-**Letzter Commit:** 3539e11 (KPI-Label-Precision) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Pre-Demo-Cron-Disable committed (Followup-Cron raus aus vercel.json), naechster Schritt Production-Verifikation auf MOD-B2C + Phantom-Message-Cleanup auf Amir-Conversation
+**Letzter Commit:** PENDING (Pre-Demo-Cron-Disable) — Vercel-Deploy folgt nach Push
+
+---
+
+## Phase Pre-Demo-Cron-Disable (27.04.2026)
+
+Audit am Vormittag (27.04.) hat eine Phantom-Follow-Up-Message
+auf der MOD-B2C-Test-Conversation "Amir" zurueckverfolgt zum
+Vercel-Cron `/api/cron/followup`. Source: hardcoded Templates
+in `src/app/api/cron/followup/route.ts:14-31`, getriggert
+taeglich `0 9 * * *` UTC = 11:00 MESZ via `vercel.json`.
+Templates verstossen gegen mehrere Mara-Spec-Regeln (Sie/Du-
+Bruch, Emojis 👋📅🙏, Wiederholungs-Begruessung, Anti-Sales:
+"unverbindliches Angebot" + "Beratungstermin", Tenant-`brandName`
+in User-facing-Text). Cross-Tenant-Reichweite: WHERE-Klausel
+ohne Per-Tenant-Toggle, jeder aktive Tenant betroffen.
+
+**Aenderung:** Cron-Eintrag fuer `/api/cron/followup` aus
+`vercel.json` entfernt. Verbleibender Cron `/api/cron/cleanup`
+unveraendert (`0 3 * * *`). Route-File
+`src/app/api/cron/followup/route.ts` bleibt erhalten fuer
+Pilot-Phase-Refactor-Reuse — kein Code-Loesch.
+
+**Tech-Debt-Aufnahme:** TD-Pilot-Followup-Mechanismus-Rewrite
+als 🟡 SHOULD-FIX-IF-TRIGGERED in
+`docs/tech-debt.md`. Anforderungen: Per-Tenant-Toggle,
+Mara-Bot-Aufruf statt hardcoded Templates, WhatsApp Business
+Policy approved Templates, DSGVO-Opt-In, Settings-UI-Schalter.
+
+**Build-Verifikation:** `npx next build` clean.
+
+**Tenant-Isolation:** Verbessert. Vorher: Cron iterierte
+cross-tenant ohne Per-Tenant-Toggle. Jetzt: kein Cron, kein
+Cross-Tenant-Touch.
+
+**Offenes Pre-Demo-Item:** Phantom-ASSISTANT-Messages auf
+der MOD-B2C-Amir-Conversation muessen manuell aus der
+Production-DB geloescht werden, damit die Demo-Conversation
+clean ist. Nicht Teil dieses Commits — separater Schritt
+mit Production-DB-Zugriff erforderlich.
+
+**Verifikations-Luecke (offen):** Audit konnte nicht
+abschliessend klaeren, ob der Cron die ASSISTANT-Messages
+tatsaechlich via WhatsApp Cloud API oder Web-Widget-Poll
+an Lead-Endgeraete gepusht hat, oder ob sie nur als
+DB-Phantom existierten. Aenderung nichts daran — Cron-Disable
+ist in beiden Faellen die richtige Aktion. Compliance-Frage
+bleibt fuer Pilot-Phase offen (vor Re-Aktivierung klaeren).
 
 ---
 

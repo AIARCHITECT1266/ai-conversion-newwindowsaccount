@@ -74,6 +74,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Post-Demo-Tenant-Cache | Wenn Pool-Druck wieder steigt (parkt aus Cut 5c.2) | "TD-Post-Demo-Tenant-Cache" |
 | TD-Doc-Master-Handoff-Pricing-Outdated | Naechstes Master-Handoff-Update (Sonntag-Abend / Montag) | "TD-Doc-Master-Handoff-Pricing-Outdated" |
 | TD-Post-Demo-Konversionsrate-Tooltip-und-Customer-Quote | Pilot-User will KPI-Klarheit weiter schaerfen ODER CRM-Sync liefert CUSTOMER-Stage-Updates | "TD-Post-Demo-Konversionsrate-Tooltip-und-Customer-Quote" |
+| TD-Pilot-Followup-Mechanismus-Rewrite | Pilot-Phase mit erstem aktiven Tenant | "TD-Pilot-Followup-Mechanismus-Rewrite" |
 
 ### 🟢 NICE-TO-HAVE
 
@@ -3558,3 +3559,58 @@ trends/route.ts:127-133 Lead-Findone-mit-aktueller-qualification).
 Tenant-Isolation bestaetigt, Edge-Cases identifiziert
 (Nenner=0 → 0%, Frueh-Phase-Volatilitaet bei <7 Tagen Daten,
 toFixed(0)-Rundung kaufmaennisch).
+
+---
+
+## Phase Pre-Demo-Cron-Disable (27.04.2026)
+
+### TD-Pilot-Followup-Mechanismus-Rewrite
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED
+
+**Trigger:** Pilot-Phase mit erstem aktiven Tenant.
+
+**Aufwand:** 4-6h
+
+**Anforderungen:**
+
+- **Per-Tenant-Toggle:** `Tenant.followUpEnabled Boolean
+  @default(false)`. Schema-Migration + Konsumenten-Audit
+  (Pflicht-Regel 2 in CLAUDE.md). Default `false` damit
+  neue Tenants opt-in sind.
+- **Hardcoded Templates ersetzen** durch Mara-Bot-Aufruf
+  mit Re-Engagement-Modus im System-Prompt. Die Templates
+  in `src/app/api/cron/followup/route.ts:14-31` (drei Stufen,
+  jeweils per `${brand}`-Token) werden gestrichen.
+- **Mara-Spec-Konformitaet:** Sie/Du-Erkennung pro Conversation
+  uebernehmen, KEIN Emoji (👋 📅 🙏 raus), KEIN Wiederholungs-
+  Gruss ("Hallo!", "Guten Tag!"), Anti-Sales-Regel
+  ("unverbindliches Angebot", "Beratungstermin vereinbaren"
+  raus).
+- **WhatsApp Business Policy:** approved Message-Templates
+  statt Plain-Text-Outbound. Voraussetzung: Verifikation,
+  ob der Mechanismus tatsaechlich an WhatsApp pusht oder
+  nur DB-Phantom-Messages schreibt (Audit-Luecke vom 27.04.).
+- **DSGVO:** separater Opt-In-Flag fuer automatisierte
+  Nachfass-Nachrichten, nicht der bestehende Conversation-
+  `consentGiven` (der deckt nur Conversation-Initiierung ab).
+- **Settings-UI:** Schalter im Dashboard (`src/app/dashboard/
+  settings/`), Default off, mit Tooltip-Erklaerung der
+  Konsequenzen.
+
+**Audit-Referenz:** 27.04.2026 — Source identifiziert in
+`src/app/api/cron/followup/route.ts`. Cron-Trigger lief
+taeglich `0 9 * * *` UTC = 11:00 MESZ via `vercel.json`.
+Cross-Tenant-Reichweite bestaetigt: WHERE-Klausel filterte
+nicht auf `tenant.id`, jeder Tenant mit `isActive=true` und
+Leads mit `consentGiven=true` wurde beschossen. Verifikations-
+Luecke offen: ist der Mechanismus DB-only oder pusht er
+tatsaechlich an WhatsApp/Web-Widget? Diese Frage muss VOR
+Re-Aktivierung beantwortet werden.
+
+**Sofort-Aktion am 27.04.2026:** Cron-Eintrag in `vercel.json`
+entfernt. Route-File `src/app/api/cron/followup/route.ts` bleibt
+erhalten fuer Pilot-Phase-Refactor-Reuse. Demo-Conversation
+"Amir" auf MOD-B2C: Phantom-Messages muessen vor Demo
+manuell aus DB geloescht werden (separates Pre-Demo-Item,
+nicht Teil dieses Cron-Disable-Commits).
