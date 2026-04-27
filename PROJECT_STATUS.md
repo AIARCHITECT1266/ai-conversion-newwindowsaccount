@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-27
 **Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Inventory committed (read-only Diagnose-Skript), naechster Schritt: Skript ausfuehren + Cleanup-Phase basierend auf Inventur-Ergebnis
-**Letzter Commit:** PENDING (Followup-Phantom-Inventory) — Vercel-Deploy folgt nach Push
+**Letzter Commit:** b928507 (Followup-Phantom-Inventory) — Vercel-Deploy folgt nach Push
 
 ---
 
