@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-27
 **Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Inventory mit env-Fix abgeschlossen (Inventur erfolgreich gegen Production: 57 Leads, 147 Phantom-Messages ueber 4 Tenants), naechster Schritt: Cleanup-Phase 2 designen
-**Letzter Commit:** PENDING (Followup-Phantom-Inventory env-Fix) — Vercel-Deploy folgt nach Push
+**Letzter Commit:** e0855fc (Followup-Phantom-Inventory env-Fix + Prod-Inventur) — Vercel-Deploy folgt nach Push
 
 ---
 
