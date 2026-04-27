@@ -328,7 +328,7 @@ export default function KpiCards() {
         }
       } catch {
         if (!cancelled) {
-          setError("Daten nicht verfuegbar");
+          setError("Daten nicht verfügbar");
           setLoading(false);
         }
       }
@@ -413,7 +413,7 @@ export default function KpiCards() {
       <KpiCard
         kind="scorebar"
         icon={Users}
-        label="Aktive Gespraeche"
+        label="Aktive Gespräche"
         value={trends.summary.activeConversationsCurrent}
         percentChange={trends.summary.activeConversationsPercentChange}
         breakdown={activeBreakdown}

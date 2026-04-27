@@ -50,7 +50,7 @@ const bodySchema = z.object({
     .string()
     .min(4)
     .max(100)
-    .regex(/^pub_[A-Za-z0-9_-]+$/, "Ungueltiges Key-Format"),
+    .regex(/^pub_[A-Za-z0-9_-]+$/, "Ungültiges Key-Format"),
   // visitorMeta: beliebiges flaches Objekt, nicht tiefer typisiert
   visitorMeta: z.record(z.string(), z.unknown()).optional(),
   // Phase 4-pre: Frontend-Modal kann consentGiven=true vorab senden,
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     rawBody = await request.json();
   } catch {
     return withCors(
-      NextResponse.json({ error: "Ungueltige Eingabe" }, { status: 400 }),
+      NextResponse.json({ error: "Ungültige Eingabe" }, { status: 400 }),
     );
   }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return withCors(
       NextResponse.json(
         {
-          error: "Ungueltige Eingabe",
+          error: "Ungültige Eingabe",
           details: parseResult.error.flatten(),
         },
         { status: 400 },

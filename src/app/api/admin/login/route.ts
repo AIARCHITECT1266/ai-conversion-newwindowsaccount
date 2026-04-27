@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     rawBody = await request.json();
   } catch {
     return NextResponse.json(
-      { error: "Ungueltige Anfrage" },
+      { error: "Ungültige Anfrage" },
       { status: 400 }
     );
   }
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   const parsed = loginSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Ungueltige Anfrage", details: parsed.error.flatten() },
+      { error: "Ungültige Anfrage", details: parsed.error.flatten() },
       { status: 400 }
     );
   }

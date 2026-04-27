@@ -140,7 +140,7 @@ export default function ScoringSettingsPage() {
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-[#c9a84c]/15 bg-[#c9a84c]/5 px-4 py-3">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#c9a84c]/70" />
           <p className="text-sm text-[#ede8df]/60">
-            Der Scoring-Prompt bewertet jedes Gespraech nach deinen Kriterien. Leer
+            Der Scoring-Prompt bewertet jedes Gespräch nach deinen Kriterien. Leer
             lassen = Default (DACH-B2B). Labels erscheinen im Dashboard neben dem Score.
           </p>
         </div>

@@ -128,8 +128,8 @@ export async function POST(request: NextRequest) {
 
     const signature = request.headers.get("x-hub-signature-256");
     if (!verifySignature(rawBody, signature)) {
-      console.warn("[WhatsApp Webhook] Ungueltige Signatur");
-      return NextResponse.json({ error: "Ungueltige Signatur" }, { status: 401 });
+      console.warn("[WhatsApp Webhook] Ungültige Signatur");
+      return NextResponse.json({ error: "Ungültige Signatur" }, { status: 401 });
     }
 
     const body = JSON.parse(rawBody) as WhatsAppWebhookBody;

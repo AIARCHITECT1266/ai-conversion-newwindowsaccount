@@ -76,7 +76,7 @@ const SYSTEM_TEMPLATES = [
       "Hi! Viele meiner Klienten standen genau da, wo Sie jetzt stehen. Lassen Sie uns herausfinden, ob mein Coaching-Ansatz zu Ihnen passt. Was beschaeftigt Sie gerade?",
     ],
     abVarianten: {
-      variantA: "Hallo! Was ist Ihre groesste berufliche Herausforderung? Ich biete ein kostenloses 15-Min Gespraech an.",
+      variantA: "Hallo! Was ist Ihre größte berufliche Herausforderung? Ich biete ein kostenloses 15-Min Gespräch an.",
       variantB: "Willkommen! Erzaehlen Sie mir Ihr Ziel fuer die naechsten 90 Tage – und ich sage Ihnen ob ich helfen kann.",
     },
     ziele: ["Kennenlerngespraech buchen", "Veraenderungswunsch qualifizieren", "Budget-Bereitschaft erkennen"],

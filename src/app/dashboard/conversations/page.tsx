@@ -235,8 +235,8 @@ export default async function ConversationsListPage({
         <div className="mb-6">
           <h1 className="text-lg font-semibold">Konversationen</h1>
           <p className="mt-1 text-xs text-[#ede8df]/50">
-            Alle Gespraeche deines Tenants ueber alle Kanaele. Klicke
-            auf einen Eintrag fuer Details und Transkript.
+            Alle Gespräche deines Tenants über alle Kanäle. Klicke
+            auf einen Eintrag für Details und Transkript.
           </p>
         </div>
 
@@ -249,15 +249,15 @@ export default async function ConversationsListPage({
             <MessageSquare className="mx-auto mb-3 h-8 w-8 text-slate-600" />
             <p className="text-sm text-[#ede8df]/60">
               {channel
-                ? `Keine ${channel === "WHATSAPP" ? "WhatsApp" : "Web"}-Gespraeche gefunden.`
-                : "Noch keine Gespraeche vorhanden."}
+                ? `Keine ${channel === "WHATSAPP" ? "WhatsApp" : "Web"}-Gespräche gefunden.`
+                : "Noch keine Gespräche vorhanden."}
             </p>
             {channel && (
               <Link
                 href="/dashboard/conversations"
                 className="mt-3 inline-block text-xs text-[#c9a84c] underline underline-offset-4 hover:text-[#d4b85c]"
               >
-                Filter zuruecksetzen
+                Filter zurücksetzen
               </Link>
             )}
           </div>
@@ -314,12 +314,12 @@ export default async function ConversationsListPage({
                   className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-slate-400 transition-colors hover:bg-white/[0.04] hover:text-white"
                 >
                   <ChevronLeft className="h-3 w-3" />
-                  Zurueck
+                  Zurück
                 </Link>
               ) : (
                 <span className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-slate-700">
                   <ChevronLeft className="h-3 w-3" />
-                  Zurueck
+                  Zurück
                 </span>
               )}
               <span className="tabular-nums">

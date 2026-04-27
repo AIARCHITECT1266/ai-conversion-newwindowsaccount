@@ -37,7 +37,7 @@ export default function GeneratorPage() {
           }
           className="inline-flex items-center gap-1 text-xs text-[#ede8df]/40 hover:text-[#c9a84c] transition-colors mb-6"
         >
-          &larr; {view === "home" ? "Zurueck zu AI Studio" : "Zurueck zur Auswahl"}
+          &larr; {view === "home" ? "Zurück zu AI Studio" : "Zurück zur Auswahl"}
         </a>
 
         {/* Header */}
@@ -45,7 +45,7 @@ export default function GeneratorPage() {
           <h1 className="text-xl font-bold text-[#ede8df]">Asset Generator</h1>
           <p className="text-sm text-[#ede8df]/40 mt-1">
             {view === "home" && "KI-Bilder generieren, bearbeiten oder im Layer-Editor kombinieren"}
-            {view === "generate" && "Beschreibe dein Bild und waehle ein KI-Modell"}
+            {view === "generate" && "Beschreibe dein Bild und wähle ein KI-Modell"}
             {view === "edit" && "Lade ein Bild hoch und passe es an"}
             {view === "editor" && "Layer-basierter Editor mit KI-Integration"}
           </p>

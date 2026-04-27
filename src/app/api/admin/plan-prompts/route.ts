@@ -28,14 +28,14 @@ export async function GET(req: NextRequest) {
 
   if (!plan || !PROMPTS[plan]) {
     return NextResponse.json(
-      { error: "Ungueltiger Plan. Erlaubt: starter, growth, professional" },
+      { error: "Ungültiger Plan. Erlaubt: starter, growth, professional" },
       { status: 400 },
     );
   }
 
   if (branch && !BRANCHES[branch]) {
     return NextResponse.json(
-      { error: `Ungueltige Branche. Erlaubt: ${Object.keys(BRANCHES).join(", ")}` },
+      { error: `Ungültige Branche. Erlaubt: ${Object.keys(BRANCHES).join(", ")}` },
       { status: 400 },
     );
   }

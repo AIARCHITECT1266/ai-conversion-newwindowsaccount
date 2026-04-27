@@ -76,7 +76,7 @@ export async function PATCH(req: NextRequest) {
   if (!parseResult.success) {
     return NextResponse.json(
       {
-        error: "Ungueltige Eingabe",
+        error: "Ungültige Eingabe",
         details: parseResult.error.flatten(),
       },
       { status: 400 }

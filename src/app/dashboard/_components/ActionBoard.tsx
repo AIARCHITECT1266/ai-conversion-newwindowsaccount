@@ -91,7 +91,7 @@ const COLUMNS: ReadonlyArray<{
   },
   {
     key: "recentlyContacted",
-    title: "Kuerzlich kontaktiert",
+    title: "Kürzlich kontaktiert",
     subtitle: "Letzte 24 Stunden",
     icon: MessageSquareDashed,
     emptyText: "Noch keine Kontakte in den letzten 24h.",
@@ -241,7 +241,7 @@ function LeadCard({
           type="button"
           disabled
           className="cursor-not-allowed rounded-md bg-[var(--gold-border)]/40 px-3 py-1 text-xs text-[var(--text-muted)] opacity-60"
-          title="Im Pilot verfuegbar"
+          title="Im Pilot verfügbar"
         >
           Als kontaktiert markieren
         </button>
@@ -337,7 +337,7 @@ export default function ActionBoard() {
         }
       } catch {
         if (!cancelled) {
-          setError("Action-Board nicht verfuegbar");
+          setError("Action-Board nicht verfügbar");
           setLoading(false);
         }
       }
@@ -352,8 +352,8 @@ export default function ActionBoard() {
   // Phase 2e: drei separate Counts statt aggregierter Total —
   // Tages-Bilanz im Header zeigt Status pro Bucket.
   const summaryLine = useMemo(() => {
-    if (loading) return "Lade naechste Schritte ...";
-    if (error || !data) return "Daten temporaer nicht verfuegbar";
+    if (loading) return "Lade nächste Schritte ...";
+    if (error || !data) return "Daten temporär nicht verfügbar";
     return null;
   }, [loading, error, data]);
 

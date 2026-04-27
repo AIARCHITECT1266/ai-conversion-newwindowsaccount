@@ -49,7 +49,7 @@ const bodySchema = z.object({
     .string()
     .min(4)
     .max(100)
-    .regex(/^ws_[A-Za-z0-9_-]+$/, "Ungueltiges Token-Format"),
+    .regex(/^ws_[A-Za-z0-9_-]+$/, "Ungültiges Token-Format"),
   message: z.string().min(1, "Nachricht fehlt").max(4000, "Nachricht zu lang"),
 });
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     rawBody = await request.json();
   } catch {
     return withCors(
-      NextResponse.json({ error: "Ungueltige Eingabe" }, { status: 400 }),
+      NextResponse.json({ error: "Ungültige Eingabe" }, { status: 400 }),
     );
   }
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return withCors(
       NextResponse.json(
         {
-          error: "Ungueltige Eingabe",
+          error: "Ungültige Eingabe",
           details: parseResult.error.flatten(),
         },
         { status: 400 },

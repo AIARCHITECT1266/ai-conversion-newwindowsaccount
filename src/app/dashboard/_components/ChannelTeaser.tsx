@@ -33,12 +33,12 @@ export default function ChannelTeaser() {
   return (
     <div
       className="rounded-2xl border border-dashed border-[var(--gold-border)] bg-[var(--surface)]/40 p-6"
-      aria-label="Bald verfuegbar — Channel-Performance"
+      aria-label="Bald verfügbar — Channel-Performance"
     >
       <div className="mb-3 flex items-center gap-2.5">
         <Hourglass className="h-4 w-4 text-[var(--gold)]/60" />
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--gold)]/70">
-          Bald verfuegbar
+          Bald verfügbar
         </p>
       </div>
 

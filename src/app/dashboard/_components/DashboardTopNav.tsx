@@ -38,7 +38,7 @@ import {
 // src/app/dashboard/clients/page.tsx bleibt im Code, ist nur
 // nicht erreichbar. Post-Demo wird der Tab wieder freigeschaltet.
 const TABS = [
-  { href: "/dashboard", label: "Uebersicht", icon: Activity, exact: true, comingSoon: false },
+  { href: "/dashboard", label: "Übersicht", icon: Activity, exact: true, comingSoon: false },
   { href: "/dashboard/conversations", label: "Konversationen", icon: MessageSquare, exact: false, comingSoon: false },
   { href: "/dashboard/crm", label: "CRM", icon: Kanban, exact: false, comingSoon: false },
   { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone, exact: false, comingSoon: false },
@@ -73,7 +73,7 @@ export function DashboardTopNav() {
               key={tab.href}
               className="inline-flex cursor-not-allowed items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-[var(--text-muted)] opacity-50"
               aria-disabled="true"
-              title="Bald verfuegbar"
+              title="Bald verfügbar"
             >
               <Icon className="h-4 w-4" aria-hidden />
               {tab.label}

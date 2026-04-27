@@ -179,7 +179,7 @@ export default function YesterdayResults() {
         }
       } catch {
         if (!cancelled) {
-          setError("Yesterday-Daten nicht verfuegbar");
+          setError("Yesterday-Daten nicht verfügbar");
           setLoading(false);
         }
       }

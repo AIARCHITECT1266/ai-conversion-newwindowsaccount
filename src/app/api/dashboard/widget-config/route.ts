@@ -42,7 +42,7 @@ function forbidIfFeatureUnavailable(
   if (!hasPlanFeature(paddlePlan, "web_widget")) {
     return NextResponse.json(
       {
-        error: "Web-Widget ist ab dem Growth-Plan verfuegbar",
+        error: "Web-Widget ist ab dem Growth-Plan verfügbar",
         code: "plan_upgrade_required",
       },
       { status: 403 },
@@ -94,7 +94,7 @@ const updateConfigSchema = z
     leadType: z.enum(["B2C", "B2B"]).optional(),
   })
   .refine((d) => isValidLogoUrl(d.logoUrl), {
-    message: "Ungueltiges logoUrl-Format",
+    message: "Ungültiges logoUrl-Format",
     path: ["logoUrl"],
   });
 
@@ -154,14 +154,14 @@ export async function PATCH(req: NextRequest) {
   try {
     rawBody = await req.json();
   } catch {
-    return NextResponse.json({ error: "Ungueltige Eingabe" }, { status: 400 });
+    return NextResponse.json({ error: "Ungültige Eingabe" }, { status: 400 });
   }
 
   const parseResult = updateConfigSchema.safeParse(rawBody);
   if (!parseResult.success) {
     return NextResponse.json(
       {
-        error: "Ungueltige Eingabe",
+        error: "Ungültige Eingabe",
         details: parseResult.error.flatten(),
       },
       { status: 400 },

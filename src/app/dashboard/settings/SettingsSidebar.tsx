@@ -140,7 +140,7 @@ export function SettingsSidebar() {
         {/* "Bald verfuegbar" */}
         <div className="mt-6 px-4 sm:px-0">
           <p className="mb-2 text-[10px] uppercase tracking-wider text-slate-600">
-            Bald verfuegbar
+            Bald verfügbar
           </p>
           <div className="flex flex-col gap-1">
             {COMING_SOON_ITEMS.map((item) => {
@@ -150,7 +150,7 @@ export function SettingsSidebar() {
                   key={item.label}
                   className="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-600"
                   aria-disabled="true"
-                  title="Bald verfuegbar"
+                  title="Bald verfügbar"
                 >
                   <Icon className="h-4 w-4 shrink-0 opacity-40" />
                   <span className="opacity-60">{item.label}</span>

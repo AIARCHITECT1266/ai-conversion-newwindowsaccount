@@ -79,7 +79,7 @@ export default function TopSignals() {
         }
       } catch {
         if (!cancelled) {
-          setError("Signale nicht verfuegbar");
+          setError("Signale nicht verfügbar");
           setLoading(false);
         }
       }

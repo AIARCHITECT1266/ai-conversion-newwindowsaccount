@@ -127,7 +127,7 @@ export default function SettingsOverviewPage() {
 
       {/* "Bald verfuegbar"-Sektion */}
       <h2 className="mb-3 mt-10 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-        Bald verfuegbar
+        Bald verfügbar
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">
         {COMING_SOON_SETTINGS.map((setting) => (
@@ -165,7 +165,7 @@ function ComingSoonCard({ setting }: { setting: ComingSoonSetting }) {
     <div
       className="flex cursor-not-allowed flex-col rounded-2xl border border-white/[0.04] bg-[#0e0e1a]/60 p-5"
       aria-disabled="true"
-      title="Bald verfuegbar"
+      title="Bald verfügbar"
     >
       <div className="mb-3 flex items-center justify-between">
         <Icon className="h-5 w-5 text-slate-600" />

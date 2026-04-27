@@ -207,7 +207,7 @@ export default function WidgetSettingsPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setMessage({ type: "error", text: "Zwischenablage nicht verfuegbar" });
+      setMessage({ type: "error", text: "Zwischenablage nicht verfügbar" });
     }
   }
 

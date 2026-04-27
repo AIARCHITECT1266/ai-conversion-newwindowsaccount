@@ -138,7 +138,7 @@ export default function AiModulPage() {
         {/* Zurueck-Link */}
         <a href="/dashboard/assets"
            className="inline-flex items-center gap-1 text-xs text-[#ede8df]/40 hover:text-[#c9a84c] transition-colors mb-6">
-          &larr; Zurueck zu AI Studio
+          &larr; Zurück zu AI Studio
         </a>
 
         {/* Header */}

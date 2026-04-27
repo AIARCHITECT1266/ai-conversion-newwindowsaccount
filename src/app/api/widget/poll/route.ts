@@ -45,7 +45,7 @@ const tokenSchema = z
   .string()
   .min(4)
   .max(100)
-  .regex(/^ws_[A-Za-z0-9_-]+$/, "Ungueltiges Token-Format");
+  .regex(/^ws_[A-Za-z0-9_-]+$/, "Ungültiges Token-Format");
 
 // since kommt als String aus searchParams, wird manuell zu Number konvertiert
 const sinceSchema = z
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!tokenResult.success) {
     return withCors(
       NextResponse.json(
-        { error: "Ungueltige Eingabe", details: tokenResult.error.flatten() },
+        { error: "Ungültige Eingabe", details: tokenResult.error.flatten() },
         { status: 400 },
       ),
     );
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!sinceResult.success) {
       return withCors(
         NextResponse.json(
-          { error: "Ungueltiges since-Parameter" },
+          { error: "Ungültiges since-Parameter" },
           { status: 400 },
         ),
       );

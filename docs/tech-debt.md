@@ -75,6 +75,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Doc-Master-Handoff-Pricing-Outdated | Naechstes Master-Handoff-Update (Sonntag-Abend / Montag) | "TD-Doc-Master-Handoff-Pricing-Outdated" |
 | TD-Post-Demo-Konversionsrate-Tooltip-und-Customer-Quote | Pilot-User will KPI-Klarheit weiter schaerfen ODER CRM-Sync liefert CUSTOMER-Stage-Updates | "TD-Post-Demo-Konversionsrate-Tooltip-und-Customer-Quote" |
 | TD-Pilot-Followup-Mechanismus-Rewrite | Pilot-Phase mit erstem aktiven Tenant | "TD-Pilot-Followup-Mechanismus-Rewrite" |
+| TD-Pilot-Bot-Prompts-Umlaut-Cleanup | Pilot-Phase, vor erstem aktiven Tenant ODER Bot-Output-Konsistenz irritiert Pilot-Kunde | "TD-Pilot-Bot-Prompts-Umlaut-Cleanup" |
 
 ### 🟢 NICE-TO-HAVE
 
@@ -3614,3 +3615,65 @@ erhalten fuer Pilot-Phase-Refactor-Reuse. Demo-Conversation
 "Amir" auf MOD-B2C: Phantom-Messages muessen vor Demo
 manuell aus DB geloescht werden (separates Pre-Demo-Item,
 nicht Teil dieses Cron-Disable-Commits).
+
+---
+
+## Phase Umlaut-Consistency-Pass (27.04.2026)
+
+### TD-Pilot-Bot-Prompts-Umlaut-Cleanup
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED
+
+**Trigger:** Pilot-Phase, vor erstem aktiven Tenant ODER wenn
+Bot-Output-Konsistenz Pilot-Kunde irritiert.
+
+**Aufwand:** 2-3h (6 Files + Bot-Output-Validierung)
+
+**Anforderungen:**
+
+- `src/modules/bot/system-prompts/{starter,growth,
+  professional,base}.ts` mit deutschen Umlauten saeubern
+  (aktuell ASCII-Ersatz: ae/oe/ue/ss in dutzenden Beispiel-
+  Dialogen, "Schoen dass Sie sich melden", "groesste
+  Herausforderung", "Gespraech besprechen", "Veraenderung",
+  "Moeglichkeiten", "Gespraechsphasen" etc.)
+- `src/modules/bot/scoring/{mod-b2c,mod-b2b}.ts` dito
+  (Scoring-Prompt-Anweisungen mit "Gespraeche", "fuer",
+  "Erklaerung", "naechste Geschaeftsfuehrung")
+- Nach Aenderung Live-Mara-Test-Suite laufen lassen,
+  Output-Diff zu Vorher-Stand pruefen
+- Style-Drift-Risiko: Bot koennte ASCII-Style imitieren wenn
+  System-Prompt mischt — saubere Bereinigung erzeugt
+  konsistenten ä/ö/ü-Output
+
+**Audit-Referenz:** 27.04.2026 (Umlaut-Audit-Phase)
+identifizierte Bot-System-Prompts als 🟡 BORDERLINE — sie
+werden NICHT direkt an User gesendet, aber die Beispiel-
+Dialoge im System-Prompt beeinflussen Claude-Output-Stil
+massiv. Wenn der System-Prompt "Schoen" verwendet, koennte
+Claude "Schoen" statt "Schön" antworten — dann landen die
+ASCII-Umlaute beim User. Saubere Bereinigung erfordert
+Bot-Output-Validation, daher eigene Phase.
+
+**Sonstige Audit-Lueckenfunde am 27.04.2026:** Beim Umlaut-
+Consistency-Pass wurden vier zusaetzliche User-facing Treffer
+identifiziert, die nicht in der urspruenglichen Audit-Liste
+waren, aber als Konsistenz-Edits in derselben Datei mit
+saniert wurden:
+- `_components/HottestLeads.tsx:210` "Heisseste Leads jetzt"
+  (h2-Header)
+- `_components/ActionBoard.tsx:355` "Lade naechste Schritte ..."
+  (Loading-State)
+- `assets/generator/page.tsx:48` "waehle ein KI-Modell" (UI-Text)
+- `conversations/page.tsx:260` "Filter zuruecksetzen" (Link-Text)
+
+Plus weitere im Audit nicht erfasste, NICHT-angefasste Treffer:
+- 4 weitere Bot-Templates in
+  `dashboard/campaigns/templates/route.ts:75,76,80,82`
+  (defaultBriefing/openers/abVarianten/ziele) mit
+  "Veraenderung", "Erzaehlen", "moecht", "beschaeftigt",
+  "naechsten" — gehoert zur TD-Pilot-Bot-Prompts-Phase
+- Drei "spaeter" in widget-Routes Rate-Limit-Errors
+  (`api/widget/{session,config}/route.ts`)
+  ("Zu viele Anfragen - bitte spaeter erneut versuchen") —
+  technisch User-facing aber nicht im Demo-Flow sichtbar

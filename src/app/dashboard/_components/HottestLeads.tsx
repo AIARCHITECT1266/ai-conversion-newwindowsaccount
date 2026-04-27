@@ -107,7 +107,7 @@ function HottestLeadCard({ lead }: { lead: HottestLead }) {
         </p>
       ) : (
         <p className="mt-3 text-xs italic text-[var(--text-muted)]/50">
-          (Kein Top-Signal verfuegbar)
+          (Kein Top-Signal verfügbar)
         </p>
       )}
 
@@ -125,7 +125,7 @@ function HottestLeadCard({ lead }: { lead: HottestLead }) {
                 aria-hidden
               />
               <span className="text-[var(--text-muted)]">
-                Keine Konversation verknuepft
+                Keine Konversation verknüpft
               </span>
             </>
           )}
@@ -153,7 +153,7 @@ function HottestLeadCard({ lead }: { lead: HottestLead }) {
   return (
     <li
       className="list-none rounded-xl border border-[var(--gold-border)] bg-white/[0.02] p-4 opacity-80"
-      title="Keine Konversation verknuepft"
+      title="Keine Konversation verknüpft"
     >
       {cardInner}
     </li>
@@ -180,7 +180,7 @@ export default function HottestLeads() {
         }
       } catch {
         if (!cancelled) {
-          setError("Heisseste Leads nicht verfuegbar");
+          setError("Heißeste Leads nicht verfügbar");
           setLoading(false);
         }
       }
@@ -207,7 +207,7 @@ export default function HottestLeads() {
         <div>
           <h2 className="flex items-center gap-2 font-serif text-2xl text-[var(--text)]">
             <Flame className="h-5 w-5 text-[var(--gold)]" aria-hidden />
-            Heisseste Leads jetzt
+            Heißeste Leads jetzt
           </h2>
           <p className="mt-0.5 text-sm text-[var(--text-muted)]">
             {leads.length === 0

@@ -27,7 +27,7 @@ export default function AppointmentsComingSoonPage() {
         <div className="mb-4 flex items-center gap-2.5">
           <Hourglass className="h-4 w-4 text-[var(--gold)]/60" />
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--gold)]/70">
-            Bald verfuegbar
+            Bald verfügbar
           </p>
         </div>
 
@@ -41,7 +41,7 @@ export default function AppointmentsComingSoonPage() {
         {/* Wert-Bullets */}
         <div className="mb-8 space-y-3 text-base text-[var(--text)]">
           <p>
-            Mara bucht Termine direkt im Gespraech.
+            Mara bucht Termine direkt im Gespräch.
             <br />
             <span className="text-[var(--text-muted)]">
               Du siehst sie hier im Kalender.

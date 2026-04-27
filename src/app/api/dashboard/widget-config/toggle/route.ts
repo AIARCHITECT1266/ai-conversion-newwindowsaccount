@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   if (!hasPlanFeature(tenant.paddlePlan, "web_widget")) {
     return NextResponse.json(
       {
-        error: "Web-Widget ist ab dem Growth-Plan verfuegbar",
+        error: "Web-Widget ist ab dem Growth-Plan verfügbar",
         code: "plan_upgrade_required",
       },
       { status: 403 },
@@ -50,14 +50,14 @@ export async function POST(req: NextRequest) {
   try {
     rawBody = await req.json();
   } catch {
-    return NextResponse.json({ error: "Ungueltige Eingabe" }, { status: 400 });
+    return NextResponse.json({ error: "Ungültige Eingabe" }, { status: 400 });
   }
 
   const parseResult = toggleSchema.safeParse(rawBody);
   if (!parseResult.success) {
     return NextResponse.json(
       {
-        error: "Ungueltige Eingabe",
+        error: "Ungültige Eingabe",
         details: parseResult.error.flatten(),
       },
       { status: 400 },

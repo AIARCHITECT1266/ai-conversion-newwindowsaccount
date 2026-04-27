@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   if (!hasPlanFeature(tenant.paddlePlan, "web_widget")) {
     return NextResponse.json(
       {
-        error: "Web-Widget ist ab dem Growth-Plan verfuegbar",
+        error: "Web-Widget ist ab dem Growth-Plan verfügbar",
         code: "plan_upgrade_required",
       },
       { status: 403 },

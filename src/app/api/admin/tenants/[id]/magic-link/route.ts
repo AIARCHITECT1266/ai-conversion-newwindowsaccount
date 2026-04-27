@@ -52,7 +52,7 @@ export async function POST(
     const { id } = await params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
-      return NextResponse.json({ error: "Ungueltige Tenant-ID" }, { status: 400 });
+      return NextResponse.json({ error: "Ungültige Tenant-ID" }, { status: 400 });
     }
 
     // Body parsen (leer oder optional { purpose }). Bei invalidem
@@ -66,7 +66,7 @@ export async function POST(
         const parsed = RequestBodySchema.safeParse(rawBody ?? {});
         if (!parsed.success) {
           return NextResponse.json(
-            { error: "Ungueltige Eingabe", details: parsed.error.flatten() },
+            { error: "Ungültige Eingabe", details: parsed.error.flatten() },
             { status: 400 }
           );
         }

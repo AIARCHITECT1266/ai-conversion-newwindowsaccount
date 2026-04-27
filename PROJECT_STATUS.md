@@ -1,8 +1,63 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Archive-Followup-Phantom-Scripts committed (Cleanup erfolgreich abgeschlossen, 168 Phantom-Messages aus 4 Tenants entfernt, Skripte archiviert)
-**Letzter Commit:** a3e42f4 (Archive-Followup-Phantom-Scripts) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Umlaut-Consistency-Pass committed (62 String-Edits in 22 Files, ASCII-Ersatz → ä/ö/ü/ß), naechster Schritt: Production-Verifikation
+**Letzter Commit:** PENDING (Umlaut-Consistency-Pass) — Vercel-Deploy folgt nach Push
+
+---
+
+## Phase Umlaut-Consistency-Pass (27.04.2026)
+
+Pre-Demo-Polish: User-facing Strings mit ASCII-Ersatz
+(ae/oe/ue/ss) auf korrekte deutsche Umlaute (ä/ö/ü/ß)
+umgestellt. Vorausgegangen: Umlaut-Audit-Phase am
+selben Tag (58 Treffer in 22 Files identifiziert + 4
+Audit-Luecken-Funde wahrend Implementation).
+
+**Aenderung:** 62 punktuelle String-Edits in 22 Files
+(58 spec'd + 4 Konsistenz-Edits binnen derselben Files):
+- 13 Treffer in 9 Dashboard-Components
+  (DashboardTopNav, KpiCards, ActionBoard, YesterdayResults,
+  HottestLeads, ChannelTeaser, ConversationAnalyticsTeaser,
+  TrendChart, TopSignals)
+- 14 Treffer in 8 Dashboard-Pages (page, conversations,
+  appointments, assets/generator, assets/ai-modul, settings,
+  SettingsSidebar, settings/widget, settings/scoring)
+- 18 Treffer in 11 API-Routes (widget/, widget-config/,
+  admin/, settings/scoring, paddle/webhook, whatsapp/webhook)
+- 3 Treffer in lib + Default-Templates (test-mode.ts,
+  campaigns/templates/route.ts)
+- 4 Konsistenz-Edits binnen Files
+  (HottestLeads:210 "Heißeste Leads jetzt",
+  ActionBoard:355 "Lade nächste Schritte ...",
+  generator:48 "wähle ein KI-Modell",
+  conversations:260 "Filter zurücksetzen")
+
+**Kein Bot-System-Prompt angefasst:** Borderline-Kategorie
+laut Audit (System-Prompts werden nicht direkt an User
+gesendet, beeinflussen aber Claude-Output-Stil). Eigene
+Pilot-Phase via TD-Pilot-Bot-Prompts-Umlaut-Cleanup.
+
+**Inkonsistenz-Auflösung:** API-Routes hatten gemischt
+"Ungültige" (mit Umlaut) und "Ungueltige" (ohne) — alle
+jetzt einheitlich "Ungültige …".
+
+**Build-Verifikation:** `npx next build` clean (zwei Builds:
+einmal nach Initial-Edits, einmal nach 4 Konsistenz-Edits).
+
+**Tenant-Isolation:** Reine String-Aenderungen. Keine Logik-
+Aenderungen, keine DB-Touches, keine WHERE-Clauses.
+Unveraendert.
+
+**Tech-Debt-Aufnahme:** TD-Pilot-Bot-Prompts-Umlaut-Cleanup
+als 🟡 SHOULD-FIX-IF-TRIGGERED in `docs/tech-debt.md`. Inkl.
+Doku der Audit-Lueckenfunde (4 weitere Bot-Templates in
+campaigns/templates/route.ts und 3 "spaeter"-Treffer in
+widget-Rate-Limit-Errors), die NICHT angefasst wurden.
+
+---
+
+## Phase Archive-Followup-Phantom-Scripts (27.04.2026)
 
 ---
 

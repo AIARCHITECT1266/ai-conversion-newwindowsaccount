@@ -143,7 +143,7 @@ export default function TrendChart() {
         }
       } catch {
         if (!cancelled) {
-          setError("Trend-Daten nicht verfuegbar");
+          setError("Trend-Daten nicht verfügbar");
           setLoading(false);
         }
       }

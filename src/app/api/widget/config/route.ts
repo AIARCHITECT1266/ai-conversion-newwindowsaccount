@@ -45,7 +45,7 @@ const keySchema = z
   .string()
   .min(4)
   .max(100)
-  .regex(/^pub_[A-Za-z0-9_-]+$/, "Ungueltiges Key-Format");
+  .regex(/^pub_[A-Za-z0-9_-]+$/, "Ungültiges Key-Format");
 
 // ---------- Hilfsfunktionen ----------
 
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return withCors(
       NextResponse.json(
         {
-          error: "Ungueltige Eingabe",
+          error: "Ungültige Eingabe",
           details: parseResult.error.flatten(),
         },
         { status: 400 },

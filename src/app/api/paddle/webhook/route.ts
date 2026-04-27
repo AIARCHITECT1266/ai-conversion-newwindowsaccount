@@ -94,15 +94,15 @@ export async function POST(req: NextRequest) {
 
   // 3. Signatur-Validierung (HMAC-SHA256)
   if (!verifySignature(rawBody, signatureHeader, webhookSecret)) {
-    console.error("[Paddle Webhook] Signatur ungueltig");
-    return NextResponse.json({ error: "Ungueltige Signatur" }, { status: 400 });
+    console.error("[Paddle Webhook] Signatur ungültig");
+    return NextResponse.json({ error: "Ungültige Signatur" }, { status: 400 });
   }
 
   let event: PaddleEvent;
   try {
     event = JSON.parse(rawBody);
   } catch {
-    return NextResponse.json({ error: "Ungueltiger JSON-Body" }, { status: 400 });
+    return NextResponse.json({ error: "Ungültiger JSON-Body" }, { status: 400 });
   }
 
   try {

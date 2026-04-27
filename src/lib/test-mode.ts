@@ -85,7 +85,7 @@ export async function sendTestMessage(
   // Anthropic-Call
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return "Der Bot ist aktuell nicht verfuegbar. Bitte versuche es spaeter.";
+    return "Der Bot ist aktuell nicht verfügbar. Bitte versuche es später.";
   }
 
   try {
@@ -117,6 +117,6 @@ export async function sendTestMessage(
       tenantId,
       error: error instanceof Error ? error.message : "Unbekannt",
     });
-    return "Der Bot ist aktuell nicht verfuegbar. Bitte versuche es spaeter.";
+    return "Der Bot ist aktuell nicht verfügbar. Bitte versuche es später.";
   }
 }

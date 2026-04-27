@@ -447,7 +447,7 @@ export default function TenantDashboard() {
                 Page-Section selbst. */}
             <div className="mb-6 flex items-center justify-between">
               <h1 className="text-2xl font-semibold text-[var(--text)]">
-                Uebersicht
+                Übersicht
               </h1>
               <LivePulse />
             </div>
@@ -511,7 +511,7 @@ export default function TenantDashboard() {
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <Phone className="h-4 w-4 text-[#c9a84c]/60" />
-                    <h2 className="text-sm font-semibold tracking-wide">Letzte Gespraeche</h2>
+                    <h2 className="text-sm font-semibold tracking-wide">Letzte Gespräche</h2>
                   </div>
                   <span className="text-[11px] text-slate-600 uppercase tracking-wider">Live</span>
                 </div>
@@ -519,7 +519,7 @@ export default function TenantDashboard() {
                   {conversations.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 text-center py-6">
                       <p className="text-slate-500 text-sm">
-                        Noch keine Gespraeche – starte jetzt deine erste Kampagne.
+                        Noch keine Gespräche – starte jetzt deine erste Kampagne.
                       </p>
                       <a href="/dashboard/campaigns"
                          className="text-xs text-[#c9a84c] underline underline-offset-4 hover:text-[#d4b85c]">
