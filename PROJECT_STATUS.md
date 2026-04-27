@@ -2,7 +2,7 @@
 
 **Letzte Aktualisierung:** 2026-04-27
 **Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Umlaut-Consistency-Pass committed (62 String-Edits in 22 Files, ASCII-Ersatz → ä/ö/ü/ß), naechster Schritt: Production-Verifikation
-**Letzter Commit:** PENDING (Umlaut-Consistency-Pass) — Vercel-Deploy folgt nach Push
+**Letzter Commit:** 4619f1b (Umlaut-Consistency-Pass + .next-Cleanup) — Vercel-Deploy folgt nach Push
 
 ---
 
