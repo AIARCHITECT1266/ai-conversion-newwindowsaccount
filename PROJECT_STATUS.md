@@ -1,8 +1,71 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Inventory mit env-Fix abgeschlossen (Inventur erfolgreich gegen Production: 57 Leads, 147 Phantom-Messages ueber 4 Tenants), naechster Schritt: Cleanup-Phase 2 designen
-**Letzter Commit:** e0855fc (Followup-Phantom-Inventory env-Fix + Prod-Inventur) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Cleanup-Skript committed (transaction-safe, dry-run-default, staged), naechster Schritt: User fuehrt Stages 1-5 manuell aus (dry-run + commit pro Tenant + Final-Verifikation)
+**Letzter Commit:** PENDING (Followup-Phantom-Cleanup-Skript) — Vercel-Deploy folgt nach Push
+
+---
+
+## Phase Followup-Phantom-Cleanup-Skript (27.04.2026)
+
+Phase 2 von 3 im Followup-Phantom-Cleanup-Plan. Vorausgegangen:
+Inventur-Skript (Phase 1, Commit e0855fc) bestaetigt 147 Phantom-
+Messages ueber 4 Tenants; Cron entfernt aus vercel.json
+(Commit f371b76).
+
+**Aenderung:** Neues Cleanup-Skript
+`src/scripts/cleanup-followup-phantoms.ts` — transaction-safe
+Hard-Delete mit Default-DRY-RUN, ENV-Trigger `CLEANUP_COMMIT=true`
+fuer echten DELETE, optional `--tenant=<slug>` Filter fuer
+staged Cleanup.
+
+**Skript-Architektur:**
+- ENV-Loading: `.env.production.local` mit `override: true`
+  (analog Inventur)
+- Host-Preview ohne Credentials (Regex `@([^:/?]+)`)
+- CLI-Arg `--tenant=<slug>` mit Slug-Format-Validierung
+  (a-z0-9-only, verhindert SQL/argv-Injection)
+- Pre-Count via `$queryRaw` mit Identifizierungs-Strategie
+- `$transaction` mit `Serializable`-Isolation, Timeout 60s
+- ID-Snapshot innerhalb TX, dann entweder DRY_RUN_ABORT-Throw
+  (sauberer Rollback) ODER `deleteMany` mit Count-Mismatch-Check
+- Post-Verify ausserhalb TX (nur bei COMMIT): erneuter Count
+  muss 0 sein, sonst exit 1
+
+**Lead-Marker bewusst NICHT zurueckgesetzt:** `lead.followUpCount`
+und `lead.lastFollowUpAt` bleiben unveraendert — forensische
+Spur, dass diese Leads im Cron-Zeitraum 13.04.-26.04. erfasst
+wurden. Pilot-Phase (TD-Pilot-Followup-Mechanismus-Rewrite)
+entscheidet ueber semantische Neudefinition.
+
+**Build-Verifikation:** `npx next build` clean.
+
+**Tenant-Isolation:** Identifizierungs-Query joint via
+`leads.tenantId`. Mit `--tenant=<slug>`-Filter: `WHERE t.slug = ...`
+garantiert Single-Tenant-Scope. Ohne Filter: cleanup ueber
+alle 4 betroffenen Tenants, jede Message via conversationId
+einem Lead und damit einem Tenant zugeordnet — kein
+Cross-Tenant-Cascade.
+
+**Naechste Schritte (manuell durch User):**
+- Stage 1: `npx tsx src/scripts/cleanup-followup-phantoms.ts
+  --tenant=mod-education-demo-b2c` → erwartet "Plan: 63 (DRY-RUN)"
+- Stage 2: `CLEANUP_COMMIT=true` setzen + Stage-1-Befehl wiederholen
+  → erwartet "Deleted: 63" + "Post-Cleanup-Count: 0", visuelle
+  Verifikation auf Amir-Conversation
+- Stage 3: ohne `CLEANUP_COMMIT` und ohne `--tenant` → erwartet
+  "Plan: 84 (DRY-RUN)"
+- Stage 4: mit `CLEANUP_COMMIT=true` → erwartet "Deleted: 84"
+- Stage 5: `npx tsx src/scripts/inventory-followup-phantoms.ts`
+  → erwartet "(keine Eintraege)" und strict_count=0
+
+**Skript-Lifecycle:** Diagnostisch, nicht wiederholbar. Nach
+erfolgreicher Stage 5 zu archivieren in `src/scripts/_archived/`
+(zusammen mit Inventur-Skript).
+
+---
+
+## Phase Followup-Phantom-Inventory (27.04.2026)
 
 ---
 
