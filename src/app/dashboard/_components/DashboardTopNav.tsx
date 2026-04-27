@@ -41,8 +41,17 @@ const TABS = [
   { href: "/dashboard", label: "Übersicht", icon: Activity, exact: true, comingSoon: false },
   { href: "/dashboard/conversations", label: "Konversationen", icon: MessageSquare, exact: false, comingSoon: false },
   { href: "/dashboard/crm", label: "CRM", icon: Kanban, exact: false, comingSoon: false },
-  { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone, exact: false, comingSoon: false },
-  { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send, exact: false, comingSoon: false },
+  // Pre-Demo (29.04.): Kampagnen + Broadcasts auf BALD gesetzt.
+  // Grund Kampagnen: Branchen-Templates (Immobilien, Handwerk,
+  // Coaching, Agentur, E-Commerce) lenken vom Bildungsträger-
+  // Demo-Frame ab.
+  // Grund Broadcasts: kein Sender-Worker → "Senden"-Klick erzeugt
+  // nur PENDING-DB-Row, würde Phantom-Versand-Eindruck erzeugen.
+  // Post-Demo: comingSoon zurück auf false; Reaktivierung via
+  // Revert dieses Commits. Siehe TD-Pre-Demo-Campaigns-Broadcasts-
+  // Hide.
+  { href: "/dashboard/campaigns", label: "Kampagnen", icon: Megaphone, exact: false, comingSoon: true },
+  { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Send, exact: false, comingSoon: true },
   // Termine-Tab Phase 2e: Coming-Soon, Pattern analog Clients-Tab.
   // Calendly/Cal.com/Microsoft-Bookings-Integration kommt im
   // Pilot — siehe TD-Pilot-Calendly-Integration.

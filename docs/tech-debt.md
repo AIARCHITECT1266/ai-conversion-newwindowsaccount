@@ -37,6 +37,8 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 
 | ID | Trigger | Body-Sektion |
 |---|---|---|
+| TD-Pre-Demo-Campaigns-Broadcasts-Hide | Demo abgeschlossen, Pilot-Scope geklaert | "TD-Pre-Demo-Campaigns-Broadcasts-Hide" |
+| TD-Pilot-Broadcast-Sender | MOD-Pilot Sender-Worker noetig | "TD-Pilot-Broadcast-Sender" |
 | TD-Post-Demo-Clients-2 | Nach Datenmodell-Fix (Clients-3) | "TD-Post-Demo-Clients-2" |
 | TD-Post-Demo-Clients-3 | Lead↔Client-Inkonsistenz blockt erste Pilot-Nutzung | "TD-Post-Demo-Clients-3" |
 | TD-Post-Demo-Timezone | DST-Wechsel oder internationaler Pilot-Tenant | "TD-Post-Demo-Timezone" |
@@ -3677,3 +3679,73 @@ Plus weitere im Audit nicht erfasste, NICHT-angefasste Treffer:
   (`api/widget/{session,config}/route.ts`)
   ("Zu viele Anfragen - bitte spaeter erneut versuchen") —
   technisch User-facing aber nicht im Demo-Flow sichtbar
+
+---
+
+### TD-Pre-Demo-Campaigns-Broadcasts-Hide
+
+- **Status:** 🟢 Pre-Demo-Mitigation aktiv (seit 27.04.2026 abends)
+- **Trigger zur Schließung:** Demo abgeschlossen, Pilot-Scope geklärt
+- **Reaktivierungs-Pfad:**
+  1. Broadcasts: Sender-Worker implementieren
+     (TD-Pilot-Broadcast-Sender) ODER Branding als
+     "Vorlagen-Verwaltung" ohne Versand-Suggestion
+  2. Kampagnen: Bildungsträger-Template hinzufügen +
+     Branchen-Templates konditional pro Tenant einblenden
+  3. `comingSoon: false` in
+     `src/app/dashboard/_components/DashboardTopNav.tsx` Z.50-51
+     (Patch via `git revert` des Commits)
+- **Aufwand Reaktivierung:** 4-8h (Broadcasts-Sender +
+  Kampagnen-Tenant-Templates), reine Tab-Reaktivierung ohne
+  Backend-Change ~5 min
+- **Verbundene TDs:** TD-Pilot-Broadcast-Sender (siehe unten)
+- **Kontext:**
+  - Audit am 27.04.2026 identifizierte Phantom-Versand bei
+    Broadcasts (kein Cron, kein Worker — POST erzeugt nur
+    PENDING-Row, Status bleibt für immer auf PENDING)
+  - Audit identifizierte Branchen-Frame-Bruch bei Kampagnen:
+    hardcoded Templates fuer Immobilien/Handwerk/Coaching/
+    Agentur/E-Commerce in `dashboard/campaigns/page.tsx:40-81`
+    — kein Bildungstraeger-Template
+  - Patch wirkt GLOBAL (nicht pro Tenant), da `comingSoon`
+    Source-Code-Konstante. Fuer Demo akzeptabel
+  - Direkt-URLs `/dashboard/campaigns` und `/dashboard/broadcasts`
+    bleiben technisch erreichbar (Page-Components rendern
+    weiterhin), Risiko fuer MOD-Demo: niedrig (Founder steuert
+    Demo live, kein MOD-Direkt-URL-Tippen erwartet)
+
+---
+
+### TD-Pilot-Broadcast-Sender
+
+- **Status:** 🟡 SHOULD-FIX-IF-TRIGGERED
+- **Trigger:** MOD-Pilot benoetigt aktive Broadcast-Funktionalitaet
+- **Problem:** Aktueller Stand (27.04.2026):
+  - `POST /api/dashboard/broadcasts` erzeugt `Broadcast`-Row
+    mit `status: PENDING` und `BroadcastRecipient`-Rows
+    (`src/app/api/dashboard/broadcasts/route.ts:77-91`)
+  - **KEIN Cron in `vercel.json`** fuer Broadcast-Versand
+  - **KEIN Worker** der `PENDING` → `SENDING` → `COMPLETED`
+    transitioned (Grep `broadcast.update` in non-generated
+    Code: 0 Treffer)
+  - UI zeigt "Bereit"-Badge nach POST → suggeriert real
+    versendete Nachrichten, was nicht stimmt
+- **Notwendige Implementation:**
+  1. `vercel.json`-Cron fuer `/api/cron/broadcast-dispatch`
+     (Schedule z.B. `*/5 * * * *`)
+  2. Cron-Handler liest `PENDING`-Broadcasts, setzt
+     `SENDING`, iteriert Recipients, ruft
+     `whatsapp.sendMessage` per Tenant-`whatsappPhoneId`,
+     trackt `totalSent`/`totalFailed`, setzt
+     `BroadcastRecipient.status` (`sent`/`failed`),
+     final-state `COMPLETED`
+  3. Meta-24h-Fenster-Check vor Send (Template-Pflicht
+     ausserhalb Conversation-Window)
+  4. Opt-In/Consent-Check pro Recipient
+     (`Lead.conversation.consentGiven`)
+  5. Rate-Limit-Respekt (Meta-Quotas, Tenant-Plan-Limits)
+- **Aufwand:** 4-6h fuer MVP-Sender ohne Template-Mgmt,
+  +2h fuer Template-Pflicht, +1h fuer Audit-Logging
+- **Verbundene TDs:** TD-Pre-Demo-Campaigns-Broadcasts-Hide
+  (Reaktivierung dieser TD impliziert Schliessung dieser TD
+  oder explizites Re-Branding der UI)

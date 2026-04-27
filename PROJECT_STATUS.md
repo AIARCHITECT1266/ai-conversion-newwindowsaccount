@@ -1,8 +1,20 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Umlaut-Consistency-Pass committed (62 String-Edits in 22 Files, ASCII-Ersatz → ä/ö/ü/ß), naechster Schritt: Production-Verifikation
-**Letzter Commit:** 4619f1b (Umlaut-Consistency-Pass + .next-Cleanup) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Pre-Demo-Campaigns-Broadcasts-Hide committed (Reiter Kampagnen + Broadcasts auf BALD), naechster Schritt: Production-Verifikation
+**Letzter Commit:** wird im Push gesetzt (siehe Commit-Hash unten) — Vercel-Deploy folgt nach Push
+
+---
+
+### Pre-Demo-Campaigns-Broadcasts-Hide (27.04.2026 abends)
+- DashboardTopNav.tsx: comingSoon: true für Kampagnen + Broadcasts
+- Begründung: Audit hat Phantom-Versand bei Broadcasts und
+  Branchen-Frame-Bruch bei Kampagnen identifiziert
+- Reversibilität: git revert <commit-hash> + Redeploy ~3 min
+- Post-Demo-Reaktivierung geplant nach Pilot-Setup
+- Tenant-Scope: GLOBAL (alle Tenants sehen BALD) — fuer Demo akzeptabel
+- Build-Verifikation: `npx next build` clean
+- Tenant-Isolation: unveraendert (reine UI-Konfig im Source-Code-Array)
 
 ---
 
