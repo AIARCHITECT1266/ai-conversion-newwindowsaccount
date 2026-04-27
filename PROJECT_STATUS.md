@@ -1,8 +1,43 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Pre-Demo-Campaigns-Broadcasts-Hide committed (Reiter Kampagnen + Broadcasts auf BALD), naechster Schritt: Production-Verifikation
-**Letzter Commit:** wird im Push gesetzt (siehe Commit-Hash unten) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Pre-Demo-DB-Wipe-MOD-B2C abgeschlossen (378 Eintraege geloescht), naechster Schritt: Live-Mara-Test-Conversations heute Abend
+**Letzter Commit:** 21e3bbf (Pre-Demo-Campaigns-Broadcasts-Hide); Wipe-Skript-Commit folgt
+
+---
+
+### Pre-Demo-DB-Wipe-MOD-B2C (27.04.2026 abends, 22:08 MESZ)
+
+Pre-Demo-Cleanup des Test-Tenants `mod-education-demo-b2c`
+(id `cmo8yte6d000004jlergkg37w`) vor heutigen Live-Mara-
+Test-Conversations.
+
+**Skript:** `src/scripts/wipe-mod-b2c-pre-demo.ts`
+(Stage-basiert: inventur / dry-run / commit / verify;
+WIPE_COMMIT=true als zweite Bestaetigung-Schicht).
+
+**Geloescht (378 Eintraege gesamt, leaf-first in Transaction
+mit Serializable-Isolation):**
+- 312 Messages
+- 34 Conversations
+- 30 Leads
+- 2 Clients
+- 0 Broadcasts / BroadcastRecipients / Campaigns / AbTests
+
+**Nicht angefasst:**
+- Tenant-Stammdaten (id, slug, hubspotApiKey, systemPrompt,
+  paddlePlan, webWidgetConfig etc.) bleiben vollstaendig
+- Andere Tenants: 28 Leads + 72 Conversations
+  (Sanity-Pre = Sanity-Post bestaetigt)
+- AuditLog-Eintraege (forensische Spur)
+
+**Audit-Trail:** Strukturierter JSON-Log emittiert
+(action="wipe.pre_demo", tenantId, deleted-Counts) — analog
+modules/compliance/auditLog ohne AuditAction-Union zu
+erweitern (one-shot Skript).
+
+**Verify-Stage:** Alle Entity-Counts fuer MOD-B2C = 0.
+DB clean, bereit fuer Live-Mara-Tests.
 
 ---
 

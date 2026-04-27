@@ -37,6 +37,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 
 | ID | Trigger | Body-Sektion |
 |---|---|---|
+| TD-Pre-Demo-DB-Wipe | 🟢 abgeschlossen 27.04.2026 22:08 MESZ | "TD-Pre-Demo-DB-Wipe" |
 | TD-Pre-Demo-Campaigns-Broadcasts-Hide | Demo abgeschlossen, Pilot-Scope geklaert | "TD-Pre-Demo-Campaigns-Broadcasts-Hide" |
 | TD-Pilot-Broadcast-Sender | MOD-Pilot Sender-Worker noetig | "TD-Pilot-Broadcast-Sender" |
 | TD-Post-Demo-Clients-2 | Nach Datenmodell-Fix (Clients-3) | "TD-Post-Demo-Clients-2" |
@@ -3679,6 +3680,44 @@ Plus weitere im Audit nicht erfasste, NICHT-angefasste Treffer:
   (`api/widget/{session,config}/route.ts`)
   ("Zu viele Anfragen - bitte spaeter erneut versuchen") —
   technisch User-facing aber nicht im Demo-Flow sichtbar
+
+---
+
+### TD-Pre-Demo-DB-Wipe
+
+- **Status:** 🟢 Abgeschlossen (27.04.2026 22:08 MESZ)
+- **Trigger zur Schließung:** sofort nach Wipe-Commit
+- **Reaktivierungs-Pfad:** nicht noetig (Demo-Setup, kein
+  Re-Run geplant). Falls erneuter Wipe noetig (z.B. nach
+  weiteren Test-Sessions), Skript existiert noch unter
+  `src/scripts/wipe-mod-b2c-pre-demo.ts` und kann erneut mit
+  `inventur` → `dry-run` → `commit` → `verify` ausgefuehrt
+  werden. Tenant-Slug ist hardcoded — fuer andere Tenants
+  Skript kopieren und Slug anpassen.
+- **Aufwand Reaktivierung:** 0 (Skript bleibt funktional
+  liegen, kein Code-Change noetig)
+- **Hintergrund:**
+  - Vor Live-Mara-Test-Conversations am 27.04.2026 abends
+    musste der Test-Tenant `mod-education-demo-b2c`
+    (id `cmo8yte6d000004jlergkg37w`) von Alt-Test-Daten
+    bereinigt werden
+  - Pattern analog cleanup-followup-phantoms.ts vom selben
+    Vormittag (168 Phantom-Messages aus 4 Tenants)
+  - Loesch-Reihenfolge leaf-first in Serializable-Transaction:
+    BroadcastRecipients → Broadcasts → AbTests → Messages →
+    Clients → Leads → Conversations → Campaigns
+  - Sicherheits-Schichten: Tenant-Slug hardcoded, ENV-Var
+    `WIPE_COMMIT=true` zusaetzlich zur 'commit'-Stage,
+    Sanity-Check vor und nach Wipe gegen andere-Tenants-Counts
+- **Resultat (im Audit-Log persistiert via console.log JSON):**
+  ```
+  {"action":"wipe.pre_demo","tenantId":"cmo8yte6d000004jlergkg37w",
+   "details":{"tenantSlug":"mod-education-demo-b2c",
+   "deleted":{"broadcastRecipients":0,"broadcasts":0,"abTests":0,
+   "messages":312,"clients":2,"leads":30,"conversations":34,
+   "campaigns":0}}}
+  ```
+- **Verbundene TDs:** keine
 
 ---
 
