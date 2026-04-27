@@ -1,8 +1,59 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Cleanup-Skript committed (transaction-safe, dry-run-default, staged), naechster Schritt: User fuehrt Stages 1-5 manuell aus (dry-run + commit pro Tenant + Final-Verifikation)
-**Letzter Commit:** 9ed3341 (Followup-Phantom-Cleanup-Skript) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Archive-Followup-Phantom-Scripts committed (Cleanup erfolgreich abgeschlossen, 168 Phantom-Messages aus 4 Tenants entfernt, Skripte archiviert)
+**Letzter Commit:** PENDING (Archive-Followup-Phantom-Scripts) — Vercel-Deploy folgt nach Push
+
+---
+
+## Phase Archive-Followup-Phantom-Scripts (27.04.2026)
+
+Phase 3 von 3 im Followup-Phantom-Cleanup-Plan. Vorausgegangen:
+Cleanup-Skript-Phase (Commit 9ed3341), gefolgt von User-
+ausgefuehrtem Cleanup ueber alle 5 Stages — 168 Phantom-Messages
+aus 4 Tenants entfernt (MOD-B2C 63, ai-conversion-marketing 42,
+internal-admin 39, MOD-B2B 3, plus 21 zusaetzliche Treffer
+zwischen Inventur 27.04. morgens und Cleanup-Run am Mittag —
+vermutlich Cron-Trigger 27.04. 11:00 MESZ vor Vercel-Deploy
+des Cron-Disable-Commits f371b76).
+
+**Aenderung:** Beide Diagnose-Skripte verschoben nach
+`src/scripts/_archived/`:
+- `inventory-followup-phantoms.ts` → `_archived/inventory-followup-phantoms.ts`
+- `cleanup-followup-phantoms.ts` → `_archived/cleanup-followup-phantoms.ts`
+
+Status-Header in beiden Skripten erweitert um `ARCHIVED 27.04.2026`-
+Vermerk + Erfolgs-Note + Hinweis auf Re-Use als Referenz fuer
+TD-Pilot-Followup-Mechanismus-Rewrite.
+
+`git mv` (preserves history) statt manueller Loesch-und-Neu-Erstellung.
+
+**Build-Hotfix wahrend der Phase:** Move brach Import-Pfade.
+`import { PrismaClient } from "../generated/prisma/client"` (relativ
+zu `src/scripts/`) musste auf `"../../generated/prisma/client"`
+korrigiert werden (relativ zu `src/scripts/_archived/`). Beide
+Skripte angepasst.
+
+**Build-Verifikation:** `npx next build` clean.
+
+**Tenant-Isolation:** Reine File-Move-Operation. Keine Code-Logik,
+keine DB-Touches, keine API-Aenderungen. Tenant-Isolation
+unveraendert.
+
+**Tech-Debt-Status:** Keine neue Schuld.
+TD-Pilot-Followup-Mechanismus-Rewrite bleibt offen — die
+archivierten Skripte dienen dort als Referenz fuer
+Identifizierungs-Strategie.
+
+**Repo-Hygiene-Effekt:** `src/scripts/` ist um 2 Eintraege
+schlanker. `src/scripts/_archived/` ist neu, fungiert ab jetzt
+als Standard-Ablage fuer einmalige Diagnose-Skripte
+(`verify-mod-tenant-isolation.ts` und `diagnose-mod-demo-leads.ts`
+sind Kandidaten fuer den naechsten Archiv-Schub).
+
+---
+
+## Phase Followup-Phantom-Cleanup-Skript (27.04.2026)
 
 ---
 

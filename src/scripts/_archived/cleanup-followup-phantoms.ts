@@ -1,8 +1,14 @@
 // ============================================================
+// ARCHIVED 27.04.2026 — Einmal-Diagnose-Skript fuer Followup-
+// Phantom-Cleanup. Cleanup erfolgreich abgeschlossen
+// (168 Messages aus 4 Tenants entfernt). Nicht fuer
+// Wiederholung gedacht. Bei Re-Aktivierung des Followup-
+// Mechanismus (TD-Pilot-Followup-Mechanismus-Rewrite) als
+// Referenz fuer Identifizierungs-Strategie nutzbar.
+//
 // Diagnostisches Cleanup-Skript fuer einmaligen Followup-
 // Phantom-Cleanup (27.04.2026). Default dry-run, ENV
-// CLEANUP_COMMIT=true fuer echten DELETE. Nach erfolgreichem
-// Cleanup zu archivieren in src/scripts/_archived/.
+// CLEANUP_COMMIT=true fuer echten DELETE.
 //
 // Phase 2 von Followup-Phantom-Cleanup-Plan. Vorausgegangen:
 // - Inventur (Commit e0855fc) bestaetigt 147 Phantom-Messages
@@ -35,7 +41,7 @@
 // ============================================================
 
 import { config } from "dotenv";
-import { PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "../../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 config({ path: ".env.production.local", override: true });
