@@ -1,8 +1,47 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Pre-Demo-Cron-Disable committed (Followup-Cron raus aus vercel.json), naechster Schritt Production-Verifikation auf MOD-B2C + Phantom-Message-Cleanup auf Amir-Conversation
-**Letzter Commit:** f371b76 (Pre-Demo-Cron-Disable) — Vercel-Deploy folgt nach Push
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Followup-Phantom-Inventory committed (read-only Diagnose-Skript), naechster Schritt: Skript ausfuehren + Cleanup-Phase basierend auf Inventur-Ergebnis
+**Letzter Commit:** PENDING (Followup-Phantom-Inventory) — Vercel-Deploy folgt nach Push
+
+---
+
+## Phase Followup-Phantom-Inventory (27.04.2026)
+
+Phase 1 von 3 im Followup-Phantom-Cleanup-Plan. Vorausgegangen:
+Audit am Vormittag hat Identifizierungs-Strategie etabliert
+(role + followUpCount + 09:00-09:04:59 UTC + No-User-Vorlauf).
+
+**Aenderung:** Neues read-only Diagnose-Skript
+`src/scripts/inventory-followup-phantoms.ts` (analog Pattern
+`src/scripts/check-db.ts`: PrismaPg + dotenv-Load). Drei Queries:
+- Tenant-Aggregat (Phantom-Counts pro Tenant)
+- MOD-B2C-Detail (Conversation-Liste mit Lead/Message-Counts)
+- Diagnose-Sanity-Check (5min-strict vs. 30min-loose Fenster)
+
+DSGVO-safe: nur Slugs, Counts, technische cuid-IDs und
+Timestamps — keine Lead-Namen, keine Nachrichten-Inhalte
+(contentEncrypted wird nicht entschluesselt).
+
+**Build-Verifikation:** `npx next build` clean. Zwei Type-
+Hotfixes wahrend Build: printTable-Generic-Constraint von
+`Record<string, unknown>` auf `object` mit Cast (Prisma-
+Result-Types haben keine String-Index-Signature), und
+BigInt-Literal `0n` durch `Number(...)` mit Conditional
+ersetzt (TS-Target unter ES2020).
+
+**Tenant-Isolation:** Read-only Query, keine DB-Aenderungen.
+Tenant-Isolation unveraendert.
+
+**Naechster Schritt:** Skript ausfuehren via
+`npx tsx src/scripts/inventory-followup-phantoms.ts`,
+Output an ConvArch fuer Cleanup-Scope-Entscheidung
+(Phase 2: tatsaechliches Cleanup-Skript mit Transaction).
+
+**Skript-Lifecycle:** Diagnostisch, nicht wiederholbare
+Infrastruktur. Nach erfolgreichem Cleanup zu archivieren in
+`src/scripts/_archived/` (analog Pattern in
+verify-mod-tenant-isolation.ts:11).
 
 ---
 
