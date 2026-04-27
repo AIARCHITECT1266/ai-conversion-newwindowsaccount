@@ -73,6 +73,7 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Post-Demo-KPI-Range-Toggle | Pilot-Phase oder Demo-Feedback-driven nach 29.04. | "TD-Post-Demo-KPI-Range-Toggle" |
 | TD-Post-Demo-Tenant-Cache | Wenn Pool-Druck wieder steigt (parkt aus Cut 5c.2) | "TD-Post-Demo-Tenant-Cache" |
 | TD-Doc-Master-Handoff-Pricing-Outdated | Naechstes Master-Handoff-Update (Sonntag-Abend / Montag) | "TD-Doc-Master-Handoff-Pricing-Outdated" |
+| TD-Post-Demo-Konversionsrate-Tooltip-und-Customer-Quote | Pilot-User will KPI-Klarheit weiter schaerfen ODER CRM-Sync liefert CUSTOMER-Stage-Updates | "TD-Post-Demo-Konversionsrate-Tooltip-und-Customer-Quote" |
 
 ### 🟢 NICE-TO-HAVE
 
@@ -3505,3 +3506,55 @@ Wenn Julius/Fabian fragen "Was kostet das?":
 
 ROI-Argument als Anker, Loyalitaets-Story als Vertrauens-Punkt
 fuer den 30-vs-14-Tage-Edge-Case bei Webseite-Discrepancy.
+
+---
+
+## Phase KPI-Label-Precision (27.04.2026)
+
+### TD-Post-Demo-Konversionsrate-Tooltip-und-Customer-Quote
+
+**Klasse:** 🟡 SHOULD-FIX-IF-TRIGGERED
+
+**Trigger:** Wenn Pilot-User die KPI-Card-Klarheit weiter
+schaerfen will, ODER wenn CRM-Sync CUSTOMER-Stage-Updates
+liefert und eine separate Customer-Conversion-Quote sichtbar
+werden soll.
+
+**Aufwand:** 30-60 Min
+
+**Kontext:** Die Label-Umbenennung am 27.04.2026 (KpiCards.tsx:436,
+"Konversionsrate" → "Lead-Qualifizierungs-Quote") hat die
+semantische Verwirrung an der Wurzel adressiert — der Begriff
+"Konversion" wird nicht mehr fuer eine Berechnung verwendet, die
+faktisch eine Qualifizierungs-Quote ist (`(OPPORTUNITY + CUSTOMER
+aktueller Stand) / total-leads-7d`). Damit ist die Demo-Antwort
+auf "X% wovon?" praezise.
+
+Zwei tiefere Schwaechen bleiben aber bestehen:
+
+a) **Tooltip mit praeziser Definition fehlt.** Ein Info-Icon am
+   Card-Header mit dem wortwoertlichen Berechnungs-Text
+   ("Anteil der in den letzten 7 Tagen erstellten Leads, die
+   aktuell auf Stufe Opportunity oder Kunde stehen.") wuerde
+   die Definition direkt am Beruehrungspunkt verfuegbar machen,
+   statt nur in der Doku.
+
+b) **CUSTOMER-Stage ist mit OPPORTUNITY in einer Quote
+   zusammengefasst.** Eine separate "Customer-Conversion-Quote"
+   (`CUSTOMER / total-leads-7d`) waere semantisch sauberer und
+   wuerde dem klassischen Sales-Funnel-Vokabular gerecht.
+   Aktuell ist diese KPI nicht sichtbar, weil ohne CRM-Sync
+   kein Tenant valide CUSTOMER-Daten produziert.
+
+**Wann fixen:** Im Pilot-Onboarding mit erstem Kunden gemeinsam
+definieren, was "Conversion" fuer dessen Sales-Sprachgebrauch
+bedeutet. Erst dann ist klar, ob Tooltip und/oder zweite KPI
+das richtige Format sind, oder ob ein Reports-Reiter mit allen
+Funnel-Stufen die bessere Antwort ist.
+
+**Audit-Referenz:** Audit am 27.04.2026 hat die Berechnungs-
+Pfade dokumentiert (KpiCards.tsx:360-379 Frontend-Quotient,
+trends/route.ts:127-133 Lead-Findone-mit-aktueller-qualification).
+Tenant-Isolation bestaetigt, Edge-Cases identifiziert
+(Nenner=0 → 0%, Frueh-Phase-Volatilitaet bei <7 Tagen Daten,
+toFixed(0)-Rundung kaufmaennisch).

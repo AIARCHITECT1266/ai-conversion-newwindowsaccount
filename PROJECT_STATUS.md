@@ -1,8 +1,41 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-26
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase 2e komplett auf master gemerged + gepusht, naechster Schritt Production-Verifikation auf MOD-B2C, dann optional Build-Prompt 5b (HottestLeads + ChannelTeaser)
-**Letzter Commit:** 91b6c8c (Merge phase 2e auf master) — Vercel-Deploy auto-getriggert
+**Letzte Aktualisierung:** 2026-04-27
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase KPI-Label-Precision committed (semantische Schaerfung Konversionsrate-Label vor Demo), naechster Schritt Production-Verifikation auf MOD-B2C
+**Letzter Commit:** PENDING (KPI-Label-Precision) — Vercel-Deploy folgt nach Push
+
+---
+
+## Phase KPI-Label-Precision (27.04.2026)
+
+Minimal-invasive Pre-Demo-Schaerfung. Audit am Vormittag (kein
+Code-Change, nur Report) hat gezeigt: Das KPI-Card-Label
+"Konversionsrate" ist semantisch irrefuehrend — die Berechnung
+ist `(OPPORTUNITY + CUSTOMER aktueller Stand) / total-leads-7d`,
+also eine Qualifizierungs-Quote, keine klassische Sales-Conversion-
+Rate. Senior-Sales-Buyer wuerden mit hoher Wahrscheinlichkeit
+"X% wovon?" fragen und die Antwort waere unsauber, weil das
+Label und die tatsaechliche Berechnung divergieren.
+
+**Aenderung:** Eine String-Aenderung in
+`src/app/dashboard/_components/KpiCards.tsx:436` —
+"Konversionsrate · letzte 7 Tage" →
+"Lead-Qualifizierungs-Quote · letzte 7 Tage". Kein Logik-Change,
+kein API-Touch, kein Schema-Touch. Code-Kommentare im selben File
+unveraendert (sie beschreiben die unveraenderte Berechnung).
+
+**Tech-Debt-Aufnahme:** TD-Post-Demo-Konversionsrate-Tooltip-und-
+Customer-Quote als 🟡 SHOULD-FIX-IF-TRIGGERED. Zwei tiefere
+Schwaechen bleiben (Tooltip am Card-Header, separate Customer-
+Conversion-Quote), Trigger ist Pilot-Feedback oder CRM-Sync-
+Verfuegbarkeit fuer CUSTOMER-Stage.
+
+**Build-Verifikation:** `npx next build` clean.
+- /dashboard: 125 kB Page-Code, 339 kB First Load JS
+- Delta gegenueber Phase 2e: +1 kB Page (laengerer Label-String)
+
+**Tenant-Isolation:** Unveraendert. Reine UI-String-Aenderung,
+keine WHERE-Clauses, keine Auth-Pfade beruehrt.
 
 ---
 

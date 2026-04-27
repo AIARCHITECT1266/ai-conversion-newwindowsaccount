@@ -433,7 +433,7 @@ export default function KpiCards() {
       <KpiCard
         kind="sparkline"
         icon={Zap}
-        label="Konversionsrate · letzte 7 Tage"
+        label="Lead-Qualifizierungs-Quote · letzte 7 Tage"
         value={conversionRate}
         format={(n) => `${n.toFixed(0)}%`}
         percentChange={null}
