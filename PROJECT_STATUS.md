@@ -1,8 +1,54 @@
 # Projekt-Status — AI Conversion Web-Widget
 
-**Letzte Aktualisierung:** 2026-04-27
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Pre-Demo-DB-Wipe-MOD-B2C abgeschlossen (378 Eintraege geloescht), naechster Schritt: Live-Mara-Test-Conversations heute Abend
-**Letzter Commit:** 21e3bbf (Pre-Demo-Campaigns-Broadcasts-Hide); Wipe-Skript-Commit folgt
+**Letzte Aktualisierung:** 2026-04-28
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Tenant-Resolver-Audit + Erste-Test-Suite committed (16/16 passing), naechster Schritt: Demo-Generalprobe
+**Letzter Commit:** wird im Push gesetzt — Tenant-Resolver-Tests Commit folgt
+
+---
+
+### Tenant-Resolver-Audit + Erste-Test-Suite (28.04.2026)
+
+Pre-Pilot-2 Sicherheitsverifikation des Tenant-Resolver-Pfades
+(`src/modules/tenant/resolver.ts:29-57`, `getTenantByPhoneId`).
+Phase 1 Code-Audit, Phase 2 Test-Erstellung, Phase 3 Findings-
+Report.
+
+**Sicherheitsbefund:** Cross-Tenant-Leak-Risiko = keiner.
+Cross-Tenant-Isolation ist bombensicher (Filter
+`whatsappPhoneId @unique + isActive: true` exakt, Prisma
+parameterisiert, kein Default-Match-Pfad).
+
+**Erste Test-Suite im Repo:**
+`src/modules/tenant/__tests__/resolver.test.ts` (240 Zeilen,
+16 Tests, vi.mock auf @/shared/db, lauft in 252ms ohne echte
+DB-Verbindung). Coverage:
+- 7 Edge-Cases (a-g): undefined/null/empty/SQL-injection/
+  long-string/inactive-tenant
+- 2 Cross-Tenant-Isolation-Tests (Showstopper-Coverage)
+- 5 Cache-Verhalten-Tests (Positiv/Negativ/Invalidation/Key-
+  Separation)
+- 2 Performance-Tests (<50ms-Budget)
+
+**Bug-Findings (NICHT gefixt, dokumentiert als TDs):**
+- HIGH: Cache-Invalidation nirgends aufgerufen
+  (TD-Pilot-2-Resolver-Cache, ~30 Min Fix-Aufwand)
+- LOW: Failed-Lookups nur in console.warn, nicht im Audit-Log
+  (TD-Pilot-2-Resolver-Audit-Log, ~15 Min Fix-Aufwand)
+- LOW: Negativ-Cache-Lag, Input-Validation-Luecke,
+  In-Memory-Cache-vs-Serverless (in TD oder Info-only)
+
+**Empfehlung:** Resolver kann fuer ersten Pilot-Tenant so bleiben
+(MOD-B2C). Vor zweitem Pilot oder Live-Toggle: TD-Pilot-2-
+Resolver-Cache fixen.
+
+**Vitest-Setup:** war bereits konfiguriert (`vitest.config.ts`,
+`package.json:10` `npm test` Script). Erste Tests im Repo —
+package.json devDependency `vitest@^4.1.2` schon da. Vorlage fuer
+weitere Test-Suites etabliert.
+
+**Tenant-Isolation:** Reine Test-Erstellung, keine Prod-Code-
+Aenderung. Resolver unveraendert. Keine DB-Touches, keine
+Schema-Aenderung.
 
 ---
 

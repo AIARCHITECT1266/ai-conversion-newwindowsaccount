@@ -40,6 +40,8 @@ TD-Pre-Demo-2 erfuellt mit dieser Sektion.
 | TD-Pre-Demo-DB-Wipe | 🟢 abgeschlossen 27.04.2026 22:08 MESZ | "TD-Pre-Demo-DB-Wipe" |
 | TD-Pre-Demo-Campaigns-Broadcasts-Hide | Demo abgeschlossen, Pilot-Scope geklaert | "TD-Pre-Demo-Campaigns-Broadcasts-Hide" |
 | TD-Pilot-Broadcast-Sender | MOD-Pilot Sender-Worker noetig | "TD-Pilot-Broadcast-Sender" |
+| TD-Pilot-2-Resolver-Cache | Vor zweitem produktivem Pilot-Tenant (Cache-Lag bei Tenant-Toggle) | "TD-Pilot-2-Resolver-Cache" |
+| TD-Pilot-2-Resolver-Audit-Log | Vor Multi-Tenant-Live-Betrieb (forensische Spur fuer Failed-Lookups) | "TD-Pilot-2-Resolver-Audit-Log" |
 | TD-Post-Demo-Clients-2 | Nach Datenmodell-Fix (Clients-3) | "TD-Post-Demo-Clients-2" |
 | TD-Post-Demo-Clients-3 | Lead↔Client-Inkonsistenz blockt erste Pilot-Nutzung | "TD-Post-Demo-Clients-3" |
 | TD-Post-Demo-Timezone | DST-Wechsel oder internationaler Pilot-Tenant | "TD-Post-Demo-Timezone" |
@@ -3680,6 +3682,75 @@ Plus weitere im Audit nicht erfasste, NICHT-angefasste Treffer:
   (`api/widget/{session,config}/route.ts`)
   ("Zu viele Anfragen - bitte spaeter erneut versuchen") —
   technisch User-facing aber nicht im Demo-Flow sichtbar
+
+---
+
+### TD-Pilot-2-Resolver-Cache
+
+- **Status:** 🟡 SHOULD-FIX-IF-TRIGGERED
+- **Trigger:** Vor zweitem produktivem Pilot-Tenant ODER vor erstem
+  Live-Tenant-Toggle (`isActive: false` per Admin-PATCH).
+- **Problem:** `src/modules/tenant/resolver.ts:62` definiert
+  `invalidateTenantCache(phoneNumberId?)` — die Funktion ist
+  exportiert, wird aber **nirgends in der Codebase aufgerufen**
+  (Audit 28.04.2026 via grep bestaetigt: 0 Aufrufer ausser der
+  Definition selbst).
+- **Konsequenz:**
+  - Admin-PATCH auf `/api/admin/tenants/[id]:220` aendert Tenant
+    (z.B. `isActive: false`) → Cache haelt bis zu 60 Sekunden den
+    alten `isActive: true`-Tenant. Webhook akzeptiert in dieser
+    Zeit weiterhin Nachrichten und routet zur "deaktivierten"
+    Logik.
+  - Admin-DELETE (`route.ts:271`) → 60s-Lag plus FK-Cascade-Race
+  - Admin-CREATE (`route.ts:114`) → wenn vorher Negativ-Cache fuer
+    diese Phone-ID entstanden ist (z.B. Pre-Setup-Webhook-Test),
+    sieht Webhook den neuen Tenant 60s lang nicht
+- **Risiko-Klasse:** TENANT-LEAK-RISIKO **mittel** — Permission-Lag,
+  kein Cross-Tenant-Mix. Cross-Tenant-Isolation selbst ist
+  bombensicher (Resolver-Filter exakt, Tests bestaetigen).
+- **Severity HIGH (nicht critical):** kein Showstopper fuer ersten
+  Pilot-Tenant. Wird kritisch ab zweitem Pilot oder Live-Toggle.
+- **Empfohlener Fix:** `invalidateTenantCache(tenant.whatsappPhoneId)`
+  nach jedem `db.tenant.update`/`.delete`/`.create` in den
+  Admin-Routen, plus globaler `invalidateTenantCache()` als
+  Safety-Net. Aufwand: 30 Min Code + 5-10 Min Test-Erweiterung.
+- **Tests vorhanden:**
+  `src/modules/tenant/__tests__/resolver.test.ts` deckt das
+  Cache-Verhalten ab (16/16 grun) — pruefen NACH Fix erweitern um:
+  PATCH-Handler ruft invalidateTenantCache, DELETE ebenfalls,
+  CREATE ebenfalls (Negativ-Cache-Bypass).
+- **Verbundene TDs:** TD-Pilot-2-Resolver-Audit-Log (gleicher
+  Trigger-Punkt: zweiter Pilot)
+
+---
+
+### TD-Pilot-2-Resolver-Audit-Log
+
+- **Status:** 🟡 SHOULD-FIX-IF-TRIGGERED
+- **Trigger:** Vor Multi-Tenant-Live-Betrieb (>= 2 produktive
+  Tenants), spaetestens beim ersten Forensik-Bedarf.
+- **Problem:** `src/modules/tenant/resolver.ts:52-54` loggt
+  Failed-Lookups nur via `console.warn`:
+  ```
+  if (!tenant) {
+    console.warn("[Tenant] Kein aktiver Mandant für Phone ID gefunden");
+  }
+  ```
+  Kein strukturierter `auditLog()`-Eintrag.
+- **Konsequenz:** Bei Tenant-Leak-Forensik oder Brute-Force-Probe-
+  Investigation muesste man Vercel-Logs grep'en statt
+  Audit-DB-Query. Failed-Lookups sind ein potenzieller Indikator
+  fuer Probing-Versuche durch fremde Webhook-Caller (sofern
+  AppSecret kompromittiert).
+- **Risiko-Klasse:** Defense-in-Depth, niedriger Severity (LOW).
+  Webhook-Signature-Validierung verhindert ungeknackte Lookups —
+  ohne valides AppSecret keine Phone-ID-Probe moeglich.
+- **Empfohlener Fix:** `auditLog("tenant.lookup_failed", { details:
+  { phoneIdHash: hashSha256(phoneNumberId).slice(0,16) } })` —
+  DSGVO-konformer Hash statt Plain-ID. AuditAction-Union in
+  `src/modules/compliance/audit-log.ts:7` muss erweitert werden.
+  Aufwand: 15 Min.
+- **Verbundene TDs:** TD-Pilot-2-Resolver-Cache
 
 ---
 
