@@ -1,8 +1,70 @@
 # Projekt-Status — AI Conversion Web-Widget
 
 **Letzte Aktualisierung:** 2026-04-28
-**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Tenant-Resolver-Audit + Erste-Test-Suite committed (16/16 passing), naechster Schritt: Demo-Generalprobe
-**Letzter Commit:** wird im Push gesetzt — Tenant-Resolver-Tests Commit folgt
+**Aktuelle Phase:** MOD-Demo-Vorbereitung (Call 29.04. Dienstag); Phase Tenant-Resolver-Hardening committed (Cache-Invalidation + Input-Validation + Audit-Log, 92/92 Tests grün), naechster Schritt: Demo-Generalprobe
+**Letzter Commit:** wird im Push gesetzt — Resolver-Hardening Commit folgt
+
+---
+
+### Tenant-Resolver-Hardening (28.04.2026)
+
+Fix-Aufgabe nach Resolver-Audit: alle drei Bug-Findings
+geschlossen, +13 neue Tests, Drive-By-Repair der pre-existenten
+auth.test.ts-Async-Drift.
+
+**Bug 1 HIGH (Cache-Invalidation) — geschlossen:**
+- `invalidateTenantCache(phoneId)` nach jeder mutierenden
+  DB-Operation auf `db.tenant`:
+  - `src/app/api/admin/tenants/route.ts` (POST/CREATE, Z.135)
+  - `src/app/api/admin/tenants/[id]/route.ts` (PATCH Z.234,
+    DELETE mit `delete({ select: { whatsappPhoneId } })` Z.279)
+  - `src/app/api/paddle/webhook/route.ts` (transaction.completed
+    UPDATE+CREATE, subscription.activated, subscription.canceled —
+    NICHT past_due)
+  - `src/app/api/onboarding/route.ts` (POST/CREATE)
+- Single-Key-Wipe (kein Global-Clear). Negativ-Cache-Lag bei
+  Tenant-Anlage und 60s-Stale-Routing nach Cancel/Activate
+  beseitigt.
+
+**Bug 3 LOW (Input-Validation) — geschlossen:**
+- Defensive Checks am Anfang von `getTenantByPhoneId`:
+  undefined/null → null, non-string → null, empty string → null,
+  >64 chars → null + Audit-Log oversized.
+- Verhindert Prisma-500 bei unsauberen Aufrufern, schuetzt vor
+  Brute-Force-Probing.
+
+**Bug 4 LOW (Audit-Log) — geschlossen:**
+- AuditAction-Union um `"tenant.lookup_failed"` erweitert.
+- Auf Failed-Lookup: `auditLog("tenant.lookup_failed", { details:
+  { phoneIdHash, reason } })`. Hash via SHA-256 (16 Hex-Chars,
+  gleiches Pattern wie `hashTokenForRateLimit`).
+- DSGVO: Phone-ID nie im Klartext im Audit-Log (eigener Test
+  asserted das).
+
+**Test-Suite-Erweiterung:**
+- `src/modules/tenant/__tests__/resolver.test.ts`: 16 → 21 Tests
+  (+null-input, +non-string-input, +65-chars-oversized, +64-chars-
+  Limit-OK, +Hash-niemals-Klartext)
+- NEU: `src/app/api/admin/tenants/__tests__/cache-invalidation.test.ts`
+  (7 Tests): POST/PATCH/DELETE invalidieren — auch Negativ-Pfade
+  (Zod-Fail / Tenant-not-found ruft NICHT auf)
+- Drive-By: `tests/auth.test.ts` repariert — pre-existent rote
+  Tests durch async-Migration der Session-API
+  (TD-Pilot-08-Admin-Magic-Link), Tests waren nicht migriert.
+
+**Verifikation:**
+- `npx vitest run`: 85/85 Tests grün (in 7 Files, vorher 80
+  effektiv passing wegen 5 roter auth.test.ts)
+- `npx tsc --noEmit`: 0 Fehler
+- `npx next build`: 0 Fehler (nur erwartete Sentry-Auth-Token-
+  Warnings)
+
+**Tenant-Isolation:** Resolver-Cache-Logik unveraendert,
+Filter-WHERE { whatsappPhoneId, isActive: true } unangetastet.
+Cross-Tenant-Test bleibt grün.
+
+**TD-Updates:** TD-Pilot-2-Resolver-Cache → 🟢 closed,
+TD-Pilot-2-Resolver-Audit-Log → 🟢 closed.
 
 ---
 

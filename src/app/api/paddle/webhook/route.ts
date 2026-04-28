@@ -11,6 +11,7 @@ import { db } from "@/shared/db";
 import { randomBytes, createHmac, timingSafeEqual } from "crypto";
 import { Resend } from "resend";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
+import { invalidateTenantCache } from "@/modules/tenant/resolver";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://ai-conversion.ai";
 
@@ -161,6 +162,10 @@ async function handleTransactionCompleted(event: PaddleEvent) {
         isActive: true,
       },
     });
+    // isActive=true wird in Resolver-WHERE-Filter beruecksichtigt —
+    // ein bis zu 60s alter null-Cache-Eintrag wuerde sonst neue
+    // Webhooks weiter abweisen.
+    invalidateTenantCache(existing.whatsappPhoneId);
     console.log("[Paddle] Tenant aktualisiert:", { tenantId: existing.id, plan });
     return;
   }
@@ -193,6 +198,13 @@ async function handleTransactionCompleted(event: PaddleEvent) {
     },
   });
 
+  // Negativ-Cache fuer den neuen (Pending-)PhoneId-Wert invalidieren.
+  // Phone-ID ist hier `pending-${ts}` und kollidiert nicht mit echten
+  // WhatsApp-IDs — der Cache-Wipe ist trotzdem korrekt, falls ein
+  // Webhook-Replay denselben Pending-Wert in den 60s-TTL gespeichert
+  // hat.
+  invalidateTenantCache(tenant.whatsappPhoneId);
+
   console.log("[Paddle] Neuer Tenant erstellt:", {
     tenantId: tenant.id,
     plan,
@@ -217,6 +229,10 @@ async function handleSubscriptionActivated(event: PaddleEvent) {
     where: { id: tenant.id },
     data: { paddleStatus: "active", isActive: true },
   });
+  // isActive: false → true: Resolver-Cache koennte einen alten
+  // null-Eintrag halten, der sonst bis zu 60s den frisch aktivierten
+  // Tenant unsichtbar macht.
+  invalidateTenantCache(tenant.whatsappPhoneId);
   console.log("[Paddle] Subscription aktiviert:", { tenantId: tenant.id });
 }
 
@@ -232,6 +248,10 @@ async function handleSubscriptionCanceled(event: PaddleEvent) {
     where: { id: tenant.id },
     data: { paddleStatus: "canceled", isActive: false },
   });
+  // isActive: true → false: Webhook-Routing muss SOFORT abgeschnitten
+  // werden, sonst kann der Bot bis zu 60s lang weiter Nachrichten
+  // im Namen eines gekuendigten Kunden senden.
+  invalidateTenantCache(tenant.whatsappPhoneId);
   console.log("[Paddle] Subscription gekuendigt:", { tenantId: tenant.id });
 }
 

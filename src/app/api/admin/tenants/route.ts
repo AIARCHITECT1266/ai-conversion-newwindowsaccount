@@ -10,6 +10,7 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 import { db } from "@/shared/db";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
+import { invalidateTenantCache } from "@/modules/tenant/resolver";
 
 // Zod-Schema fuer Tenant-Erstellung
 // Erlaubte paddlePlan-Werte (muss mit detectPlanType() kompatibel sein)
@@ -128,6 +129,12 @@ export async function POST(request: NextRequest) {
       // Nur oeffentliche Felder zurueckgeben – Token-Hash wird NICHT exponiert
       select: TENANT_PUBLIC_SELECT,
     });
+
+    // Negativ-Cache fuer die neue Phone-ID invalidieren. Falls vor
+    // Anlegen schon ein Webhook mit dieser ID kam (Probing), ist
+    // null im 60s-TTL-Cache und wuerde den frischen Tenant ueber-
+    // decken. Praeziser Single-Key-Wipe — kein Global-Clear.
+    invalidateTenantCache(tenant.whatsappPhoneId);
 
     console.log("[Admin] Tenant erstellt", {
       tenantId: tenant.id,

@@ -13,6 +13,7 @@ import { db } from "@/shared/db";
 import { checkRateLimit, getClientIp } from "@/shared/rate-limit";
 import { hashToken, MAGIC_LINK_EXPIRY_MS } from "@/modules/auth/dashboard-auth";
 import { auditLog } from "@/modules/compliance/audit-log";
+import { invalidateTenantCache } from "@/modules/tenant/resolver";
 
 // Zod-Schema fuer Tenant-Erstellung
 const createSchema = z.object({
@@ -100,6 +101,11 @@ export async function POST(request: NextRequest) {
       tenantId: tenant.id,
       details: { acceptedAt: tenant.dpaAcceptedAt },
     });
+
+    // Negativ-Cache fuer die neue Phone-ID invalidieren — falls vor
+    // Anlegen schon ein Webhook-Probe diese ID gequeried hat, sitzt
+    // ein null-Eintrag im 60s-TTL-Cache. Single-Key-Wipe.
+    invalidateTenantCache(tenant.whatsappPhoneId);
 
     console.log("[Onboarding] Tenant erstellt", {
       tenantId: tenant.id,

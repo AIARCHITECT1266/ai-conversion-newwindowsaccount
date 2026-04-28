@@ -38,7 +38,8 @@ type AuditAction =
   | "widget.toggled"
   | "dashboard.prompt_updated"
   | "dashboard.scoring_updated"
-  | "admin.demo_seed_mod_education";
+  | "admin.demo_seed_mod_education"
+  | "tenant.lookup_failed";
 
 // DSGVO: Felder die nie in Details auftauchen duerfen
 const SENSITIVE_FIELDS = new Set([

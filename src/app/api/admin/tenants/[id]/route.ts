@@ -17,6 +17,7 @@ import { generatePublicKey } from "@/lib/widget/publicKey";
 import { hasPlanFeature } from "@/lib/plan-limits";
 import { QualificationLabelsSchema } from "@/modules/bot/scoring";
 import { getClientIp } from "@/shared/rate-limit";
+import { invalidateTenantCache } from "@/modules/tenant/resolver";
 
 // Oeffentliche Felder fuer API-Responses (ohne dashboardToken!)
 const TENANT_PUBLIC_SELECT = {
@@ -231,6 +232,14 @@ export async function PATCH(
       },
     });
 
+    // Cache invalidieren falls Felder geaendert wurden, die der
+    // Resolver-Cache abdeckt (Tenant-Identitaet via whatsappPhoneId
+    // + WHERE-Filter isActive: true). whatsappPhoneId selbst ist im
+    // PATCH-Schema NICHT mutierbar, also reicht Single-Key-Wipe auf
+    // tenant.whatsappPhoneId. isActive: false → naechster Webhook
+    // bekommt sofort null statt eines bis zu 60s alten Tenant-Hits.
+    invalidateTenantCache(tenant.whatsappPhoneId);
+
     console.log("[Admin] Tenant aktualisiert", {
       tenantId: tenant.id,
       fields: Object.keys(data),
@@ -268,7 +277,18 @@ export async function DELETE(
       return NextResponse.json({ error: "Ungültige Tenant-ID" }, { status: 400 });
     }
 
-    await db.tenant.delete({ where: { id } });
+    // delete({ select: ... }) liefert das geloeschte Record zurueck,
+    // damit wir die whatsappPhoneId fuer die Cache-Invalidation
+    // haben — kein zusaetzlicher findUnique-Roundtrip noetig.
+    const deleted = await db.tenant.delete({
+      where: { id },
+      select: { whatsappPhoneId: true },
+    });
+
+    // Resolver-Cache fuer die geloeschte Phone-ID invalidieren —
+    // sonst koennte ein bis zu 60s alter Cache-Hit Webhooks weiter
+    // an den nicht mehr existenten Tenant routen.
+    invalidateTenantCache(deleted.whatsappPhoneId);
 
     // DSGVO-Pflicht: Tenant-Loeschung im Audit-Log dokumentieren
     auditLog("admin.tenant_deleted", {

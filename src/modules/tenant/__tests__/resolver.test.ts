@@ -2,19 +2,23 @@
 // Tenant-Resolver-Tests (Phase 2 des Resolver-Audit, 28.04.2026)
 // Audit-Mission: Verifiziere Cross-Tenant-Isolation und Edge-Case-
 // Verhalten von getTenantByPhoneId() vor zweitem Pilot-Tenant.
-// Reine Additivitaet — keine Refactoring-Aenderungen am Resolver-
-// Code in src/modules/tenant/resolver.ts.
+//
+// Update 28.04.2026 (Hardening):
+// - Defensive Input-Validation (undefined/null/non-string/empty/
+//   >64 chars) → fruehzeitig null, kein Prisma-Call
+// - Failed-Lookup-Audit-Log (action: tenant.lookup_failed)
+// - Tests c/d/f wurden umgestellt: erwarten jetzt NICHT-Aufruf
+//   von findUnique
 //
 // db-Mock: vi.mock auf @/shared/db, damit weder DATABASE_URL
-// noch eine echte Prisma-Verbindung benoetigt wird. Die Tests
-// laufen vollstaendig in-process mit vi.fn-Stubs.
+// noch eine echte Prisma-Verbindung benoetigt wird.
+// audit-log-Mock: vi.mock auf @/modules/compliance/audit-log,
+// damit Failed-Lookup-Logs assertbar sind.
 // ============================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock muss VOR dem Resolver-Import deklariert werden.
-// vi.mock wird von Vitest gehoistet; der Resolver-Import bekommt
-// das gemockte db-Modul.
+// Mocks muessen VOR den Resolver-Imports deklariert werden.
 vi.mock("@/shared/db", () => ({
   db: {
     tenant: {
@@ -23,13 +27,18 @@ vi.mock("@/shared/db", () => ({
   },
 }));
 
+vi.mock("@/modules/compliance/audit-log", () => ({
+  auditLog: vi.fn(),
+}));
+
 import { db } from "@/shared/db";
+import { auditLog } from "@/modules/compliance/audit-log";
 import { getTenantByPhoneId, invalidateTenantCache } from "../resolver";
 
-// Convenient handle auf die Mock-Funktion
 const findUniqueMock = db.tenant.findUnique as unknown as ReturnType<
   typeof vi.fn
 >;
+const auditLogMock = auditLog as unknown as ReturnType<typeof vi.fn>;
 
 // Tenant-Fixtures. `as any` weil wir nur die fuer den Resolver
 // relevanten Felder brauchen — Prisma-Tenant-Type hat ~25 Felder,
@@ -56,6 +65,7 @@ const TENANT_B = {
 beforeEach(() => {
   invalidateTenantCache();
   findUniqueMock.mockReset();
+  auditLogMock.mockReset();
 });
 
 describe("getTenantByPhoneId — Edge-Cases (Phase 1.1)", () => {
@@ -70,42 +80,55 @@ describe("getTenantByPhoneId — Edge-Cases (Phase 1.1)", () => {
     });
   });
 
-  it("b) gueltige NICHT-existierende phoneNumberId → liefert null", async () => {
+  it("b) gueltige NICHT-existierende phoneNumberId → null + Audit-Log not_found", async () => {
     findUniqueMock.mockResolvedValueOnce(null);
 
     const result = await getTenantByPhoneId("999999999999");
 
     expect(result).toBeNull();
     expect(findUniqueMock).toHaveBeenCalledTimes(1);
+    expect(auditLogMock).toHaveBeenCalledWith(
+      "tenant.lookup_failed",
+      expect.objectContaining({
+        details: expect.objectContaining({ reason: "not_found" }),
+      })
+    );
   });
 
-  it("c) leerer String → findUnique mit '' aufgerufen, liefert null (kein Default-Match)", async () => {
-    findUniqueMock.mockResolvedValueOnce(null);
-
+  it("c) leerer String → kein Prisma-Call, null", async () => {
     const result = await getTenantByPhoneId("");
 
     expect(result).toBeNull();
-    expect(findUniqueMock).toHaveBeenCalledWith({
-      where: { whatsappPhoneId: "", isActive: true },
-    });
+    expect(findUniqueMock).not.toHaveBeenCalled();
+    // Empty Input ist kein Audit-Event — ueberspringen reduziert Log-Lärm.
+    expect(auditLogMock).not.toHaveBeenCalled();
   });
 
-  it("d) undefined → Resolver validiert NICHT, leitet an Prisma weiter (Finding)", async () => {
-    // Dokumentiert das tatsaechliche Verhalten: Der Resolver
-    // hat keine Eingangsvalidierung. Bei undefined wuerde Prisma
-    // zur Runtime werfen. Hier mit Mock simuliert.
-    findUniqueMock.mockResolvedValueOnce(null);
-
+  it("d) undefined → kein Prisma-Call, null", async () => {
     // @ts-expect-error: Tests Runtime-Verhalten mit invalidem Input
     const result = await getTenantByPhoneId(undefined);
 
-    expect(findUniqueMock).toHaveBeenCalledWith({
-      where: { whatsappPhoneId: undefined, isActive: true },
-    });
     expect(result).toBeNull();
+    expect(findUniqueMock).not.toHaveBeenCalled();
   });
 
-  it("e) SQL-Injection-Versuch → als String-Literal an Prisma, kein Treffer", async () => {
+  it("d2) null → kein Prisma-Call, null", async () => {
+    // @ts-expect-error: Tests Runtime-Verhalten mit invalidem Input
+    const result = await getTenantByPhoneId(null);
+
+    expect(result).toBeNull();
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("d3) non-string Input (Number) → kein Prisma-Call, null", async () => {
+    // @ts-expect-error: Tests Runtime-Verhalten mit invalidem Input
+    const result = await getTenantByPhoneId(12345);
+
+    expect(result).toBeNull();
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("e) SQL-Injection-Versuch (kurz) → als String-Literal an Prisma, kein Treffer", async () => {
     findUniqueMock.mockResolvedValueOnce(null);
     const injection = "'; DROP TABLE tenants; --";
 
@@ -115,18 +138,55 @@ describe("getTenantByPhoneId — Edge-Cases (Phase 1.1)", () => {
     expect(findUniqueMock).toHaveBeenCalledWith({
       where: { whatsappPhoneId: injection, isActive: true },
     });
+    expect(auditLogMock).toHaveBeenCalledWith(
+      "tenant.lookup_failed",
+      expect.objectContaining({
+        details: expect.objectContaining({ reason: "not_found" }),
+      })
+    );
   });
 
-  it("f) sehr langer String (>1000 chars) → Resolver truncated nicht, leitet weiter", async () => {
-    findUniqueMock.mockResolvedValueOnce(null);
+  it("f) sehr langer String (>64 chars) → kein Prisma-Call + Audit-Log oversized", async () => {
     const longStr = "x".repeat(2000);
 
     const result = await getTenantByPhoneId(longStr);
 
     expect(result).toBeNull();
-    expect(findUniqueMock).toHaveBeenCalledWith({
-      where: { whatsappPhoneId: longStr, isActive: true },
-    });
+    expect(findUniqueMock).not.toHaveBeenCalled();
+    expect(auditLogMock).toHaveBeenCalledWith(
+      "tenant.lookup_failed",
+      expect.objectContaining({
+        details: expect.objectContaining({
+          reason: "oversized",
+          length: 2000,
+        }),
+      })
+    );
+  });
+
+  it("f2) genau 65 chars (1 ueber Limit) → kein Prisma-Call, oversized", async () => {
+    const justOver = "x".repeat(65);
+
+    const result = await getTenantByPhoneId(justOver);
+
+    expect(result).toBeNull();
+    expect(findUniqueMock).not.toHaveBeenCalled();
+    expect(auditLogMock).toHaveBeenCalledWith(
+      "tenant.lookup_failed",
+      expect.objectContaining({
+        details: expect.objectContaining({ reason: "oversized" }),
+      })
+    );
+  });
+
+  it("f3) genau 64 chars (Limit) → Prisma-Call OK", async () => {
+    findUniqueMock.mockResolvedValueOnce(null);
+    const atLimit = "x".repeat(64);
+
+    const result = await getTenantByPhoneId(atLimit);
+
+    expect(result).toBeNull();
+    expect(findUniqueMock).toHaveBeenCalledTimes(1);
   });
 
   it("g) DEAKTIVIERTER Tenant (isActive: false) → null (Filter im WHERE-Clause)", async () => {
@@ -140,6 +200,22 @@ describe("getTenantByPhoneId — Edge-Cases (Phase 1.1)", () => {
     expect(findUniqueMock).toHaveBeenCalledWith({
       where: { whatsappPhoneId: "inactive-tenant-phone", isActive: true },
     });
+  });
+
+  it("h) Audit-Log enthaelt nur Hash, NIE die Phone-ID im Klartext", async () => {
+    findUniqueMock.mockResolvedValueOnce(null);
+    const phoneId = "secret-phone-id-12345";
+
+    await getTenantByPhoneId(phoneId);
+
+    expect(auditLogMock).toHaveBeenCalledTimes(1);
+    const call = auditLogMock.mock.calls[0];
+    const detailsArg = call[1] as { details: Record<string, unknown> };
+    // Hash ist 16 Hex-Chars, NIE der Klartext-Phone-ID
+    expect(detailsArg.details.phoneIdHash).toMatch(/^[0-9a-f]{16}$/);
+    expect(detailsArg.details.phoneIdHash).not.toBe(phoneId);
+    // Vollstaendiger JSON-Stringify darf den Klartext nicht enthalten
+    expect(JSON.stringify(detailsArg)).not.toContain(phoneId);
   });
 });
 

@@ -2,6 +2,11 @@
 // Tests: Admin-Session-Token Verwaltung
 // Prueft Session-Erstellung, Validierung, Invalidierung und
 // timing-sicheren Secret-Vergleich.
+//
+// 28.04.2026: createAdminSession + validateAdminSession +
+// invalidateAdminSession sind seit TD-Pilot-08-Admin-Magic-Link
+// async (Upstash-Redis cluster-weit). Tests wurden im selben
+// Commit nicht migriert — hier als Drive-By repariert.
 // ============================================================
 
 import { describe, it, expect } from "vitest";
@@ -13,48 +18,48 @@ import {
 } from "@/modules/auth/session";
 
 describe("Admin Session Management", () => {
-  it("erstellt einen 64-Zeichen-Hex-Token", () => {
-    const token = createAdminSession();
+  it("erstellt einen 64-Zeichen-Hex-Token", async () => {
+    const token = await createAdminSession();
     expect(token).toHaveLength(64);
     expect(token).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it("generiert einzigartige Tokens", () => {
+  it("generiert einzigartige Tokens", async () => {
     const tokens = new Set<string>();
     for (let i = 0; i < 100; i++) {
-      tokens.add(createAdminSession());
+      tokens.add(await createAdminSession());
     }
     expect(tokens.size).toBe(100);
   });
 
-  it("validiert einen gerade erstellten Token", () => {
-    const token = createAdminSession();
-    expect(validateAdminSession(token)).toBe(true);
+  it("validiert einen gerade erstellten Token", async () => {
+    const token = await createAdminSession();
+    expect(await validateAdminSession(token)).toBe(true);
   });
 
-  it("lehnt ungueltige Tokens ab", () => {
-    expect(validateAdminSession("")).toBe(false);
-    expect(validateAdminSession("zu-kurz")).toBe(false);
-    expect(validateAdminSession("a".repeat(64))).toBe(false); // Nicht erstellt
-    expect(validateAdminSession("x".repeat(100))).toBe(false); // Falsche Laenge
+  it("lehnt ungueltige Tokens ab", async () => {
+    expect(await validateAdminSession("")).toBe(false);
+    expect(await validateAdminSession("zu-kurz")).toBe(false);
+    expect(await validateAdminSession("a".repeat(64))).toBe(false); // Nicht erstellt
+    expect(await validateAdminSession("x".repeat(100))).toBe(false); // Falsche Laenge
   });
 
-  it("invalidiert einen Token (Logout)", () => {
-    const token = createAdminSession();
-    expect(validateAdminSession(token)).toBe(true);
+  it("invalidiert einen Token (Logout)", async () => {
+    const token = await createAdminSession();
+    expect(await validateAdminSession(token)).toBe(true);
 
-    invalidateAdminSession(token);
-    expect(validateAdminSession(token)).toBe(false);
+    await invalidateAdminSession(token);
+    expect(await validateAdminSession(token)).toBe(false);
   });
 
-  it("laesst andere Tokens intakt nach Invalidierung", () => {
-    const token1 = createAdminSession();
-    const token2 = createAdminSession();
+  it("laesst andere Tokens intakt nach Invalidierung", async () => {
+    const token1 = await createAdminSession();
+    const token2 = await createAdminSession();
 
-    invalidateAdminSession(token1);
+    await invalidateAdminSession(token1);
 
-    expect(validateAdminSession(token1)).toBe(false);
-    expect(validateAdminSession(token2)).toBe(true);
+    expect(await validateAdminSession(token1)).toBe(false);
+    expect(await validateAdminSession(token2)).toBe(true);
   });
 });
 
